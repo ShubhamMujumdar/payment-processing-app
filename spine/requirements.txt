@@ -1,0 +1,9 @@
+# Unpinned deliberately: Python 3.14 is new enough that several of these only
+# ship cp314 wheels on recent releases. Pin once the demo stack is frozen.
+arcadedb-embedded>=26.8.1
+fastapi
+uvicorn[standard]
+httpx
+python-dotenv
+tree-sitter
+tree-sitter-java

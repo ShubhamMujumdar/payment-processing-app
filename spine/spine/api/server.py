@@ -327,6 +327,41 @@ def trace(req_id: str) -> dict[str, Any]:
     }
 
 
+@app.get("/code/graph")
+def code_graph() -> dict[str, Any]:
+    """The code graph, whole.
+
+    A few hundred nodes and edges, so it ships in one response rather than
+    paginating. Edges carry their type and confidence: CALLS is name-matched
+    without a type checker and is labelled 0.4 so the console can render it as
+    the guess it is.
+    """
+    store = _store()
+    units = store.query(
+        "SELECT unit_id AS unitId, kind, name, path, start_line AS startLine, "
+        "end_line AS endLine, signature, introduced_in_pr AS introducedInPr, "
+        "last_changed_pr AS lastChangedPr, touched_by_prs AS touchedByPrs FROM CodeUnit"
+    )
+
+    def edges(edge_type: str, confidence: float) -> list[dict[str, Any]]:
+        rows = store.cypher(
+            f"MATCH (a:CodeUnit)-[:{edge_type}]->(b:CodeUnit) "
+            "RETURN a.unit_id AS source, b.unit_id AS target"
+        )
+        return [{**r, "type": edge_type, "confidence": confidence} for r in rows]
+
+    implements = store.cypher(
+        "MATCH (r:Requirement)-[:IMPLEMENTS]->(cu:CodeUnit) "
+        "RETURN r.req_id AS source, cu.unit_id AS target"
+    )
+
+    return {
+        "units": units,
+        "edges": edges("CONTAINS", 1.0) + edges("CALLS", 0.4),
+        "requirementLinks": [{**r, "type": "IMPLEMENTS", "confidence": 0.85} for r in implements],
+    }
+
+
 @app.get("/health")
 def health() -> dict[str, Any]:
     store = _store()

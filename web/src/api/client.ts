@@ -93,3 +93,39 @@ export async function getPacketChain(packetId: string): Promise<WorkPacket | und
   }
   return settle(buildConsole().packets.find((p) => p.packetId === packetId));
 }
+
+export interface CodeGraphUnit {
+  unitId: string;
+  kind: string;
+  name: string;
+  path: string;
+  startLine: number;
+  endLine: number;
+  signature?: string;
+  introducedInPr?: number;
+  lastChangedPr?: number;
+  touchedByPrs?: string;
+}
+
+export interface CodeGraphEdge {
+  source: string;
+  target: string;
+  type: "CONTAINS" | "CALLS" | "IMPLEMENTS";
+  confidence: number;
+}
+
+export interface CodeGraph {
+  units: CodeGraphUnit[];
+  edges: CodeGraphEdge[];
+  requirementLinks: CodeGraphEdge[];
+}
+
+/** The whole code graph. Only available live: fixtures have no parsed source. */
+export async function getCodeGraph(): Promise<CodeGraph | null> {
+  if (MODE !== "live") return settle(null);
+  try {
+    return await fetchJson<CodeGraph>("/code/graph", 30000);
+  } catch {
+    return null;
+  }
+}

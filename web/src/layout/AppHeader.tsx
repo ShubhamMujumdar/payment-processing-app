@@ -1,4 +1,5 @@
 import { useSidebar } from "../context/SidebarContext";
+import { useOrigin } from "../api/origin";
 
 /**
  * The header carries one thing the rest of the page cannot: how current the data
@@ -7,10 +8,11 @@ import { useSidebar } from "../context/SidebarContext";
  * in a demo.
  */
 
-const MODE = import.meta.env.VITE_SPINE_MODE ?? "fixtures";
+
 
 export default function AppHeader() {
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const origin = useOrigin();
 
   return (
     <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/[0.06] bg-ink-950/80 px-4 py-3 backdrop-blur-md md:px-6">
@@ -33,20 +35,33 @@ export default function AppHeader() {
           title="Which sources are live in this build"
         >
           <span className="size-1.5 rounded-full bg-state-pass" />
-          github · ci live
+          github · ci · confluence
         </span>
 
         <span
           className="flex items-center gap-1.5 rounded-full border border-white/[0.07] px-2.5 py-1 font-mono text-[10px] text-gray-500"
-          title="Jira, Confluence and test management are seeded fixtures in this build"
+          title="Jira and Zephyr have no connector yet; their rows are seeded"
         >
           <span className="size-1.5 rounded-full bg-state-idle" />
-          3 sources seeded
+          jira · zephyr seeded
         </span>
 
-        {MODE !== "live" && (
+        {origin === "live" && (
+          <span className="rounded-full border border-cgz-cyan/30 bg-cgz-cyan/[0.08] px-2.5 py-1 font-mono text-[10px] text-cgz-cyan">
+            live graph
+          </span>
+        )}
+        {origin === "fixtures" && (
           <span className="rounded-full border border-state-warn/25 bg-state-warn/[0.08] px-2.5 py-1 font-mono text-[10px] text-state-warn">
-            fixture mode
+            seeded data
+          </span>
+        )}
+        {origin === "fixtures-fallback" && (
+          <span
+            className="rounded-full border border-state-fail/30 bg-state-fail/[0.08] px-2.5 py-1 font-mono text-[10px] text-state-fail"
+            title="Live mode is configured but the spine did not respond, so this is seeded data"
+          >
+            spine unreachable — seeded
           </span>
         )}
       </div>

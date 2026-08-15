@@ -156,9 +156,46 @@ export interface Requirement {
   linkedIssueKeys: string[];
   linkedTestIds: string[];
   openDefectIds: string[];
-  /** 0-1. Share of linked test cases passing at last execution. */
+  /** 0-1. Share of linked test cases passing at last execution. Derived from
+   *  test results, not read from the matrix's own status column - deriving what
+   *  the RTM records by hand is the point of the exercise. */
   verification: number;
   lastChangedAt: string;
+  /** Requirement satisfaction as the programme currently records it. */
+  status?: RequirementStatus;
+  /** Parent requirements this one derives from (FR -> BR). */
+  parents?: string[];
+  /** Requirements deriving from this one (BR -> FRs). */
+  children?: string[];
+  testCount?: number;
+}
+
+export type RequirementStatus =
+  | "satisfied"
+  | "partial"
+  | "not_satisfied"
+  | "delivered_with_defect"
+  | "delivered_unverified"
+  | "in_progress"
+  | "approved"
+  | "not_started"
+  | "deferred"
+  | "unknown";
+
+/** A parsed unit of source: a file, type, method or field. */
+export interface CodeUnit {
+  unitId: string;
+  kind: "file" | "class" | "interface" | "enum" | "record" | "method" | "field";
+  name: string;
+  path: string;
+  startLine: number;
+  endLine: number;
+  signature?: string;
+  introducedInPr?: number;
+  lastChangedPr?: number;
+  /** Every pull request still live in this unit's line range - the set that
+   *  matters for "what backs out with PR #N". */
+  touchedByPrs?: string;
 }
 
 export type PrState = "open" | "merged" | "closed" | "draft";
@@ -241,4 +278,8 @@ export interface ConsoleData extends PortfolioSummary {
   defects: DefectRow[];
   deployments: DeploymentRow[];
   personStats: PersonStats[];
+  codeUnits?: CodeUnit[];
+  /** Which source the console is actually showing, so the UI never implies
+   *  live data while serving fixtures. */
+  origin?: "live" | "fixtures" | "fixtures-fallback";
 }

@@ -1,0 +1,31 @@
+# Secrets — the GitHub PAT and the ArcadeDB root password live here.
+# .env.example is committed; .env never is.
+.env
+*.pem
+*.key
+
+# ArcadeDB databases and generated fixture output — both reproducible.
+data/
+*.arcadedb/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+
+# Node (slice F)
+node_modules/
+.vite/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

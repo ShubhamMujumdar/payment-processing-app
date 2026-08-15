@@ -173,6 +173,13 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
+      # Buildx is required before the build below: the default `docker` driver
+      # cannot export a cache, so `cache-to: type=gha` fails the job outright
+      # with "Cache export is not supported for the docker driver". cd.yml and
+      # security.yml already set this up; this job was the one that did not.
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
       # Building the image on a PR proves the Dockerfile still works without
       # publishing anything. Nothing is pushed from a pull request.
       - name: Verify the container image builds

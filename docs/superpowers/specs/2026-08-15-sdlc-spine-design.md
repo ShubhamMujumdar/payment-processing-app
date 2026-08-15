@@ -46,7 +46,7 @@ slice D and are explicitly out of scope here.
 | D3 | Python 3.14 backend | Matches the installed runtime, the ArcadeDB binding, and the tooling slices C and D will need (tree-sitter, Anthropic SDK). |
 | D4 | Custody time as the durable measure; activity signal as a labelled overlay | Git and Jira record events, not effort. Conflating elapsed time with effort produces numbers that do not survive scrutiny from an engineering manager. |
 | D5 | Work Packet is synthetic, spanning requirement → issue → PR → test → defect | Matches how work actually flows. A Jira issue alone fragments work that spans tickets; a requirement alone accumulates unbounded chains across releases. |
-| D6 | GitHub and CI live via read-only PAT; Jira, Confluence and Zephyr from fixtures | The repository is private and no Atlassian tenant is available. See [§10](#10-fixture-generator). |
+| D6 | GitHub and CI live via read-only PAT; Jira, Confluence and Zephyr from fixtures | No Atlassian tenant is available. GitHub access was secured by taking ownership of the repository, [§9.1](#91-github-access). See also [§10](#10-fixture-generator). |
 | D7 | Team-aggregate analytics by default; individual drill-down is permissioned | Per-person timing data is workforce monitoring. A team-level default is both the safer control posture and the better story in an RFP defence. |
 | D8 | Identity resolution never merges on name similarity | A false merge silently corrupts every downstream number and is undetectable once it has happened. |
 
@@ -422,23 +422,42 @@ re-reading is safe because `event_id` is deterministic.
 
 ### 9.1 GitHub access
 
-The repository `vrkaushiklakkaraj/payment-processing-app` is **private**; unauthenticated API
-calls return 404. A fine-grained PAT scoped to that repository with **read** on Contents, Pull
-requests, Actions, Deployments and Issues is required. It is read from a gitignored `.env`;
-`.env.example` documents the variables. Absent a token, the connector runs in replay mode
-against recorded cassettes, and the API surface is identical.
+**Repository of record:** `ShubhamMujumdar/payment-processing-app` — **public**, admin held by
+the programme. Created 15 Aug 2026 as a standalone copy of
+`vrkaushiklakkaraj/payment-processing-app`, preserving both branches at their original SHAs
+(`main` `e97d909`, `development` `6030b80`). The original is retained as the `upstream` remote.
 
-Two limitations to state plainly rather than discover during a demo:
+A standalone copy rather than a GitHub fork, for two reasons: forks have GitHub Actions
+disabled by default, and admin on the repository is required for
+`scripts/bootstrap-governance.sh` to create environments and branch protection at all.
 
-- Environment protection rules are unavailable on private repositories on GitHub Free, so
-  gates 2, 3 and 5 do not pause and carry no approver. Deployments and deployment statuses
-  are still recorded with actor and timestamp, so the *transition* is real even where the
-  *approval* is not. Spans derived without a real approval carry the flag `simulated_gate`.
-- At the time of writing, `development` contains three commits pushed directly to the branch.
-  There are no pull requests and therefore no review events. Until real PRs exist, review
-  custody comes from fixtures. Pushing two or three genuine PRs through the gates before the
-  demo converts the single strongest signal in the system from synthetic to real, and is
-  recommended.
+Access is a read-only PAT with Contents, Pull requests, Actions, Deployments and Issues, read
+from a gitignored `.env`; `.env.example` documents the variables. Verified 200 across every
+endpoint the connectors use. Absent a token the connector runs in replay mode against recorded
+cassettes, with an identical API surface.
+
+> **Token note.** Fine-grained PATs are scoped to a resource owner and **cannot** reach
+> repositories owned by another user, even for a collaborator with full access — the failure
+> presents as a 404 indistinguishable from an unauthenticated one. Owning the repository is
+> what makes a fine-grained, least-privilege, read-only token viable here. The spine holds
+> read access only; the `Administration: write` token needed once for governance bootstrap is
+> separate, short-lived, and never used by the spine.
+
+Two conditions to state plainly rather than discover during a demo:
+
+- Until `bootstrap-governance.sh` runs, the environments have no reviewers, so gates 2, 3 and
+  5 do not pause and carry no approver. Deployments and deployment statuses are still recorded
+  with actor and timestamp, so the *transition* is real even where the *approval* is not.
+  Spans derived without a real approval carry the flag `simulated_gate`. Because the repository
+  is public, environment protection rules **are** available on GitHub Free — so this is a
+  configuration step, not a plan limitation.
+- As of 15 Aug 2026 `development` contains three commits pushed directly to the branch. There
+  are no pull requests and therefore no review events. Until real PRs exist, review custody
+  comes from fixtures. Pushing two or three genuine PRs through the gates converts the single
+  strongest signal in the system from synthetic to real, and is recommended before the demo.
+- CODEOWNERS references `@cognizantfs/payments-*` teams, which do not exist on a personal
+  account. GitHub silently ignores such entries, so Gate 1 will not fire until they are
+  replaced with real accounts via the script's `REVIEWER_USERS` fallback.
 
 ---
 
@@ -593,11 +612,14 @@ And per D7, individual-level analytics stay permissioned.
 
 ## 16. Open dependencies
 
-| # | Dependency | Owner | Blocking? |
+| # | Dependency | Owner | Status |
 |---|---|---|---|
-| 1 | Fine-grained read-only GitHub PAT | Shubham | No — replay mode covers the gap |
-| 2 | Two or three real PRs merged through the gates | Shubham | No — improves realism, not correctness |
-| 3 | `identity_map.yaml` mapping roster handles to GitHub logins | Shubham | Partially — per-person analytics stay unresolved without it |
+| 1 | Fine-grained read-only GitHub PAT | Shubham | **Done** 15 Aug 2026 — verified 200 across all connector endpoints |
+| 2 | Repository under programme ownership with admin | Shubham | **Done** 15 Aug 2026 — `ShubhamMujumdar/payment-processing-app`, public |
+| 3 | Short-lived `Administration: write` token for governance bootstrap | Shubham | Open — needed to make gates 1–5 real; not needed to build |
+| 4 | `gh` CLI installed (required by `bootstrap-governance.sh`) | — | Open — not installed; resolve at governance setup |
+| 5 | Two or three real PRs merged through the gates | Shubham | Open — improves realism, not correctness |
+| 6 | `identity_map.yaml` mapping roster handles to GitHub logins | Shubham | Open — per-person analytics stay unresolved without it |
 
 None blocks the start of implementation.
 

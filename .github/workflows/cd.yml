@@ -1,0 +1,264 @@
+name: CD — development pipeline
+
+# Continuous delivery for the development branch.
+#
+#   package  →  deploy-dev  →  [GATE 2: QA Lead]  →  deploy-staging
+#                                     ↓
+#                             staging smoke tests
+#                                     ↓
+#                          [GATE 3: Product Owner]  →  uat-signoff
+#
+# GATES 2 AND 3 ARE NOT IN THIS FILE. A job that names an `environment:` will
+# suspend before its first step runs if that environment has required reviewers
+# configured in repository settings. The `environment:` key below is the hook;
+# the reviewer list is repo configuration applied by
+# scripts/bootstrap-governance.sh. Without that configuration these jobs run
+# straight through with no human involved.
+
+on:
+  push:
+    branches: [development]
+  workflow_dispatch:
+    inputs:
+      skip_uat:
+        description: 'Stop after staging (skip the UAT sign-off gate)'
+        type: boolean
+        default: false
+
+# Deployments must not overlap. Unlike CI, in-flight runs are NOT cancelled —
+# cancelling a run that is mid-deploy leaves an environment in an unknown state.
+concurrency:
+  group: cd-development
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Build the artifact ONCE. Every environment below deploys this exact image
+  # digest. Rebuilding per environment would mean the thing signed off at UAT is
+  # not bit-for-bit the thing that reaches production.
+  # ---------------------------------------------------------------------------
+  package:
+    name: Package & publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      digest: ${{ steps.build.outputs.digest }}
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Build and test
+        run: mvn -B -ntp -Pquality verify
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-jar
+          path: target/*.jar
+          retention-days: 30
+
+      - name: Derive image metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          # Registry paths must be lowercase; repository names are not.
+          IMAGE="${REGISTRY}/$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')"
+          VERSION="0.0.1-dev.${GITHUB_RUN_NUMBER}+${GITHUB_SHA::7}"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Image:   ${IMAGE}"
+          echo "Version: ${VERSION}"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # Tagged by commit SHA so a deployment can always be traced back to
+          # the exact source that produced it. `development` is a moving
+          # convenience pointer, never the thing that gets promoted.
+          tags: |
+            ${{ steps.meta.outputs.image }}:sha-${{ github.sha }}
+            ${{ steps.meta.outputs.image }}:development
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Record what was built
+        run: |
+          {
+            echo "### Artifact published"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Image | \`${{ steps.meta.outputs.image }}:sha-${{ github.sha }}\` |"
+            echo "| Digest | \`${{ steps.build.outputs.digest }}\` |"
+            echo "| Version | \`${{ steps.meta.outputs.version }}\` |"
+            echo "| Commit | ${{ github.sha }} |"
+            echo ""
+            echo "This exact digest is promoted through every environment below."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # DEV — no gate. The point of a dev environment is that it moves without
+  # asking permission; adding an approval here would only train people to click
+  # through approvals without reading them.
+  # ---------------------------------------------------------------------------
+  deploy-dev:
+    name: Deploy to dev
+    runs-on: ubuntu-latest
+    needs: package
+    environment:
+      name: dev
+      url: https://payments-dev.internal.cognizantfs.example
+    steps:
+      - name: Deploy
+        env:
+          IMAGE: ${{ needs.package.outputs.image }}@${{ needs.package.outputs.digest }}
+        run: |
+          set -euo pipefail
+          echo "=== SIMULATED DEPLOY — dev ==="
+          echo "Image:  ${IMAGE}"
+          echo "Target: payments-dev namespace"
+          echo ""
+          echo "A real implementation replaces this step with one of:"
+          echo "  kubectl set image deployment/payment-processing app=\${IMAGE} -n payments-dev"
+          echo "  helm upgrade --install payments ./chart --set image=\${IMAGE}"
+          echo "  aws ecs update-service --cluster payments-dev --service payment-processing"
+          echo ""
+          echo "Deployment recorded against the 'dev' environment."
+
+      - name: Smoke check
+        run: |
+          echo "GET /actuator/health  →  (no actuator endpoint yet; SPEC.md section 5.1)"
+          echo "Falling back to container start verification only."
+
+  # ---------------------------------------------------------------------------
+  # GATE 2 — STAGING. Approver: QA Lead (@shubham.mujumdar6).
+  #
+  # The QA Lead owns the test strategy and RTM-30, so they are the right person
+  # to decide whether a build is worth spending a staging test cycle on.
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    needs: [package, deploy-dev]
+    environment:
+      name: staging          # ← required reviewer: payments-qa. Job suspends here.
+      url: https://payments-staging.internal.cognizantfs.example
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Deploy
+        env:
+          IMAGE: ${{ needs.package.outputs.image }}@${{ needs.package.outputs.digest }}
+        run: |
+          set -euo pipefail
+          echo "=== SIMULATED DEPLOY — staging ==="
+          echo "Image:    ${IMAGE}"
+          echo "Approved by: ${{ github.actor }}"
+          echo "Promoting the identical digest that was deployed to dev."
+
+      # Staging is the first environment where integration tests are meaningful,
+      # because it is the first one with environment-like configuration.
+      - name: Integration smoke tests
+        run: |
+          set -euo pipefail
+          echo "=== SIMULATED SMOKE SUITE — staging ==="
+          echo "  [PASS] POST   /api/v1/payments                 → 201"
+          echo "  [PASS] GET    /api/v1/payments/{id}            → 200"
+          echo "  [PASS] POST   /api/v1/payments/{id}/refunds    → 201"
+          echo "  [PASS] GET    /swagger-ui.html                 → 200"
+          echo ""
+          echo "A real implementation runs these against the deployed instance,"
+          echo "e.g. 'mvn -Pintegration-test verify -Dtarget.url=\$STAGING_URL'."
+          echo ""
+          echo "NOTE: no such suite exists yet — SPEC.md section 5.1 records that"
+          echo "the whole src/test tree was absent before this pipeline landed."
+
+      - name: Record deployment
+        run: |
+          {
+            echo "### Staging deployment"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Digest | \`${{ needs.package.outputs.digest }}\` |"
+            echo "| Approved by | @${{ github.actor }} |"
+            echo "| Gate | 2 — QA Lead |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # GATE 3 — UAT SIGN-OFF. Approver: Product Owner (@shubham.mujumdar1).
+  #
+  # The roster makes the Product Owner accountable for "UAT sign-off". This gate
+  # is the electronic equivalent of the scanned sign-off sheet attached to the
+  # Confluence space (R1-uat-signoff-scanned.pdf) — with the advantage that it
+  # is bound to a specific artifact digest rather than a date.
+  # ---------------------------------------------------------------------------
+  uat-signoff:
+    name: UAT sign-off
+    runs-on: ubuntu-latest
+    needs: [package, deploy-staging]
+    if: ${{ !inputs.skip_uat }}
+    environment:
+      name: uat              # ← required reviewer: payments-product. Job suspends here.
+      url: https://payments-uat.internal.cognizantfs.example
+    steps:
+      - name: Deploy to UAT
+        env:
+          IMAGE: ${{ needs.package.outputs.image }}@${{ needs.package.outputs.digest }}
+        run: |
+          set -euo pipefail
+          echo "=== SIMULATED DEPLOY — UAT ==="
+          echo "Image:       ${IMAGE}"
+          echo "Signed off by: ${{ github.actor }}"
+
+      - name: Record sign-off
+        run: |
+          {
+            echo "### UAT sign-off recorded"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Digest | \`${{ needs.package.outputs.digest }}\` |"
+            echo "| Signed off by | @${{ github.actor }} |"
+            echo "| Gate | 3 — Product Owner |"
+            echo ""
+            echo "This digest is now eligible for a release PR into \`main\`."
+            echo "Open one, and Gate 4 (CAB review) applies."
+          } >> "$GITHUB_STEP_SUMMARY"

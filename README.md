@@ -18,6 +18,44 @@ mvn spring-boot:run
 API base path: `http://localhost:8080/api/v1/payments`
 H2 console: `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:paymentdb`)
 
+Or in a container:
+```bash
+docker build -t payment-processing .
+docker run --rm -p 8080:8080 payment-processing
+```
+
+## Testing
+
+```bash
+mvn test                  # unit and web-layer tests
+mvn -Pquality verify      # + JaCoCo coverage gate + SpotBugs
+```
+
+Coverage report lands at `target/site/jacoco/index.html`. The build fails if line
+coverage drops below the floor in `pom.xml` (`jacoco.line.coverage.minimum`).
+
+The suite is **characterisation testing**: it pins the behaviour SPEC.md §4
+describes as the code currently implements it. Where a test touches a known
+defect from SPEC.md §6 it says so in a comment and asserts the current
+behaviour rather than the correct one — those fixes are separate work, tracked
+in the roadmap at SPEC.md §7.
+
+## CI/CD
+
+A full GitHub Actions pipeline lives in `.github/workflows/`, with five human
+approval checkpoints mapped to the programme roster. See **[docs/CI-CD.md](docs/CI-CD.md)**.
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| `ci.yml` | PR, push to `development` | Traceability, build, test, coverage, SpotBugs |
+| `security.yml` | PR, push, weekly | CodeQL, dependency CVEs, secrets, image scan |
+| `cd.yml` | push to `development` | Publish image, deploy dev → staging → UAT |
+| `release.yml` | tag `v*` | Promote the approved digest to production |
+
+> The gates are **not** live until `scripts/bootstrap-governance.sh` has been run
+> against the repository — workflow YAML cannot create its own approval rules.
+> See docs/CI-CD.md §7.
+
 ## Package structure
 ```
 com.poc.paymentprocessing
@@ -81,5 +119,7 @@ curl -X POST http://localhost:8080/api/v1/payments/{paymentId}/refunds \
 - `MockPaymentGatewayImpl` simulates an external gateway with a configurable
   success rate (`payment.gateway.mock.success-rate`) — swap it for a real
   client (Stripe, Razorpay, etc.) behind the same `PaymentGateway` interface.
-- Test files are intentionally omitted from this POC; add a `test` PR per
-  layer as a natural follow-up.
+- A first test suite covering the payment and refund service logic and the
+  web layer now exists (see [Testing](#testing)). Coverage is deliberately
+  partial — `PaymentMapper`, `PaymentAuditService` and `RefundController` are
+  still untested, and the mapper is mocked out of the service tests.

@@ -1,0 +1,212 @@
+name: Security
+
+# Security scanning runs on pull requests (to block a new problem from landing)
+# AND on a schedule (because a dependency that was clean on Monday can have a
+# CVE published against it on Thursday without anyone touching the repository).
+
+on:
+  pull_request:
+    branches: [development, main]
+  push:
+    branches: [development, main]
+  schedule:
+    # 02:00 UTC Monday — before the Monday 06:00 IST Dependabot run, so the
+    # team sees findings and the proposed bumps together.
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # CodeQL — semantic analysis for injection, path traversal, unsafe
+  # deserialisation and similar. Complements SpotBugs rather than duplicating
+  # it: SpotBugs reasons about bytecode patterns, CodeQL about dataflow.
+  # ---------------------------------------------------------------------------
+  codeql:
+    name: CodeQL (Java)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # required to upload results to the Security tab
+      actions: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java-kotlin
+          # security-and-quality is broader than the default suite; for a
+          # payments service the extra noise is worth the extra coverage.
+          queries: security-and-quality
+
+      - name: Build for analysis
+        run: mvn -B -ntp clean compile -DskipTests
+
+      - name: Run CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:java-kotlin
+
+  # ---------------------------------------------------------------------------
+  # Dependency vulnerabilities. Trivy is used in preference to the OWASP
+  # dependency-check Maven plugin because the latter downloads the full NVD
+  # feed on a cold cache, which costs 10+ minutes per run.
+  # ---------------------------------------------------------------------------
+  dependency-scan:
+    name: Dependency CVE scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      # Trivy reads the resolved tree, not just the declared POM, so transitive
+      # dependencies are covered.
+      - name: Resolve full dependency tree
+        run: mvn -B -ntp dependency:tree -DoutputFile=dependency-tree.txt
+
+      - name: Scan filesystem for vulnerable dependencies
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-deps.sarif
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          # Report everything to the Security tab; the blocking decision is made
+          # by the separate gate step below.
+          exit-code: '0'
+
+      - name: Upload results to the Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-deps.sarif
+          category: trivy-dependencies
+
+      # The blocking gate is deliberately narrower than the report: CRITICAL and
+      # HIGH only. A MEDIUM finding is triaged at Defect Triage (daily, 09:30
+      # IST) rather than blocking a developer mid-flow.
+      - name: Fail on CRITICAL or HIGH vulnerabilities
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true     # do not block on a CVE with no available fix
+          exit-code: '1'
+
+  # ---------------------------------------------------------------------------
+  # Secret detection. For a payments repository this is the highest-value scan
+  # in the file: a leaked acquirer credential is an incident, not a defect.
+  # ---------------------------------------------------------------------------
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          # Gitleaks needs history to detect a secret that was committed and
+          # then removed in a later commit — the removal does not undo the leak.
+          fetch-depth: 0
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE is only required for GitHub organisation accounts.
+          # Unset on a personal repository; the action runs without it.
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # ---------------------------------------------------------------------------
+  # Container image scan. Distinct from the dependency scan: this catches CVEs
+  # in the base image's OS packages, which no Maven-level tool can see.
+  # ---------------------------------------------------------------------------
+  image-scan:
+    name: Container image scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image for scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: payment-processing:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: image
+          image-ref: payment-processing:scan
+          format: sarif
+          output: trivy-image.sarif
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Upload results to the Security tab
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+  security-gate:
+    name: Security gate
+    runs-on: ubuntu-latest
+    needs: [codeql, dependency-scan, secret-scan, image-scan]
+    if: always()
+    steps:
+      - name: Verify all scans succeeded
+        run: |
+          set -euo pipefail
+          FAILED=0
+          for pair in "codeql:${{ needs.codeql.result }}" \
+                      "dependency-scan:${{ needs.dependency-scan.result }}" \
+                      "secret-scan:${{ needs.secret-scan.result }}" \
+                      "image-scan:${{ needs.image-scan.result }}"; do
+            NAME="${pair%%:*}"; RESULT="${pair##*:}"
+            echo "${NAME}: ${RESULT}"
+            if [ "$RESULT" != "success" ]; then
+              echo "::error title=Security scan failed::${NAME} reported ${RESULT}"
+              FAILED=1
+            fi
+          done
+          exit $FAILED

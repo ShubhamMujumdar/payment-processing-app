@@ -1,0 +1,213 @@
+name: CI
+
+# Continuous integration — runs on every pull request into a protected branch,
+# and on every push to development (so the branch tip is always known-good even
+# if something lands via an admin override).
+#
+# Every job in this file is a candidate "required status check" in branch
+# protection. See scripts/bootstrap-governance.sh for which ones are enforced.
+
+on:
+  pull_request:
+    branches: [development, main]
+  push:
+    branches: [development]
+  workflow_dispatch:
+
+# A new push to the same PR makes the in-flight run obsolete. Cancel it rather
+# than paying for both. Never cancel on development — those runs gate the CD
+# pipeline and must complete.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: '17'
+  JAVA_DISTRIBUTION: temurin
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Traceability — the programme rule from docs/requirements/index.md:
+  # "If it is not in the RTM, it is not a requirement — it is an idea."
+  # A change with no requirement reference cannot be traced to a test case or a
+  # release, which is precisely what an auditor asks for first.
+  # ---------------------------------------------------------------------------
+  traceability:
+    name: Requirement traceability
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check PR references a Jira issue or requirement id
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          HAYSTACK="${PR_TITLE}
+          ${PR_BODY}"
+
+          # PAY-123 (Jira) | FR-PAY-045 / NFR-PAY-012 / BR-PAY-003 (requirements)
+          # | DEF-PAY-77 (defect) | CR-PAY-9 (change request)
+          PATTERN='(PAY-[0-9]+|(FR|NFR|BR)-PAY-[0-9]+|DEF-PAY-[0-9]+|CR-PAY-[0-9]+)'
+
+          if echo "$HAYSTACK" | grep -Eqi "$PATTERN"; then
+            echo "Found reference(s):"
+            echo "$HAYSTACK" | grep -Eoi "$PATTERN" | sort -u | sed 's/^/  - /'
+            {
+              echo "### Traceability check passed"
+              echo ""
+              echo "Referenced work items:"
+              echo "$HAYSTACK" | grep -Eoi "$PATTERN" | sort -u | sed 's/^/- /'
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error title=No requirement reference::PR title or body must cite a work item."
+            {
+              echo "### Traceability check FAILED"
+              echo ""
+              echo "This PR cites no work item. Add one of the following to the title or body:"
+              echo ""
+              echo "| Prefix | Meaning |"
+              echo "| --- | --- |"
+              echo '| `PAY-###` | Jira epic / story / task / bug |'
+              echo '| `FR-PAY-###` | Functional requirement (FSD-20 / FSD-21) |'
+              echo '| `NFR-PAY-###` | Non-functional requirement (FSD-20 section 12) |'
+              echo '| `BR-PAY-###` | Business requirement (PRD-10) |'
+              echo '| `DEF-PAY-###` | Defect record |'
+              echo '| `CR-PAY-###` | Change request |'
+              echo ""
+              echo "Every identifier must resolve to a row in RTM-30."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Build, test, coverage gate, static analysis. The core of CI.
+  # ---------------------------------------------------------------------------
+  build-and-test:
+    name: Build & test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write          # publish the test report as a check run
+      pull-requests: write   # write the coverage comment
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          cache: maven
+
+      - name: Compile
+        run: mvn -B -ntp clean compile
+
+      - name: Run tests
+        run: mvn -B -ntp test
+
+      # `verify` runs the JaCoCo coverage gate and SpotBugs. Split from `test` so
+      # a coverage failure is visibly distinct from a test failure in the log.
+      - name: Quality gates (coverage + static analysis)
+        run: mvn -B -ntp -Pquality verify
+
+      - name: Summarise results
+        if: always()
+        run: |
+          set -uo pipefail
+
+          # Sum one attribute across every surefire testsuite report. awk is used
+          # rather than `bc` because awk prints 0 for empty input, so a missing or
+          # empty reports directory yields "0" instead of an empty string.
+          sum_surefire_attr() {
+            grep -ho "$1=\"[0-9]*\"" target/surefire-reports/*.xml 2>/dev/null \
+              | grep -o '[0-9]*' \
+              | awk '{s+=$1} END {print s+0}'
+          }
+
+          {
+            echo "### Build summary"
+            echo ""
+            if [ -f target/site/jacoco/jacoco.csv ]; then
+              COVERAGE=$(awk -F, 'NR>1 {miss+=$8; cov+=$9} END {if (miss+cov>0) printf "%.2f", cov/(miss+cov)*100; else print "0.00"}' target/site/jacoco/jacoco.csv)
+              FLOOR=$(grep -oPm1 '(?<=<jacoco.line.coverage.minimum>)[^<]+' pom.xml)
+              FLOOR_PCT=$(awk -v f="$FLOOR" 'BEGIN {printf "%.2f", f*100}')
+              echo "| Metric | Value |"
+              echo "| --- | --- |"
+              echo "| Line coverage | ${COVERAGE}% |"
+              echo "| Required floor | ${FLOOR_PCT}% |"
+            fi
+            echo ""
+            echo "Tests run: **$(sum_surefire_attr tests)** · failures: **$(sum_surefire_attr failures)** · errors: **$(sum_surefire_attr errors)** · skipped: **$(sum_surefire_attr skipped)**"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          retention-days: 14
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage
+          path: target/site/jacoco/
+          retention-days: 14
+
+      - name: Upload SpotBugs report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-report
+          path: target/spotbugsXml.xml
+          retention-days: 14
+          if-no-files-found: ignore
+
+      # Building the image on a PR proves the Dockerfile still works without
+      # publishing anything. Nothing is pushed from a pull request.
+      - name: Verify the container image builds
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------------------------
+  # Aggregate gate. Branch protection requires THIS check rather than each job
+  # individually, so adding a job later does not require editing repo settings.
+  # ---------------------------------------------------------------------------
+  ci-gate:
+    name: CI gate
+    runs-on: ubuntu-latest
+    needs: [traceability, build-and-test]
+    if: always()
+    steps:
+      - name: Verify all required jobs succeeded
+        run: |
+          set -euo pipefail
+          echo "traceability:    ${{ needs.traceability.result }}"
+          echo "build-and-test:  ${{ needs.build-and-test.result }}"
+
+          # traceability is skipped on push-to-development (it is PR-only); that
+          # is an acceptable pass. Any other non-success is a failure.
+          if [ "${{ needs.build-and-test.result }}" != "success" ]; then
+            echo "::error::build-and-test did not succeed"
+            exit 1
+          fi
+          if [ "${{ needs.traceability.result }}" != "success" ] && [ "${{ needs.traceability.result }}" != "skipped" ]; then
+            echo "::error::traceability did not succeed"
+            exit 1
+          fi
+          echo "CI gate passed."

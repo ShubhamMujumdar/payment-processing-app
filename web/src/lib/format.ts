@@ -1,4 +1,4 @@
-import type { Phase, SpanFlag } from "../api/types";
+import type { SpanFlag, StageId } from "../api/types";
 
 /** Durations are read at a glance and compared down a column, so they get one
  *  significant unit and a fixed shape - never "2 days, 3 hours, 14 minutes". */
@@ -11,31 +11,70 @@ export function duration(seconds: number): string {
   return `${d < 10 ? d.toFixed(1) : Math.round(d)}d`;
 }
 
-/** Working-day equivalent, using the programme's 9-hour IST day. */
-export function workingDays(seconds: number): string {
-  return `${(seconds / 3600 / 9).toFixed(1)} working days`;
+export const STAGE_ORDER: StageId[] = [
+  "REQ_DRAFT",
+  "REQ_REVIEW",
+  "BASELINED",
+  "REFINEMENT",
+  "DEVELOPMENT",
+  "CODE_REVIEW",
+  "CI_VERIFY",
+  "MERGED_DEV",
+  "DEPLOY_DEV",
+  "GATE2_STAGING",
+  "STAGING_TEST",
+  "GATE3_UAT",
+  "GATE4_CAB",
+  "RELEASE_TAG",
+  "GATE5_PROD",
+  "PRODUCTION",
+];
+
+/**
+ * Stage colour comes from position in the ladder, not from an arbitrary
+ * category assignment. The ramp runs deep indigo through blue and cyan to teal,
+ * so hue itself encodes how far along delivery a thing is - two stages that
+ * look similar genuinely are adjacent.
+ */
+export function stageColor(stageId: StageId): string {
+  const i = STAGE_ORDER.indexOf(stageId);
+  return `var(--color-stage-${i < 0 ? 1 : i + 1})`;
 }
 
-export const PHASE_COLOR: Record<Phase, string> = {
-  define: "var(--color-phase-define)",
-  build: "var(--color-phase-build)",
-  verify: "var(--color-phase-verify)",
-  gate: "var(--color-phase-gate)",
-  live: "var(--color-phase-live)",
-};
+export function stageIndex(stageId: StageId): number {
+  return STAGE_ORDER.indexOf(stageId);
+}
 
 export const FLAG_COPY: Record<SpanFlag, string> = {
-  simulated_gate: "Gate had no configured approver — transition is real, the approval is not",
+  simulated_gate: "No approver was configured — the transition is real, the approval is not",
   assumed_calendar: "Working calendar assumed from the programme default",
   clock_skew: "Source timestamps disagree; duration clamped to zero",
   no_activity_signal: "No attributable activity in this window",
   unresolved_identity: "Source account not mapped to a person",
 };
 
-export function relativeTime(iso: string, now: Date): string {
+const DATE_TIME = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "Asia/Kolkata",
+});
+
+const DATE_ONLY = new Intl.DateTimeFormat("en-GB", {
+  day: "2-digit",
+  month: "short",
+  timeZone: "Asia/Kolkata",
+});
+
+export const formatDateTime = (iso: string) => DATE_TIME.format(new Date(iso));
+export const formatDate = (iso: string) => DATE_ONLY.format(new Date(iso));
+
+export function ago(iso: string, now: Date): string {
   const diff = now.getTime() - new Date(iso).getTime();
   const h = diff / 3600000;
-  if (h < 1) return `${Math.round(diff / 60000)}m ago`;
-  if (h < 24) return `${Math.round(h)}h ago`;
-  return `${Math.round(h / 24)}d ago`;
+  if (h < 1) return `${Math.max(1, Math.round(diff / 60000))}m`;
+  if (h < 24) return `${Math.round(h)}h`;
+  return `${Math.round(h / 24)}d`;
 }

@@ -135,3 +135,110 @@ export interface PortfolioSummary {
   packets: WorkPacket[];
   dataQuality: DataQualityReport;
 }
+
+/* ---------------------------------------------------------------------------
+ * Entity views behind the console tabs. Each maps to a graph vertex type in
+ * the spine spec (section 5.1) and to a read endpoint in section 11.
+ * ------------------------------------------------------------------------- */
+
+export type Obligation = "shall" | "should" | "may" | "shall not";
+export type Moscow = "MUST" | "SHOULD" | "COULD" | "WON'T";
+
+export interface Requirement {
+  reqId: string;
+  title: string;
+  document: string;
+  obligation: Obligation;
+  moscow: Moscow;
+  baselined: boolean;
+  ownerId: string;
+  release: string;
+  linkedIssueKeys: string[];
+  linkedTestIds: string[];
+  openDefectIds: string[];
+  /** 0-1. Share of linked test cases passing at last execution. */
+  verification: number;
+  lastChangedAt: string;
+}
+
+export type PrState = "open" | "merged" | "closed" | "draft";
+export type CheckState = "passing" | "failing" | "running" | "none";
+
+export interface PullRequestRow {
+  number: number;
+  title: string;
+  authorId: string;
+  reviewerIds: string[];
+  state: PrState;
+  checks: CheckState;
+  additions: number;
+  deletions: number;
+  filesChanged: number;
+  requirementIds: string[];
+  openedAt: string;
+  mergedAt: string | null;
+  /** Review custody: null where the PR was merged without one. */
+  reviewSeconds: number | null;
+  isLive: boolean;
+}
+
+export type TestStatus = "passed" | "failed" | "blocked" | "not-run";
+
+export interface TestCaseRow {
+  tcId: string;
+  title: string;
+  requirementId: string | null;
+  ownerId: string;
+  automated: boolean;
+  status: TestStatus;
+  lastRunAt: string | null;
+  durationMs: number | null;
+}
+
+export type Severity = "critical" | "major" | "minor";
+export type DefectStatus = "open" | "triaged" | "in-progress" | "resolved" | "verified";
+
+export interface DefectRow {
+  defectId: string;
+  title: string;
+  severity: Severity;
+  status: DefectStatus;
+  environment: string;
+  raisedById: string;
+  assigneeId: string | null;
+  requirementId: string | null;
+  raisedAt: string;
+  ageSeconds: number;
+}
+
+export interface DeploymentRow {
+  deploymentId: string;
+  environment: "dev" | "staging" | "uat" | "production";
+  imageDigest: string;
+  actorId: string;
+  createdAt: string;
+  status: "succeeded" | "failed" | "pending";
+  /** True where a named human actually approved, false where the environment
+   *  had no configured reviewer and the transition was recorded anyway. */
+  gateApproved: boolean;
+  isLive: boolean;
+}
+
+export interface PersonStats {
+  personId: string;
+  activePackets: number;
+  totalCustodySeconds: number;
+  medianReviewSeconds: number | null;
+  reviewsSubmitted: number;
+  commits: number;
+  testsAuthored: number;
+}
+
+export interface ConsoleData extends PortfolioSummary {
+  requirements: Requirement[];
+  pullRequests: PullRequestRow[];
+  tests: TestCaseRow[];
+  defects: DefectRow[];
+  deployments: DeploymentRow[];
+  personStats: PersonStats[];
+}

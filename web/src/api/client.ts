@@ -7,28 +7,28 @@
  * contract rather than against whatever shape was convenient.
  *
  * Endpoint mapping:
- *   getPortfolio()     GET /packets + /analytics/stage-aging + /health/data-quality
+ *   getConsole()       GET /packets + /requirements + /analytics/* + /health/data-quality
  *   getPacketChain(id) GET /packets/{id}/chain
  */
 
-import { buildPortfolio } from "./fixtures";
-import type { PortfolioSummary, WorkPacket } from "./types";
+import { buildConsole } from "./consoleFixtures";
+import type { ConsoleData, WorkPacket } from "./types";
 
 const MODE = import.meta.env.VITE_SPINE_MODE ?? "fixtures";
 const BASE = import.meta.env.VITE_SPINE_URL ?? "http://localhost:8000";
 
-/** Fixtures resolve on a microtask; the delay only exists so loading states are
- *  exercised in development rather than discovered in production. */
+/** Fixtures resolve on a timer only so loading states are exercised in
+ *  development rather than discovered in production. */
 const settle = <T,>(value: T): Promise<T> =>
-  new Promise((resolve) => setTimeout(() => resolve(value), 120));
+  new Promise((resolve) => setTimeout(() => resolve(value), 100));
 
-export async function getPortfolio(): Promise<PortfolioSummary> {
+export async function getConsole(): Promise<ConsoleData> {
   if (MODE === "live") {
-    const res = await fetch(`${BASE}/packets?include=stage-aging,data-quality`);
+    const res = await fetch(`${BASE}/console`);
     if (!res.ok) throw new Error(`Spine returned ${res.status}`);
     return res.json();
   }
-  return settle(buildPortfolio());
+  return settle(buildConsole());
 }
 
 export async function getPacketChain(packetId: string): Promise<WorkPacket | undefined> {
@@ -37,5 +37,5 @@ export async function getPacketChain(packetId: string): Promise<WorkPacket | und
     if (!res.ok) throw new Error(`Spine returned ${res.status}`);
     return res.json();
   }
-  return settle(buildPortfolio().packets.find((p) => p.packetId === packetId));
+  return settle(buildConsole().packets.find((p) => p.packetId === packetId));
 }

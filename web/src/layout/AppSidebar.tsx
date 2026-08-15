@@ -3,68 +3,23 @@ import { useSidebar } from "../context/SidebarContext";
 import BrandMark from "./BrandMark";
 
 /**
- * Navigation mirrors the six slices of the design, so the sidebar doubles as a
- * statement of what the product is. Routes that are not built yet say so rather
- * than 404 - an honest disabled item beats a broken link in a client demo.
+ * Workspace navigation. Data types live in the console's tabs, not here - this
+ * rail switches between different ways of looking at the same graph.
  */
 
 interface NavItem {
   label: string;
   path: string;
-  hint: string;
   ready: boolean;
-  icon: React.ReactNode;
+  icon: string;
 }
 
-const Icon = ({ d }: { d: string }) => (
-  <svg viewBox="0 0 20 20" fill="none" className="size-[18px] shrink-0" aria-hidden="true">
-    <path d={d} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
 const NAV: NavItem[] = [
-  {
-    label: "Overview",
-    path: "/",
-    hint: "Where everything is",
-    ready: true,
-    icon: <Icon d="M3 10.5 10 4l7 6.5M5 9v7h10V9" />,
-  },
-  {
-    label: "Work packets",
-    path: "/packets",
-    hint: "Custody chains",
-    ready: false,
-    icon: <Icon d="M3 6h14M3 10h14M3 14h9" />,
-  },
-  {
-    label: "People",
-    path: "/people",
-    hint: "Time and workload",
-    ready: false,
-    icon: <Icon d="M10 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM4 16a6 6 0 0 1 12 0" />,
-  },
-  {
-    label: "Traceability",
-    path: "/traceability",
-    hint: "Requirement to release",
-    ready: false,
-    icon: <Icon d="M6 4v4m0 0a2 2 0 1 0 0 4m0-4h8a2 2 0 0 1 2 2v2m-2 4v-4" />,
-  },
-  {
-    label: "Knowledge graph",
-    path: "/graph",
-    hint: "Code, mapped",
-    ready: false,
-    icon: <Icon d="M10 3v4m0 6v4M4.5 6.5l3 3m5 5 3 3m0-11-3 3m-5 5-3 3" />,
-  },
-  {
-    label: "Data quality",
-    path: "/health",
-    hint: "What we don't know",
-    ready: false,
-    icon: <Icon d="M10 3.5 16.5 6v4c0 3.5-2.6 5.9-6.5 7-3.9-1.1-6.5-3.5-6.5-7V6L10 3.5Z" />,
-  },
+  { label: "Delivery", path: "/", ready: true, icon: "M3 6h14M3 10h14M3 14h9" },
+  { label: "Traceability", path: "/traceability", ready: false, icon: "M6 4v4m0 0a2 2 0 1 0 0 4m0-4h8a2 2 0 0 1 2 2v2m-2 4v-4" },
+  { label: "Knowledge graph", path: "/graph", ready: false, icon: "M10 3v4m0 6v4M4.5 6.5l3 3m5 5 3 3m0-11-3 3m-5 5-3 3" },
+  { label: "Insights", path: "/insights", ready: false, icon: "M4 16V9m4 7V5m4 11v-5m4 5V7" },
+  { label: "Data quality", path: "/health", ready: false, icon: "M10 3.5 16.5 6v4c0 3.5-2.6 5.9-6.5 7-3.9-1.1-6.5-3.5-6.5-7V6L10 3.5Z" },
 ];
 
 export default function AppSidebar() {
@@ -76,67 +31,52 @@ export default function AppSidebar() {
     <aside
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r border-white/[0.06] bg-ink-900 px-4 py-5 transition-all duration-300 ease-in-out
-        ${open ? "w-[290px]" : "w-[90px]"}
+      className={`fixed left-0 top-0 z-50 flex h-screen flex-col border-r hairline bg-ink-950 transition-all duration-200 ease-out
+        ${open ? "w-[218px]" : "w-[60px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
     >
-      <div className={`mb-8 flex ${open ? "justify-start" : "justify-center"}`}>
-        <Link to="/" aria-label="SDLC Spine home">
+      <div className={`flex h-[45px] shrink-0 items-center border-b hairline ${open ? "px-4" : "justify-center"}`}>
+        <Link to="/" aria-label="Cognizant SDLC Spine">
           <BrandMark collapsed={!open} />
         </Link>
       </div>
 
-      <nav className="flex-1">
-        {open && <p className="eyebrow mb-3 px-2">Views</p>}
-
-        <ul className="space-y-0.5">
+      <nav className="flex-1 overflow-y-auto py-2">
+        <ul>
           {NAV.map((item) => {
             const active = pathname === item.path;
+            const inner = (
+              <>
+                <svg viewBox="0 0 20 20" fill="none" className="size-[17px] shrink-0" aria-hidden="true">
+                  <path d={item.icon} stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {open && <span className="text-[12.5px]">{item.label}</span>}
+                {open && !item.ready && (
+                  <span className="ml-auto font-mono text-[9px] uppercase text-gray-700">soon</span>
+                )}
+              </>
+            );
 
-            if (!item.ready) {
-              return (
-                <li key={item.label}>
-                  <div
-                    className={`flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-gray-600 ${
-                      open ? "" : "justify-center"
-                    }`}
-                    title={`${item.label} — not built yet`}
-                  >
-                    {item.icon}
-                    {open && (
-                      <>
-                        <span className="text-[13px]">{item.label}</span>
-                        <span className="ml-auto font-mono text-[9px] uppercase tracking-wider text-gray-700">
-                          soon
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </li>
-              );
-            }
+            const shared = `flex items-center gap-2.5 px-4 py-2 ${open ? "" : "justify-center px-0"}`;
 
             return (
-              <li key={item.label}>
-                <Link
-                  to={item.path}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500
-                    ${open ? "" : "justify-center"}
-                    ${
-                      active
-                        ? "bg-brand-500/[0.12] text-brand-300"
-                        : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-200"
+              <li key={item.label} className="relative">
+                {item.ready ? (
+                  <Link
+                    to={item.path}
+                    aria-current={active ? "page" : undefined}
+                    className={`${shared} transition-colors focus:outline-none focus-visible:bg-white/[0.05] ${
+                      active ? "bg-white/[0.05] text-gray-100" : "text-gray-500 hover:text-gray-200"
                     }`}
-                  aria-current={active ? "page" : undefined}
-                >
-                  {item.icon}
-                  {open && (
-                    <span className="flex flex-col leading-tight">
-                      <span className="text-[13px] font-medium">{item.label}</span>
-                      <span className="text-[10px] text-gray-600">{item.hint}</span>
-                    </span>
-                  )}
-                </Link>
+                  >
+                    {active && <span className="absolute inset-y-0 left-0 w-[2px] bg-cgz-cyan" />}
+                    {inner}
+                  </Link>
+                ) : (
+                  <div className={`${shared} cursor-not-allowed text-gray-700`} title={`${item.label} — not built yet`}>
+                    {inner}
+                  </div>
+                )}
               </li>
             );
           })}
@@ -144,15 +84,10 @@ export default function AppSidebar() {
       </nav>
 
       {open && (
-        <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3">
-          <p className="eyebrow mb-1.5">Source</p>
-          <p className="font-mono text-[10px] leading-relaxed text-gray-500">
-            payment-processing-app
-            <br />
-            <span className="text-brand-500">●</span> github, ci live
-            <br />
-            <span className="text-state-idle">○</span> jira, confluence seeded
-          </p>
+        <div className="border-t hairline px-4 py-3 font-mono text-[10px] leading-relaxed text-gray-600">
+          <span className="text-state-pass">●</span> github · ci live
+          <br />
+          <span className="text-state-idle">○</span> jira · confluence · zephyr seeded
         </div>
       )}
     </aside>

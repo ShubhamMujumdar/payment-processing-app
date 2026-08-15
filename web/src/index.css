@@ -811,12 +811,19 @@ span.flatpickr-weekday,
    Brand palette (published): Navy #000048 · Dark Blue #173793 · Blue #3C66CE
    Teal #1E728C · Cyan #36C0CF
 
-   All five sit in the blue-cyan hue band, which is excellent for chrome and
-   unusable as a data palette - sixteen lifecycle stages cannot be told apart
-   in one hue, and blue-vs-teal is a common colour-vision confusion axis. So
-   brand colours dress the interface; the data and status ramps below are
-   derived separately for contrast and legibility, and deliberately leave the
-   brand band alone.
+   The whole palette lives in the blue-cyan band. Rather than working around
+   that, the interface leans on it: the sixteen lifecycle stages are an ORDERED
+   SEQUENCE, so they get a sequential ramp running deep indigo -> blue -> cyan
+   -> teal. Position in the ramp encodes progress through delivery, which is
+   real information, and the three published brand colours are anchored at the
+   points where they mean something:
+
+     Cognizant Blue  #3C66CE  at DEVELOPMENT   - the heart of build
+     Cognizant Cyan  #36C0CF  at GATE4_CAB     - the release decision
+     Cognizant Teal  #1E728C  at PRODUCTION    - landed
+
+   Semantic colours are kept few and deliberately muted so they read as state
+   changes against the blue field rather than as decoration.
    =========================================================================== */
 @theme {
   --color-cgz-navy: #000048;
@@ -825,32 +832,40 @@ span.flatpickr-weekday,
   --color-cgz-teal: #1e728c;
   --color-cgz-cyan: #36c0cf;
 
-  /* Surfaces: near-black carrying a navy cast, so the brand reads even in the
-     absence of any brand-coloured element. */
-  --color-ink-950: #04050d;
-  --color-ink-900: #080b1a;
-  --color-ink-850: #0b0f22;
-  --color-ink-800: #10152c;
-  --color-ink-700: #171d3b;
-  --color-ink-600: #212a52;
-  --color-ink-500: #2d386b;
+  /* Surfaces: near-black carrying a navy cast, so the brand reads even where
+     no brand-coloured element is present. */
+  --color-ink-975: #03040a;
+  --color-ink-950: #05060f;
+  --color-ink-900: #080a16;
+  --color-ink-850: #0b0e1d;
+  --color-ink-800: #0f1428;
+  --color-ink-750: #141a33;
+  --color-ink-700: #1a2140;
+  --color-ink-600: #232c52;
+  --color-ink-500: #2f3a68;
 
-  /* Lifecycle phase colours. Sixteen stages collapse into five phases; stages
-     within a phase vary by lightness, not hue. The grouping is the information
-     - it shows where work is, not merely that stages differ. */
-  --color-phase-define: #8b7bf0;
-  --color-phase-build: #36c0cf;
-  --color-phase-verify: #3dd68c;
-  --color-phase-gate: #f5b44a;
-  --color-phase-live: #4ade80;
+  /* The stage ramp. Sixteen steps, monotonic in lightness and hue rotation. */
+  --color-stage-1: #2a3178;
+  --color-stage-2: #2f3a88;
+  --color-stage-3: #344397;
+  --color-stage-4: #384da6;
+  --color-stage-5: #3c66ce;
+  --color-stage-6: #3a73d6;
+  --color-stage-7: #3581da;
+  --color-stage-8: #2f8fdd;
+  --color-stage-9: #2a9cdf;
+  --color-stage-10: #26a9de;
+  --color-stage-11: #26b5d9;
+  --color-stage-12: #2bc0d2;
+  --color-stage-13: #36c0cf;
+  --color-stage-14: #31b4be;
+  --color-stage-15: #27a0ab;
+  --color-stage-16: #1e728c;
 
-  /* Status. Outside the brand band on purpose: a failure must read as a
-     failure before anyone reads the label. */
-  --color-state-pass: #3dd68c;
-  --color-state-warn: #f5b44a;
-  --color-state-fail: #ff6b6b;
-  --color-state-idle: #7a87a8;
-  --color-state-stale: #c77dff;
+  --color-state-pass: #37b98a;
+  --color-state-warn: #d99b3f;
+  --color-state-fail: #d9615c;
+  --color-state-idle: #5d6a8c;
 }
 
 @layer base {
@@ -858,18 +873,38 @@ span.flatpickr-weekday,
     color-scheme: dark;
   }
   body {
-    @apply bg-ink-950 text-gray-200 font-sans antialiased;
+    @apply bg-ink-975 text-gray-300 font-sans antialiased;
+    font-size: 13px;
   }
-  /* Identifiers and durations are tabular data. Align them. */
+  /* Identifiers, counts and durations sit in columns. Align them. */
   .tnum {
     font-variant-numeric: tabular-nums;
   }
+  ::selection {
+    background: var(--color-cgz-cyan);
+    color: var(--color-ink-975);
+  }
+  /* Scrollbars in a dense tool are chrome, not furniture. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-600) transparent;
+  }
 }
 
-@utility panel {
-  @apply rounded-xl border border-white/[0.06] bg-ink-850/80 backdrop-blur-sm;
+/* Console surfaces are square-ish and hairline-bordered. Rounded cards read as
+   marketing; a tool reads as panes. */
+@utility pane {
+  @apply border border-white/[0.07] bg-ink-900;
 }
 
-@utility eyebrow {
-  @apply font-mono text-[10px] uppercase tracking-[0.18em] text-gray-500;
+@utility hairline {
+  @apply border-white/[0.07];
+}
+
+@utility lozenge {
+  @apply inline-flex items-center gap-1 rounded-[3px] px-1.5 py-[2px] font-mono text-[10px] uppercase tracking-wide;
+}
+
+@utility col-label {
+  @apply px-3 py-1.5 text-left font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500;
 }

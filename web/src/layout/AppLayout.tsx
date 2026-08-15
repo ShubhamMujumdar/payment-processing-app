@@ -4,35 +4,33 @@ import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
 
+/**
+ * Console chrome. Content is edge-to-edge with no page padding - tables own
+ * their own gutters, and a dense tool should not waste 24px on every side.
+ */
 const LayoutContent: React.FC = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
 
   return (
-    <div className="min-h-screen xl:flex">
-      <div>
-        <AppSidebar />
-        <Backdrop />
-      </div>
+    <div className="min-h-screen">
+      <AppSidebar />
+      <Backdrop />
       <div
-        className={`flex-1 transition-all duration-300 ease-in-out ${
-          isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
+        className={`min-h-screen transition-all duration-200 ease-out ${
+          isExpanded || isHovered ? "lg:ml-[218px]" : "lg:ml-[60px]"
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <AppHeader />
-        <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </div>
   );
 };
 
-const AppLayout: React.FC = () => {
-  return (
-    <SidebarProvider>
-      <LayoutContent />
-    </SidebarProvider>
-  );
-};
+const AppLayout: React.FC = () => (
+  <SidebarProvider>
+    <LayoutContent />
+  </SidebarProvider>
+);
 
 export default AppLayout;

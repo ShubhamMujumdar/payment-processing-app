@@ -25,7 +25,7 @@ import type {
 } from "./types";
 
 // --- deterministic PRNG ----------------------------------------------------
-function mulberry32(seed: number) {
+export function mulberry32(seed: number) {
   return function () {
     seed |= 0;
     seed = (seed + 0x6d2b79f5) | 0;
@@ -134,7 +134,7 @@ function calendarAdjustedSeconds(from: Date, to: Date): number {
 
 // --- packet seeds -----------------------------------------------------------
 const WINDOW_START = new Date("2026-07-06T03:30:00Z");
-const NOW = new Date("2026-08-15T15:44:00Z");
+export const NOW = new Date("2026-08-15T15:44:00Z");
 
 interface Seed {
   title: string;

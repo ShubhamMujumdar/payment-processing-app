@@ -64,7 +64,26 @@ honest list; several are good demo material rather than problems to hide.
 | 4.7 | No SBOM, no image signing | Syft/Cosign at the package stage |
 | 4.8 | `release.yml` never exercised | Only triggers on a `v*` tag; no release has been cut |
 
-### 4.9 Governance finding — CD does not observe CI
+### 4.9 Dependency CVEs — 30 findings, gate is red and correct
+
+Once `trivy-action` was fixed (DEF-PAY-201, DEF-PAY-202) the dependency scan ran properly and
+reported **30 vulnerabilities: 26 HIGH, 4 CRITICAL**. Sample: `CVE-2024-50379`,
+`CVE-2024-56337`, `CVE-2025-24813` (embedded Tomcat, RCE class), `CVE-2024-38816`,
+`CVE-2024-38819` (Spring path traversal).
+
+The scan runs with `ignore-unfixed: true`, so **every finding has an available fix** — this is
+a Spring Boot 3.3.2 stack roughly two years behind. A framework bump would clear most of them.
+
+Not actioned: this is a potentially breaking upgrade to the application, outside the
+dashboard's scope, and belongs to the Engineering Lead at Defect Triage. **The Security gate
+is red for the correct reason** and should stay red until the dependencies are addressed —
+lowering the gate to get a green tick is the exact anti-pattern `docs/CI-CD.md` warns about
+for the coverage ratchet.
+
+Good demo material: a real security gate catching real CVEs in a payments service, traceable
+from defect to dependency to the NFR it violates.
+
+### 4.10 Governance finding — CD does not observe CI
 
 `cd.yml` triggers on push to `development` independently of `ci.yml` and re-runs Maven itself,
 so it never reads CI's conclusion. On 15 Aug 2026 CD **published an image and deployed through

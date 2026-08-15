@@ -90,7 +90,7 @@ jobs:
         run: mvn -B -ntp dependency:tree -DoutputFile=dependency-tree.txt
 
       - name: Scan filesystem for vulnerable dependencies
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -112,7 +112,7 @@ jobs:
       # HIGH only. A MEDIUM finding is triaged at Defect Triage (daily, 09:30
       # IST) rather than blocking a developer mid-flow.
       - name: Fail on CRITICAL or HIGH vulnerabilities
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: .
@@ -172,7 +172,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan image
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image-ref: payment-processing:scan

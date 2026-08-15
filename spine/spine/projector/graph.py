@@ -65,6 +65,24 @@ ENV_STAGE = {
     "production": "GATE5_PROD",
 }
 
+#: Verbs that represent work moving, as opposed to entities being defined.
+#: Only these form work packets and accrue custody.
+WORK_VERBS = frozenset(
+    {
+        Verb.WORKITEM_CREATED, Verb.WORKITEM_ASSIGNED, Verb.WORKITEM_TRANSITIONED,
+        Verb.CODE_COMMITTED, Verb.CODE_PUSHED, Verb.CODE_BRANCHED,
+        Verb.REVIEW_REQUESTED, Verb.REVIEW_SUBMITTED, Verb.REVIEW_DISMISSED,
+        Verb.PR_OPENED, Verb.PR_UPDATED, Verb.PR_MERGED, Verb.PR_CLOSED,
+        Verb.BUILD_STARTED, Verb.BUILD_COMPLETED, Verb.CHECK_COMPLETED,
+        Verb.TEST_EXECUTED,
+        Verb.DEFECT_RAISED, Verb.DEFECT_TRIAGED, Verb.DEFECT_ASSIGNED,
+        Verb.DEFECT_RESOLVED, Verb.DEFECT_VERIFIED,
+        Verb.DEPLOYMENT_CREATED, Verb.DEPLOYMENT_APPROVED,
+        Verb.DEPLOYMENT_SUCCEEDED, Verb.DEPLOYMENT_FAILED,
+        Verb.RELEASE_TAGGED, Verb.RELEASE_DEPLOYED,
+    }
+)
+
 
 def _parse(value: str | None) -> datetime | None:
     if not value:
@@ -101,6 +119,10 @@ class Projector:
         self._project_people()
         actors = self._project_actors(events)
         self._project_entities(events)
+        # Requirements before traceability: the matrix links things that must
+        # already exist.
+        self._project_requirements(events)
+        self._project_traceability(events)
         packets = self._stitch(events)
         self._project_custody(events, packets, actors)
         return self.stats
@@ -246,6 +268,140 @@ class Projector:
                     )
                 self.stats.vertices += 1
 
+    # --- requirements and traceability --------------------------------------
+    def _project_requirements(self, events: list[dict[str, Any]]) -> None:
+        """Requirement vertices from PRD-10, FSD-20 and FSD-21."""
+        with self.store.transaction():
+            for event in events:
+                if event["verb"] != Verb.REQUIREMENT_BASELINED:
+                    continue
+                payload = event.get("payload") or {}
+                req_id = payload.get("requirement_id")
+                if not req_id:
+                    continue
+                actor = (event.get("actor_ref") or {}).get("account_id") or ""
+                self.store.upsert_vertex(
+                    "Requirement",
+                    req_id,
+                    {
+                        "title": (payload.get("statement") or "")[:200],
+                        "statement": (payload.get("statement") or "")[:1000],
+                        "document": payload.get("document") or "",
+                        "baselined": bool(payload.get("baselined")),
+                        "obligation": payload.get("obligation") or "",
+                        "priority": payload.get("priority") or "",
+                        "release": payload.get("release") or "",
+                        "status": payload.get("status") or "unknown",
+                        "owner_id": actor,
+                    },
+                )
+                self.stats.vertices += 1
+
+        # Parent links, in a second pass so both ends exist.
+        #
+        # The same relationship is stated twice in the space: the PRD lists its
+        # child FRs and each FSD row names its parent BR. Deduplicated on the
+        # (child, parent) pair, otherwise every downstream traversal returns
+        # each result twice and the counts are quietly doubled.
+        linked: set[tuple[str, str]] = set()
+
+        def derive(child_id: str, parent_id: str, rule: str) -> None:
+            if not child_id or not parent_id or (child_id, parent_id) in linked:
+                return
+            child_vertex = self.store.lookup("Requirement", "req_id", child_id)
+            parent_vertex = self.store.lookup("Requirement", "req_id", parent_id)
+            if child_vertex is None or parent_vertex is None:
+                return
+            self.store.link(child_vertex, "DERIVES_FROM", parent_vertex,
+                            confidence=0.95, derived_by=rule)
+            linked.add((child_id, parent_id))
+            self.stats.edges += 1
+
+        with self.store.transaction():
+            for event in events:
+                if event["verb"] != Verb.REQUIREMENT_BASELINED:
+                    continue
+                payload = event.get("payload") or {}
+                req_id = payload.get("requirement_id") or ""
+                for parent_id in payload.get("parents") or []:
+                    derive(req_id, parent_id, "fsd-source-column")
+                for child_id in payload.get("children") or []:
+                    derive(child_id, req_id, "prd-child-column")
+
+    def _project_traceability(self, events: list[dict[str, Any]]) -> None:
+        """RTM-30 rows as curated edges.
+
+        Everything created here is marked ``derived_by="rtm-30"`` so the console
+        can distinguish a link somebody wrote down from one the system observed.
+        Deriving these instead of maintaining them by hand is the point of the
+        whole exercise, and until that works the provenance has to be visible.
+        """
+        with self.store.transaction():
+            for event in events:
+                if event["verb"] != Verb.WORKITEM_LINKED:
+                    continue
+                payload = event.get("payload") or {}
+                req_id = payload.get("requirement_id")
+                requirement = self.store.lookup("Requirement", "req_id", req_id)
+                if requirement is None:
+                    continue
+
+                for issue_key in payload.get("issue_keys") or []:
+                    item = self.store.upsert_vertex(
+                        "WorkItem", issue_key, {"title": payload.get("summary", "")[:200], "status": ""}
+                    )
+                    self.store.link(item, "ADDRESSES", requirement, confidence=0.9, derived_by="rtm-30")
+                    self.stats.vertices += 1
+                    self.stats.edges += 1
+
+                for tc_id in payload.get("test_ids") or []:
+                    test = self.store.upsert_vertex(
+                        "TestCase",
+                        tc_id,
+                        {
+                            "title": f"Verify {payload.get('summary', '')}"[:200],
+                            "automated": True,
+                            "status": payload.get("test_result") or "unknown",
+                            "requirement_id": req_id,
+                        },
+                    )
+                    self.store.link(test, "VERIFIES", requirement, confidence=0.9, derived_by="rtm-30")
+                    self.stats.vertices += 1
+                    self.stats.edges += 1
+
+                for defect_id in payload.get("defect_ids") or []:
+                    defect = self.store.upsert_vertex(
+                        "Defect",
+                        defect_id,
+                        {
+                            "title": f"Defect against {req_id}",
+                            "severity": "major",
+                            "status": "open",
+                            "requirement_id": req_id,
+                        },
+                    )
+                    self.store.link(defect, "RAISED_AGAINST", requirement, confidence=0.9,
+                                    derived_by="rtm-30")
+                    self.stats.vertices += 1
+                    self.stats.edges += 1
+
+                # Code references are file paths, sometimes with a line range.
+                # Match to CodeUnits by path so the requirement reaches actual
+                # source rather than a string.
+                for ref in payload.get("code_refs") or []:
+                    path = ref.get("path", "")
+                    if not path:
+                        continue
+                    matches = self.store.query(
+                        "SELECT unit_id FROM CodeUnit WHERE path LIKE ?", f"%{path}"
+                    )
+                    for row in matches[:12]:
+                        unit = self.store.lookup("CodeUnit", "unit_id", row.get("unit_id"))
+                        if unit is not None:
+                            self.store.link(requirement, "IMPLEMENTS", unit, confidence=0.85,
+                                            derived_by="rtm-30-code-column")
+                            self.stats.edges += 1
+
     # --- stitching ----------------------------------------------------------
     def _stitch(self, events: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         """Group events into work packets by the identifiers they cite.
@@ -258,6 +414,14 @@ class Projector:
         packets: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
         for event in events:
+            # A work packet is a unit of WORK moving through the pipeline.
+            # Publishing a document or defining a requirement creates neither
+            # work nor custody, so those events describe entities rather than
+            # belonging to a packet. Treating them as work produced hundreds of
+            # spurious "orphan" packets and buried the real ones.
+            if event["verb"] not in WORK_VERBS:
+                continue
+
             payload = event.get("payload") or {}
             subject = event.get("subject_ref") or {}
             identifiers = extract_identifiers(

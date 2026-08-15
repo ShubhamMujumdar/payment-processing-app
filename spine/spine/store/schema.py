@@ -41,20 +41,20 @@ VERTEX_TYPES: dict[str, dict[str, Any]] = {
     "Person": {"key": "person_id", "properties": {"person_id": "STRING", "handle": "STRING", "name": "STRING", "role": "STRING"}},
     "SourceAccount": {"key": "account_key", "properties": {"account_key": "STRING", "source": "STRING", "account_id": "STRING", "resolved": "BOOLEAN"}},
     "WorkPacket": {"key": "packet_id", "properties": {"packet_id": "STRING", "title": "STRING", "current_stage": "STRING", "release": "STRING", "work_type": "STRING", "is_orphan": "BOOLEAN"}},
-    "Requirement": {"key": "req_id", "properties": {"req_id": "STRING", "title": "STRING", "document": "STRING", "baselined": "BOOLEAN"}},
+    "Requirement": {"key": "req_id", "properties": {"req_id": "STRING", "title": "STRING", "document": "STRING", "baselined": "BOOLEAN", "statement": "STRING", "obligation": "STRING", "priority": "STRING", "release": "STRING", "status": "STRING", "owner_id": "STRING"}},
     "Document": {"key": "doc_key", "properties": {"doc_key": "STRING", "doc_id": "STRING", "version": "INTEGER", "title": "STRING"}},
     "WorkItem": {"key": "issue_key", "properties": {"issue_key": "STRING", "title": "STRING", "status": "STRING"}},
     "Commit": {"key": "sha", "properties": {"sha": "STRING", "message": "STRING", "authored_at": "STRING"}},
     "PullRequest": {"key": "pr_key", "properties": {"pr_key": "STRING", "number": "INTEGER", "title": "STRING", "state": "STRING", "merged_at": "STRING"}},
-    "TestCase": {"key": "tc_id", "properties": {"tc_id": "STRING", "title": "STRING", "automated": "BOOLEAN"}},
+    "TestCase": {"key": "tc_id", "properties": {"tc_id": "STRING", "title": "STRING", "automated": "BOOLEAN", "status": "STRING", "requirement_id": "STRING"}},
     "TestRun": {"key": "run_key", "properties": {"run_key": "STRING", "status": "STRING", "executed_at": "STRING"}},
-    "Defect": {"key": "defect_id", "properties": {"defect_id": "STRING", "title": "STRING", "severity": "STRING", "status": "STRING"}},
+    "Defect": {"key": "defect_id", "properties": {"defect_id": "STRING", "title": "STRING", "severity": "STRING", "status": "STRING", "requirement_id": "STRING"}},
     "PipelineRun": {"key": "run_id", "properties": {"run_id": "STRING", "workflow": "STRING", "conclusion": "STRING", "started_at": "STRING"}},
     "Deployment": {"key": "deployment_id", "properties": {"deployment_id": "STRING", "environment": "STRING", "status": "STRING", "created_at": "STRING", "gate_approved": "BOOLEAN"}},
     "Release": {"key": "tag", "properties": {"tag": "STRING", "released_at": "STRING"}},
     "Stage": {"key": "stage_id", "properties": {"stage_id": "STRING", "label": "STRING", "position": "INTEGER", "is_gate": "BOOLEAN", "accountable_role": "STRING"}},
     # Populated by the code graph builder.
-    "CodeUnit": {"key": "unit_id", "properties": {"unit_id": "STRING", "kind": "STRING", "name": "STRING", "path": "STRING", "start_line": "INTEGER", "end_line": "INTEGER", "introduced_in_pr": "INTEGER", "introduced_in_sha": "STRING", "signature": "STRING"}},
+    "CodeUnit": {"key": "unit_id", "properties": {"unit_id": "STRING", "kind": "STRING", "name": "STRING", "path": "STRING", "start_line": "INTEGER", "end_line": "INTEGER", "introduced_in_pr": "INTEGER", "introduced_in_sha": "STRING", "last_changed_pr": "INTEGER", "last_changed_sha": "STRING", "touched_by_prs": "STRING", "signature": "STRING"}},
     "CustodySpan": {"key": "span_id", "properties": {"span_id": "STRING", "packet_id": "STRING", "stage_id": "STRING", "person_id": "STRING", "entered_at": "STRING", "exited_at": "STRING", "custody_seconds": "INTEGER", "calendar_adjusted_seconds": "INTEGER", "activity_signal_count": "INTEGER", "active_minutes_estimate": "INTEGER", "is_open": "BOOLEAN", "is_overdue": "BOOLEAN", "flags": "STRING"}},
 }
 
@@ -82,5 +82,16 @@ EDGE_TYPES = [
     "DEPENDS_ON",     # CodeUnit      -> CodeUnit
 ]
 
-#: Everything the projector owns. `spine reproject` drops these and rebuilds.
+#: Everything projected, for reporting.
 PROJECTION_TYPES = list(VERTEX_TYPES) + EDGE_TYPES
+
+#: The code graph is derived from the SOURCE TREE, not from the event log, so
+#: `reproject` must not drop it -- there would be nothing in the log to rebuild
+#: it from. It is refreshed by `codegraph` instead, and traceability links from
+#: the RTM attach to it, which is why codegraph runs first.
+CODE_TYPES = ["CodeUnit"]
+CODE_EDGE_TYPES = ["CONTAINS", "CALLS", "DEPENDS_ON", "TOUCHES"]
+
+#: What `reproject` owns: everything derivable from the event log.
+EVENT_VERTEX_TYPES = [t for t in VERTEX_TYPES if t not in CODE_TYPES]
+EVENT_EDGE_TYPES = [t for t in EDGE_TYPES if t not in CODE_EDGE_TYPES]

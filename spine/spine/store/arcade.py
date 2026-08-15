@@ -17,7 +17,14 @@ from typing import Any, Iterable, Iterator
 
 import arcadedb_embedded as arcade
 
-from .schema import DOCUMENT_TYPES, EDGE_TYPES, PROJECTION_TYPES, VERTEX_TYPES
+from .schema import (
+    DOCUMENT_TYPES,
+    EDGE_TYPES,
+    EVENT_EDGE_TYPES,
+    EVENT_VERTEX_TYPES,
+    PROJECTION_TYPES,
+    VERTEX_TYPES,
+)
 
 
 class Store:
@@ -75,14 +82,17 @@ class Store:
                 schema.create_edge_type(name)
 
     def drop_projection(self) -> int:
-        """Drop every projected type. The event log is untouched, so the graph
-        can always be rebuilt from it -- verified before this design was
-        accepted."""
+        """Drop everything derived from the event log, so it can be rebuilt.
+
+        The code graph is deliberately spared: it is derived from the source
+        tree rather than from events, so there would be nothing in the log to
+        rebuild it from. `codegraph` refreshes that separately.
+        """
         schema = self.db.schema
         dropped = 0
         # Edges first: dropping a vertex type with live edges leaves dangling
-        # references.
-        for name in EDGE_TYPES + list(VERTEX_TYPES):
+        # references behind.
+        for name in EVENT_EDGE_TYPES + EVENT_VERTEX_TYPES:
             if schema.exists_type(name):
                 schema.drop_type(name)
                 dropped += 1

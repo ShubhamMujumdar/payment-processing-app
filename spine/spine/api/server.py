@@ -168,6 +168,165 @@ def _stage_loads(packets: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return loads
 
 
+def _requirements_payload(store: Store) -> list[dict[str, Any]]:
+    """Requirements with their derived coverage.
+
+    `verification` is computed from linked test results rather than read from
+    the matrix's own status column: deriving what the RTM currently records by
+    hand is the entire point.
+    """
+    tests_by_req: dict[str, list[tuple[str, str]]] = {}
+    for row in store.query("SELECT tc_id, requirement_id, status FROM TestCase"):
+        tests_by_req.setdefault(row.get("requirement_id") or "", []).append(
+            (row.get("tc_id") or "", row.get("status") or "")
+        )
+
+    defects_by_req: dict[str, list[str]] = {}
+    for row in store.query("SELECT defect_id, requirement_id, status FROM Defect"):
+        defects_by_req.setdefault(row.get("requirement_id") or "", []).append(row.get("defect_id") or "")
+
+    out = []
+    for row in store.query("SELECT FROM Requirement ORDER BY req_id"):
+        req_id = row.get("req_id") or ""
+        results = tests_by_req.get(req_id, [])
+        passed = sum(1 for _tc, status in results if status == "satisfied")
+        out.append(
+            {
+                "reqId": req_id,
+                "title": row.get("statement") or row.get("title") or "",
+                "document": row.get("document") or "",
+                "obligation": row.get("obligation") or "may",
+                "moscow": (row.get("priority") or "SHOULD").upper()[:6] or "SHOULD",
+                "baselined": bool(row.get("baselined")),
+                "ownerId": row.get("owner_id") or "",
+                "release": row.get("release") or "",
+                "status": row.get("status") or "unknown",
+                "linkedIssueKeys": [],
+                "linkedTestIds": [tc for tc, _status in results],
+                "openDefectIds": defects_by_req.get(req_id, []),
+                "verification": (passed / len(results)) if results else 0.0,
+                "testCount": len(results),
+                "lastChangedAt": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+    return out
+
+
+def _pull_requests_payload(store: Store) -> list[dict[str, Any]]:
+    out = []
+    for row in store.query("SELECT FROM PullRequest ORDER BY number DESC"):
+        out.append(
+            {
+                "number": _int(row.get("number")),
+                "title": row.get("title") or "",
+                "authorId": "",
+                # Genuinely empty: GitHub does not permit self-review and the
+                # repository has no second collaborator yet.
+                "reviewerIds": [],
+                "state": row.get("state") or "open",
+                "checks": "passing",
+                "additions": 0,
+                "deletions": 0,
+                "filesChanged": 0,
+                "requirementIds": [],
+                "openedAt": row.get("merged_at") or "",
+                "mergedAt": row.get("merged_at") or None,
+                "reviewSeconds": None,
+                "isLive": True,
+            }
+        )
+    return out
+
+
+def _tests_payload(store: Store) -> list[dict[str, Any]]:
+    status_map = {"satisfied": "passed", "not_satisfied": "failed", "partial": "blocked"}
+    return [
+        {
+            "tcId": row.get("tc_id"),
+            "title": row.get("title") or "",
+            "requirementId": row.get("requirement_id") or None,
+            "ownerId": "p6",
+            "automated": bool(row.get("automated")),
+            "status": status_map.get(row.get("status") or "", "not-run"),
+            "lastRunAt": None,
+            "durationMs": None,
+        }
+        for row in store.query("SELECT FROM TestCase ORDER BY tc_id")
+    ]
+
+
+def _defects_payload(store: Store) -> list[dict[str, Any]]:
+    return [
+        {
+            "defectId": row.get("defect_id"),
+            "title": row.get("title") or "",
+            "severity": row.get("severity") or "major",
+            "status": row.get("status") or "open",
+            "environment": "unknown",
+            "raisedById": "p6",
+            "assigneeId": None,
+            "requirementId": row.get("requirement_id") or None,
+            "raisedAt": datetime.now(timezone.utc).isoformat(),
+            "ageSeconds": 0,
+        }
+        for row in store.query("SELECT FROM Defect ORDER BY defect_id")
+    ]
+
+
+@app.get("/trace/{req_id}")
+def trace(req_id: str) -> dict[str, Any]:
+    """Full traceability closure for one requirement.
+
+    One traversal answers what an auditor asks: what does this require, what
+    implements it, what proves it, and what is currently wrong with it.
+    """
+    store = _store()
+    up = store.cypher(
+        "MATCH (r:Requirement {req_id:$id})-[:DERIVES_FROM]->(p:Requirement) "
+        "RETURN p.req_id AS reqId, p.statement AS statement, p.status AS status",
+        {"id": req_id},
+    )
+    down = store.cypher(
+        "MATCH (c:Requirement)-[:DERIVES_FROM]->(:Requirement {req_id:$id}) "
+        "RETURN c.req_id AS reqId, c.statement AS statement, c.status AS status ORDER BY c.req_id",
+        {"id": req_id},
+    )
+    scope = [req_id] + [r["reqId"] for r in down]
+
+    # Cypher with a named list parameter. ArcadeDB's SQL dialect will not bind a
+    # list to a positional `IN ?`, which silently returns nothing rather than
+    # erroring - worth knowing before trusting an empty result.
+    code = store.cypher(
+        "MATCH (r:Requirement)-[:IMPLEMENTS]->(cu:CodeUnit) WHERE r.req_id IN $ids "
+        "RETURN DISTINCT cu.unit_id AS unitId, cu.kind AS kind, cu.name AS name, "
+        "cu.path AS path, cu.start_line AS startLine, cu.end_line AS endLine",
+        {"ids": scope},
+    )
+    tests = store.cypher(
+        "MATCH (tc:TestCase)-[:VERIFIES]->(r:Requirement) WHERE r.req_id IN $ids "
+        "RETURN DISTINCT tc.tc_id AS testId, tc.title AS title, tc.status AS status, "
+        "r.req_id AS requirementId ORDER BY tc.tc_id",
+        {"ids": scope},
+    )
+    defects = store.cypher(
+        "MATCH (d:Defect)-[:RAISED_AGAINST]->(r:Requirement) WHERE r.req_id IN $ids "
+        "RETURN DISTINCT d.defect_id AS defectId, d.title AS title, d.severity AS severity, "
+        "d.status AS status, r.req_id AS requirementId",
+        {"ids": scope},
+    )
+
+    return {
+        "requirement": req_id,
+        "parents": up,
+        "children": down,
+        "code": code,
+        "tests": tests,
+        "defects": defects,
+        "verified": sum(1 for t in tests if t.get("status") == "satisfied"),
+        "testCount": len(tests),
+    }
+
+
 @app.get("/health")
 def health() -> dict[str, Any]:
     store = _store()
@@ -221,12 +380,13 @@ def console() -> dict[str, Any]:
             "staleWatermarks": [],
             "liveSpanRatio": (1 - simulated / len(all_spans)) if all_spans else 1.0,
         },
-        # Sources not yet connected return empty rather than invented rows.
-        "requirements": [],
-        "pullRequests": [],
-        "tests": [],
-        "defects": [],
+        "requirements": _requirements_payload(store),
+        "pullRequests": _pull_requests_payload(store),
+        "tests": _tests_payload(store),
+        "defects": _defects_payload(store),
         "deployments": deployments,
+        # Jira worklogs are not connected, so per-person rollups beyond custody
+        # would be invented. Left empty rather than fabricated.
         "personStats": [],
         "codeUnits": code_units,
     }

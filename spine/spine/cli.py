@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 
 from .codegraph.java import JavaGraphBuilder
 from .config import config
+from .connectors.confluence import ConfluenceConnector
 from .connectors.github import GitHubConnector
 from .core.identity import ROSTER, IdentityResolver
 from .projector.graph import Projector
@@ -26,23 +27,32 @@ def _resolver() -> IdentityResolver:
 
 def ingest() -> int:
     cfg = config()
-    if not cfg.has_github:
-        print("No GITHUB_TOKEN in dashboard/.env - nothing live to ingest.")
-        return 1
+    now = datetime.now(timezone.utc).isoformat()
+    github: GitHubConnector | None = None
 
-    connector = GitHubConnector(cfg.github_token, cfg.github_repo)
     try:
         with Store(cfg.db_path) as store:
-            batch = [event.to_row() for event in connector.fetch()]
+            # Confluence first and unconditionally: it needs no credential, and
+            # the requirements it produces are what everything else links to.
+            confluence = ConfluenceConnector(cfg.requirements_dir)
+            batch = [event.to_row() for event in confluence.fetch()]
             written = store.append_events(batch)
-            store.set_watermark(
-                "github", datetime.now(timezone.utc).isoformat(),
-                datetime.now(timezone.utc).isoformat(),
-            )
-            print(f"fetched {len(batch)} events, {written} new, {len(batch) - written} already present")
+            print(f"confluence: {len(batch)} events, {written} new")
+            store.set_watermark("confluence", now, now)
+
+            if cfg.has_github:
+                github = GitHubConnector(cfg.github_token, cfg.github_repo)
+                batch = [event.to_row() for event in github.fetch()]
+                written = store.append_events(batch)
+                print(f"github+ci : {len(batch)} events, {written} new")
+                store.set_watermark("github", now, now)
+            else:
+                print("github+ci : skipped, no GITHUB_TOKEN in dashboard/.env")
+
             print(f"event log now holds {store.count('Event')}")
     finally:
-        connector.close()
+        if github is not None:
+            github.close()
     return 0
 
 

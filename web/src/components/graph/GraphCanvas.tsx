@@ -116,13 +116,17 @@ export default function GraphCanvas({
       if (existing) {
         Object.assign(existing, n);
       } else {
-        // New nodes enter near the middle with a small deterministic offset, so
-        // the simulation has something to push apart.
-        const angle = (i / Math.max(1, nodes.length)) * Math.PI * 2;
+        // New nodes enter on a ring whose radius grows with how many are
+        // arriving. Seeding a class of fifty onto a fixed small circle leaves
+        // them overlapping, and with no links between them there is nothing
+        // pulling them apart afterwards.
+        const incomingCount = Math.max(1, nodes.length);
+        const radius = 80 + incomingCount * 7;
+        const angle = (i / incomingCount) * Math.PI * 2;
         map.set(n.id, {
           ...n,
-          x: size.w / 2 + Math.cos(angle) * 90,
-          y: size.h / 2 + Math.sin(angle) * 90,
+          x: size.w / 2 + Math.cos(angle) * radius,
+          y: size.h / 2 + Math.sin(angle) * radius,
         });
       }
     });
@@ -159,16 +163,23 @@ export default function GraphCanvas({
             .radius((d) => (NODE_RADIUS[d.type] ?? 18) + 30)
             .iterations(3),
         )
-        .force("x", forceX<SimNode>(size.w / 2).strength(0.05))
-        .force("y", forceY<SimNode>(size.h / 2).strength(0.07))
+        .force("x", forceX<SimNode>(size.w / 2).strength(0.02))
+        .force("y", forceY<SimNode>(size.h / 2).strength(0.03))
         .on("tick", requestRepaint);
       simRef.current = sim;
     } else {
       sim.nodes(list);
     }
 
+    // Centring is eased off as the canvas fills: it is useful for keeping a
+    // handful of nodes in view and counterproductive once fifty are competing
+    // for the middle.
+    const crowding = Math.min(1, list.length / 40);
     sim
-      .force("center", forceCenter(size.w / 2, size.h / 2).strength(0.05))
+      .force(
+        "center",
+        forceCenter(size.w / 2, size.h / 2).strength(0.06 * (1 - crowding * 0.9)),
+      )
       .force(
         "link",
         forceLink<SimNode, SimEdge>(edgesRef.current)
@@ -178,7 +189,8 @@ export default function GraphCanvas({
           .distance((l) => (l.type === "CONTAINS" ? 86 : 175))
           .strength(0.35),
       );
-    sim.alpha(0.7).restart();
+    // A bigger batch needs longer to unpack itself.
+    sim.alpha(list.length > 25 ? 1 : 0.7).restart();
   }, [nodes, edges, size.w, size.h, requestRepaint]);
 
   useEffect(
@@ -203,10 +215,8 @@ export default function GraphCanvas({
 
   useEffect(() => {
     const release = () => {
-      if (!dragRef.current && !panRef.current) return;
       dragRef.current = null;
       panRef.current = null;
-      simRef.current?.alphaTarget(0);
     };
     window.addEventListener("pointerup", release);
     window.addEventListener("pointercancel", release);
@@ -222,7 +232,10 @@ export default function GraphCanvas({
     dragRef.current = { id: node.id };
     node.fx = node.x;
     node.fy = node.y;
-    simRef.current?.alphaTarget(0.25).restart();
+    // A one-shot alpha rather than alphaTarget. alphaTarget is sticky: if a
+    // pointerup is ever missed the simulation keeps ticking forever and the tab
+    // locks up. A decaying alpha always settles on its own.
+    simRef.current?.alpha(0.3).restart();
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
@@ -232,16 +245,22 @@ export default function GraphCanvas({
         const { x, y } = toWorld(e.clientX, e.clientY);
         node.fx = x;
         node.fy = y;
+        // Nudge the layout so neighbours follow the dragged node, but with a
+        // decaying alpha so releasing anywhere still comes to rest.
+        simRef.current?.alpha(0.2).restart();
         requestRepaint();
       }
       return;
     }
     if (panRef.current) {
-      setView((v) => ({
-        ...v,
-        x: panRef.current!.vx + (e.clientX - panRef.current!.x),
-        y: panRef.current!.vy + (e.clientY - panRef.current!.y),
-      }));
+      // Read the pan origin NOW, not inside the updater. React may run a state
+      // updater later, or re-run it during render, and by then a pointerup
+      // handler can have cleared the ref - dereferencing it there crashes the
+      // whole canvas.
+      const { x: originX, y: originY, vx, vy } = panRef.current;
+      const nextX = vx + (e.clientX - originX);
+      const nextY = vy + (e.clientY - originY);
+      setView((v) => ({ ...v, x: nextX, y: nextY }));
     }
   };
 
@@ -250,7 +269,6 @@ export default function GraphCanvas({
     // undo the placement the user just chose.
     dragRef.current = null;
     panRef.current = null;
-    simRef.current?.alphaTarget(0);
   };
 
   const onBackgroundPointerDown = (e: React.PointerEvent) => {
@@ -438,6 +456,7 @@ export default function GraphCanvas({
                   onPointerDown={(e) => onNodePointerDown(e, n)}
                   onClick={(e) => {
                     e.stopPropagation();
+                    if (e.detail > 1) return; // second click of a double-click
                     onSelect(n.id);
                   }}
                   onDoubleClick={(e) => {

@@ -174,11 +174,17 @@ class GraphExplorer:
     def search(self, query: str, limit: int = 40) -> list[dict[str, Any]]:
         """Match a query against every type's key and caption fields."""
         found: list[dict[str, Any]] = []
+        seen: set[str] = set()
         needle = query.strip().lower()
 
         for type_name, key_prop in KEY_BY_TYPE.items():
             if len(found) >= limit:
                 break
+            # Searching the Code supertype as well as its subtypes returns every
+            # code node twice, since inheritance means the supertype query
+            # already covers them.
+            if type_name == CODE_SUPERTYPE:
+                continue
             fields = {key_prop, *CAPTION_FIELDS.get(type_name, ())}
             clauses = " OR ".join(f"{f}.toLowerCase() LIKE ?" for f in fields)
             params = [f"%{needle}%"] * len(fields)
@@ -190,7 +196,8 @@ class GraphExplorer:
                 continue
             for actual_type, row in rows:
                 node = to_node(row, actual_type)
-                if node:
+                if node and node["id"] not in seen:
+                    seen.add(node["id"])
                     found.append(node)
                 if len(found) >= limit:
                     break

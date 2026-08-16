@@ -34,6 +34,7 @@ export default function KnowledgeGraph() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<GraphNode | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const busyIdRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [query, setQuery] = useState("");
@@ -97,10 +98,15 @@ export default function KnowledgeGraph() {
 
   const expand = useCallback(
     async (id: string) => {
+      // One expansion at a time. A double-click can otherwise fire two, and the
+      // second arrives while the first is still merging.
+      if (busyIdRef.current) return;
+      busyIdRef.current = id;
       setBusyId(id);
       const slice = await expandNode(id, 25);
       merge({ nodes: [...slice.nodes], edges: slice.edges });
       setExpandedIds((prev) => new Set(prev).add(id));
+      busyIdRef.current = null;
       setBusyId(null);
     },
     [merge],

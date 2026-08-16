@@ -14,6 +14,7 @@ back out with it".
 
 from __future__ import annotations
 
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -44,6 +45,9 @@ class CodeUnit:
     parent_id: str | None = None
     calls: list[str] = field(default_factory=list)
     imports: list[str] = field(default_factory=list)
+    #: Type names mentioned in a signature (return, parameters, field type).
+    #: These become DEPENDS_ON edges wherever they resolve to a type we parsed.
+    type_refs: list[str] = field(default_factory=list)
     introduced_in_sha: str | None = None
     introduced_in_pr: int | None = None
     #: Rollback needs what a pull request CHANGED, not only what it created.
@@ -69,6 +73,28 @@ class CodeUnit:
         }
 
 
+_TYPE_NAME = re.compile(r"\b([A-Z][A-Za-z0-9_]*)\b")
+
+#: Types from the JDK and common frameworks are noise in a codebase graph:
+#: everything references String and List, so those edges carry no information.
+_TYPE_NOISE = frozenset(
+    {
+        "String", "Integer", "Long", "Double", "Float", "Boolean", "Byte", "Short",
+        "Object", "List", "Map", "Set", "Optional", "Collection", "Arrays", "Objects",
+        "BigDecimal", "BigInteger", "LocalDate", "LocalDateTime", "Instant", "UUID",
+        "Exception", "RuntimeException", "Override", "Autowired", "Service", "Component",
+        "Repository", "Controller", "RestController", "Entity", "Table", "Column", "Id",
+        "GeneratedValue", "Enumerated", "Data", "Builder", "NoArgsConstructor",
+        "AllArgsConstructor", "RequiredArgsConstructor", "Getter", "Setter", "Slf4j",
+        "ResponseEntity", "HttpStatus", "Valid", "NotNull", "NotBlank", "Positive",
+    }
+)
+
+
+def _type_names(text: str) -> set[str]:
+    return {m.group(1) for m in _TYPE_NAME.finditer(text)} - _TYPE_NOISE
+
+
 def _text(node: Node, src: bytes) -> str:
     return src[node.start_byte : node.end_byte].decode("utf-8", "replace")
 
@@ -82,6 +108,10 @@ class JavaGraphBuilder:
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
         self._parser = Parser(JAVA)
+        #: file unit id -> import statements, resolved against internal types
+        #: once every file has been parsed.
+        self._file_imports: dict[str, list[str]] = {}
+        self._file_package: dict[str, str] = {}
 
     # --- parsing -----------------------------------------------------------
     def parse_file(self, path: Path) -> list[CodeUnit]:
@@ -98,7 +128,15 @@ class JavaGraphBuilder:
                 imports.append(_text(child, src).replace("import", "").replace(";", "").strip())
 
         units: list[CodeUnit] = []
-        self._walk(tree.root_node, src, rel, package, None, units, imports)
+        file_id = f"file:{rel}"
+        self._walk(tree.root_node, src, rel, package, file_id, units, imports)
+
+        # Imports belong to the file, and are resolved to internal types later.
+        for unit in units:
+            if unit.parent_id == file_id:
+                unit.imports = list(imports)
+        self._file_imports[file_id] = list(imports)
+        self._file_package[file_id] = package
         return units
 
     def _walk(
@@ -127,7 +165,6 @@ class JavaGraphBuilder:
                         end_line=child.end_point[0] + 1,
                         signature=f"{kind} {name}",
                         parent_id=parent_id,
-                        imports=imports if parent_id is None else [],
                     )
                 )
                 self._walk(child, src, rel, package, unit_id, out, imports)
@@ -149,6 +186,7 @@ class JavaGraphBuilder:
                         signature=f"{returns} {name}{params}".strip(),
                         parent_id=parent_id,
                         calls=sorted(set(self._invocations(child, src))),
+                        type_refs=sorted(_type_names(f"{returns} {params}")),
                     )
                 )
                 continue
@@ -167,6 +205,7 @@ class JavaGraphBuilder:
                             end_line=child.end_point[0] + 1,
                             signature=_text(child, src).strip().rstrip(";"),
                             parent_id=parent_id,
+                            type_refs=sorted(_type_names(_text(child, src))),
                         )
                     )
                 continue

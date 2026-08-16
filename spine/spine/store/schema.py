@@ -81,7 +81,8 @@ EDGE_TYPES = [
     "PRODUCED",       # PipelineRun   -> Deployment
     "DEPLOYED_IN",    # PullRequest   -> Release
     "TOUCHES",        # PullRequest   -> CodeUnit
-    "CONTAINS",       # CodeUnit      -> CodeUnit  (class -> method)
+    "IMPORTS",        # Code          -> Code      (file -> type it imports)
+    "CONTAINS",       # Code          -> Code      (file -> type, type -> member)
     "CALLS",          # CodeUnit      -> CodeUnit
     "DEPENDS_ON",     # CodeUnit      -> CodeUnit
 ]
@@ -115,7 +116,7 @@ PROJECTION_TYPES = list(VERTEX_TYPES) + list(CODE_SUBTYPES.values()) + EDGE_TYPE
 #: it from. It is refreshed by `codegraph` instead, and traceability links from
 #: the RTM attach to it, which is why codegraph runs first.
 CODE_TYPES = [CODE_SUPERTYPE, *CODE_SUBTYPES.values()]
-CODE_EDGE_TYPES = ["CONTAINS", "CALLS", "DEPENDS_ON", "TOUCHES"]
+CODE_EDGE_TYPES = ["CONTAINS", "CALLS", "DEPENDS_ON", "IMPORTS", "TOUCHES"]
 
 #: What `reproject` owns: everything derivable from the event log.
 EVENT_VERTEX_TYPES = [t for t in VERTEX_TYPES if t not in CODE_TYPES]

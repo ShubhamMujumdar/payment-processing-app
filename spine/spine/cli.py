@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import sys
 from datetime import datetime, timezone
+from typing import Any
 
 from .codegraph.java import JavaGraphBuilder
 from .config import config
@@ -69,27 +70,91 @@ def codegraph() -> int:
         with store.transaction():
             for unit in units:
                 store.upsert_vertex(code_type_for(unit.kind), unit.unit_id, unit.to_props())
-        # Containment and calls in a second pass: both ends must exist first.
+        # Relationships in a second pass: both ends must exist first.
+        by_id = {u.unit_id: u for u in units}
+        vertex_cache: dict[str, Any] = {}
+
+        def vertex(unit_id: str):
+            """Vertex for a unit id, cached - the same class is referenced from
+            dozens of places and each lookup is a round trip."""
+            if unit_id in vertex_cache:
+                return vertex_cache[unit_id]
+            unit = by_id.get(unit_id)
+            found = (
+                store.lookup(code_type_for(unit.kind), "unit_id", unit_id) if unit else None
+            )
+            vertex_cache[unit_id] = found
+            return found
+
+        # Types declared anywhere in the source, by simple name, so an import or
+        # a signature reference can be resolved back to something we parsed.
+        types_by_name: dict[str, list[str]] = {}
+        for unit in units:
+            if unit.kind in ("class", "interface", "enum", "record"):
+                types_by_name.setdefault(unit.name, []).append(unit.unit_id)
+
+        # Methods by owning type, so a call resolves within the caller's own
+        # class before falling back to anything with a matching name.
+        methods_by_owner: dict[str, dict[str, str]] = {}
+        for unit in units:
+            if unit.kind == "method" and unit.parent_id:
+                methods_by_owner.setdefault(unit.parent_id, {})[unit.name] = unit.unit_id
+
+        counts = {"CONTAINS": 0, "CALLS": 0, "IMPORTS": 0, "DEPENDS_ON": 0}
+        linked: set[tuple[str, str, str]] = set()
+
+        def link(from_id: str, edge: str, to_id: str, **props: Any) -> None:
+            if from_id == to_id or (from_id, edge, to_id) in linked:
+                return
+            a, b = vertex(from_id), vertex(to_id)
+            if a is None or b is None:
+                return
+            store.link(a, edge, b, **props)
+            linked.add((from_id, edge, to_id))
+            counts[edge] += 1
+
         with store.transaction():
-            by_id = {u.unit_id: u for u in units}
             for unit in units:
-                source = store.lookup(code_type_for(unit.kind), "unit_id", unit.unit_id)
-                if source is None:
-                    continue
+                # A file contains its types; a type contains its methods and
+                # fields. Without the first of those, "what is in this file" has
+                # no answer in the graph.
                 if unit.parent_id and unit.parent_id in by_id:
-                    parent = store.lookup(code_type_for(by_id[unit.parent_id].kind), "unit_id", unit.parent_id)
-                    if parent is not None:
-                        store.link(parent, "CONTAINS", source)
-                for called in unit.calls:
-                    # Name-level resolution only; full resolution needs a type
-                    # checker, so these carry low confidence and say so.
-                    for candidate_id, candidate in by_id.items():
-                        if candidate.kind == "method" and candidate.name == called:
-                            target = store.lookup(code_type_for(candidate.kind), "unit_id", candidate_id)
-                            if target is not None:
-                                store.link(source, "CALLS", target, confidence=0.4,
-                                           derived_by="name-match")
-                            break
+                    link(unit.parent_id, "CONTAINS", unit.unit_id)
+
+                # Imports, resolved to types that exist in this repository.
+                # An import of a JDK or Spring class resolves to nothing and is
+                # left out rather than creating a node for code we cannot see.
+                for imported in unit.imports:
+                    simple = imported.rstrip(".*").split(".")[-1]
+                    for target_id in types_by_name.get(simple, []):
+                        link(unit.unit_id, "IMPORTS", target_id,
+                             confidence=0.95, derived_by="import-statement")
+
+                # Types named in a signature: field types, parameters, returns.
+                # This is what connects a service to the DTOs and entities it
+                # actually handles.
+                owner = unit.parent_id if unit.kind in ("method", "field") else unit.unit_id
+                for referenced in unit.type_refs:
+                    for target_id in types_by_name.get(referenced, []):
+                        if owner in by_id:
+                            link(owner, "DEPENDS_ON", target_id,
+                                 confidence=0.8, derived_by="signature-type")
+
+                # Calls, preferring the caller's own class before any match
+                # elsewhere. Full resolution needs a type checker, so these stay
+                # low confidence and the console says so.
+                if unit.kind == "method":
+                    own = methods_by_owner.get(unit.parent_id or "", {})
+                    for called in unit.calls:
+                        target_id = own.get(called)
+                        if target_id is None:
+                            for owner_methods in methods_by_owner.values():
+                                if called in owner_methods:
+                                    target_id = owner_methods[called]
+                                    break
+                        if target_id:
+                            link(unit.unit_id, "CALLS", target_id,
+                                 confidence=0.4, derived_by="name-match")
 
         attributed = sum(1 for u in units if u.touched_by_prs)
         print(f"parsed {len(units)} code units from {cfg.source_dir.name}")
@@ -97,6 +162,7 @@ def codegraph() -> int:
               f"{sum(1 for u in units if u.kind in ('class', 'interface', 'enum', 'record'))} types, "
               f"{sum(1 for u in units if u.kind == 'method')} methods, "
               f"{sum(1 for u in units if u.kind == 'field')} fields")
+        print("  edges: " + ", ".join(f"{k} {v}" for k, v in counts.items()))
         print(f"  {attributed} carry pull-request provenance")
     return 0
 

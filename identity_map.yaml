@@ -1,0 +1,38 @@
+# Source account -> person.
+#
+# The spine never guesses at identity. It matches on verified email, then on
+# this file, and otherwise leaves the account unresolved and says so. A false
+# merge is undetectable once it has happened and silently corrupts every
+# per-person number downstream; an unresolved account is visible and fixable.
+# That asymmetry is why this file is committed and reviewable rather than
+# inferred at runtime.
+#
+# Format:  <source>:<account id>: <person id>
+# Person ids are the roster in visa_platform/docs/requirements/index.md.
+
+# --- Confluence -------------------------------------------------------------
+# Mechanical: the space's own handles are @shubham.mujumdar1..10 and the roster
+# numbers them identically. No judgement involved.
+confluence:shubham.mujumdar1: p1
+confluence:shubham.mujumdar2: p2
+confluence:shubham.mujumdar3: p3
+confluence:shubham.mujumdar4: p4
+confluence:shubham.mujumdar5: p5
+confluence:shubham.mujumdar6: p6
+confluence:shubham.mujumdar7: p7
+confluence:shubham.mujumdar8: p8
+confluence:shubham.mujumdar9: p9
+confluence:shubham.mujumdar10: p10
+
+# --- GitHub -----------------------------------------------------------------
+# ASSUMPTION, worth confirming. `ShubhamMujumdar` is a real GitHub account and
+# the roster is synthetic, so this line maps a real person onto a demo persona.
+# p5 is the Senior Engineer, accountable for "implementation, defect resolution,
+# unit test authorship", which is what this account has actually done in the
+# repository. Change it if the demo should attribute the work elsewhere.
+github:ShubhamMujumdar: p5
+
+# Deliberately absent: `dev@poc.local`, the author of the initial scaffold
+# commit. It is a placeholder identity rather than a person, and inventing a
+# mapping for it would put fictional work on someone's record. It stays
+# unresolved and shows up in the data-quality panel, which is correct.

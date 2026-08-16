@@ -314,7 +314,7 @@ def trace(req_id: str) -> dict[str, Any]:
     # list to a positional `IN ?`, which silently returns nothing rather than
     # erroring - worth knowing before trusting an empty result.
     code = store.cypher(
-        "MATCH (r:Requirement)-[:IMPLEMENTS]->(cu:CodeUnit) WHERE r.req_id IN $ids "
+        "MATCH (r:Requirement)-[:IMPLEMENTS]->(cu:Code) WHERE r.req_id IN $ids "
         "RETURN DISTINCT cu.unit_id AS unitId, cu.kind AS kind, cu.name AS name, "
         "cu.path AS path, cu.start_line AS startLine, cu.end_line AS endLine",
         {"ids": scope},
@@ -357,18 +357,18 @@ def code_graph() -> dict[str, Any]:
     units = store.query(
         "SELECT unit_id AS unitId, kind, name, path, start_line AS startLine, "
         "end_line AS endLine, signature, introduced_in_pr AS introducedInPr, "
-        "last_changed_pr AS lastChangedPr, touched_by_prs AS touchedByPrs FROM CodeUnit"
+        "last_changed_pr AS lastChangedPr, touched_by_prs AS touchedByPrs FROM Code"
     )
 
     def edges(edge_type: str, confidence: float) -> list[dict[str, Any]]:
         rows = store.cypher(
-            f"MATCH (a:CodeUnit)-[:{edge_type}]->(b:CodeUnit) "
+            f"MATCH (a:Code)-[:{edge_type}]->(b:Code) "
             "RETURN a.unit_id AS source, b.unit_id AS target"
         )
         return [{**r, "type": edge_type, "confidence": confidence} for r in rows]
 
     implements = store.cypher(
-        "MATCH (r:Requirement)-[:IMPLEMENTS]->(cu:CodeUnit) "
+        "MATCH (r:Requirement)-[:IMPLEMENTS]->(cu:Code) "
         "RETURN r.req_id AS source, cu.unit_id AS target"
     )
 
@@ -399,7 +399,7 @@ def console() -> dict[str, Any]:
 
     code_units = store.query(
         "SELECT unit_id, kind, name, path, start_line, end_line, introduced_in_pr, "
-        "last_changed_pr, touched_by_prs, signature FROM CodeUnit"
+        "last_changed_pr, touched_by_prs, signature FROM Code"
     )
 
     deployments = [
@@ -462,7 +462,7 @@ def code_by_pr(number: int) -> dict[str, Any]:
     """
     rows = _store().query(
         "SELECT unit_id, kind, name, path, start_line, end_line, introduced_in_pr, "
-        "last_changed_pr, touched_by_prs FROM CodeUnit"
+        "last_changed_pr, touched_by_prs FROM Code"
     )
     hit = [
         r
@@ -480,7 +480,7 @@ def code_by_pr(number: int) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Generic graph exploration, for the canvas.
 # ---------------------------------------------------------------------------
-from .graph import GraphExplorer  # noqa: E402
+from .graph import SAVED_QUERIES, GraphExplorer  # noqa: E402
 
 
 def _explorer() -> GraphExplorer:
@@ -511,6 +511,29 @@ def graph_node(id: str) -> dict[str, Any]:
 @app.get("/graph/expand")
 def graph_expand(id: str, limit: int = 25) -> dict[str, Any]:
     return _explorer().expand(id, limit)
+
+
+@app.get("/graph/nodes")
+def graph_nodes(type: str, limit: int = 200) -> dict[str, Any]:
+    """Every node of one class, plus the edges between them."""
+    return _explorer().all_of_type(type, limit)
+
+
+@app.get("/graph/queries")
+def graph_queries() -> dict[str, Any]:
+    return {"queries": SAVED_QUERIES}
+
+
+@app.get("/graph/query")
+def graph_query(cypher: str, limit: int = 120) -> dict[str, Any]:
+    try:
+        return _explorer().run_cypher(cypher, limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        # A malformed query is a user error, not a server fault; returning the
+        # database's own message is far more useful than a generic 500.
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.get("/graph/seed")

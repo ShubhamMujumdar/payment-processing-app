@@ -1,7 +1,7 @@
 """Command line entry points.
 
     python -m spine.cli ingest      pull live sources into the event log
-    python -m spine.cli codegraph   parse the subject repo into CodeUnit vertices
+    python -m spine.cli codegraph   parse the subject repo into Code vertices     
     python -m spine.cli reproject   drop the graph and rebuild it from the log
     python -m spine.cli status      what is in the store
     python -m spine.cli serve       run the read API
@@ -19,6 +19,7 @@ from .connectors.github import GitHubConnector
 from .core.identity import ROSTER, IdentityResolver
 from .projector.graph import Projector
 from .store.arcade import Store
+from .store.schema import code_type_for
 
 
 def _resolver() -> IdentityResolver:
@@ -62,18 +63,21 @@ def codegraph() -> int:
     units = builder.build()
 
     with Store(cfg.db_path) as store:
+        # Clear the previous parse: a unit that was renamed or deleted in source
+        # would otherwise linger forever, since nothing else removes it.
+        store.drop_code_graph()
         with store.transaction():
             for unit in units:
-                store.upsert_vertex("CodeUnit", unit.unit_id, unit.to_props())
+                store.upsert_vertex(code_type_for(unit.kind), unit.unit_id, unit.to_props())
         # Containment and calls in a second pass: both ends must exist first.
         with store.transaction():
             by_id = {u.unit_id: u for u in units}
             for unit in units:
-                source = store.lookup("CodeUnit", "unit_id", unit.unit_id)
+                source = store.lookup(code_type_for(unit.kind), "unit_id", unit.unit_id)
                 if source is None:
                     continue
                 if unit.parent_id and unit.parent_id in by_id:
-                    parent = store.lookup("CodeUnit", "unit_id", unit.parent_id)
+                    parent = store.lookup(code_type_for(by_id[unit.parent_id].kind), "unit_id", unit.parent_id)
                     if parent is not None:
                         store.link(parent, "CONTAINS", source)
                 for called in unit.calls:
@@ -81,7 +85,7 @@ def codegraph() -> int:
                     # checker, so these carry low confidence and say so.
                     for candidate_id, candidate in by_id.items():
                         if candidate.kind == "method" and candidate.name == called:
-                            target = store.lookup("CodeUnit", "unit_id", candidate_id)
+                            target = store.lookup(code_type_for(candidate.kind), "unit_id", candidate_id)
                             if target is not None:
                                 store.link(source, "CALLS", target, confidence=0.4,
                                            derived_by="name-match")

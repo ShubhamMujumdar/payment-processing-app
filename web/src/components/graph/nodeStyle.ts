@@ -7,6 +7,11 @@
  * indigo end, code and tests through the blues and cyans, deployment and
  * release at the teal end.
  *
+ * The Code hierarchy shares the cyan band and separates by lightness, because
+ * a method and the class containing it are the same kind of thing at different
+ * granularity — that relationship should be visible, not disguised as two
+ * unrelated categories.
+ *
  * Defect is the single deliberate exception. It is a problem state rather than
  * a stage, and it has to be findable in a dense graph at a glance, so it takes
  * the semantic red from outside the brand band.
@@ -24,7 +29,17 @@ export const NODE_COLOR: Record<string, string> = {
   PullRequest: "var(--color-stage-9)",
   CustodySpan: "var(--color-stage-10)",
   PipelineRun: "var(--color-stage-11)",
-  CodeUnit: "var(--color-stage-12)",
+
+  // The code hierarchy: coarse to fine, dark to light within the cyan band.
+  Code: "var(--color-stage-12)",
+  CodeFile: "var(--color-stage-11)",
+  CodeClass: "var(--color-stage-12)",
+  CodeInterface: "var(--color-stage-12)",
+  CodeRecord: "var(--color-stage-13)",
+  CodeEnum: "var(--color-stage-13)",
+  CodeMethod: "var(--color-stage-13)",
+  CodeField: "var(--color-stage-15)",
+
   TestCase: "var(--color-stage-14)",
   TestRun: "var(--color-stage-14)",
   Deployment: "var(--color-stage-15)",
@@ -39,19 +54,63 @@ export const NODE_RADIUS: Record<string, number> = {
   WorkPacket: 20,
   Person: 20,
   Defect: 19,
-  CodeUnit: 16,
-  TestCase: 16,
   PullRequest: 18,
-  Commit: 15,
-  CustodySpan: 14,
-  Deployment: 17,
-  PipelineRun: 15,
-  WorkItem: 17,
-  Stage: 14,
-  SourceAccount: 14,
   Document: 18,
   Release: 18,
+  WorkItem: 17,
+  Deployment: 17,
+  TestCase: 16,
+  Commit: 15,
+  PipelineRun: 15,
+  CustodySpan: 14,
+  Stage: 14,
+  SourceAccount: 14,
   TestRun: 14,
+
+  Code: 16,
+  CodeFile: 18,
+  CodeClass: 17,
+  CodeInterface: 17,
+  CodeRecord: 16,
+  CodeEnum: 15,
+  CodeMethod: 14,
+  CodeField: 11,
 };
 
-export const TYPE_ORDER = Object.keys(NODE_COLOR);
+/** What to call a class on screen. The store needs unambiguous type names;
+ *  a reader does not need the "Code" prefix repeated eight times. */
+export const TYPE_LABEL: Record<string, string> = {
+  Code: "Code (all)",
+  CodeFile: "File",
+  CodeClass: "Class",
+  CodeInterface: "Interface",
+  CodeEnum: "Enum",
+  CodeRecord: "Record",
+  CodeMethod: "Method",
+  CodeField: "Field",
+  CustodySpan: "Custody span",
+  SourceAccount: "Source account",
+  WorkPacket: "Work packet",
+  WorkItem: "Work item",
+  PullRequest: "Pull request",
+  PipelineRun: "Pipeline run",
+  TestCase: "Test case",
+  TestRun: "Test run",
+};
+
+export const typeLabel = (type: string): string => TYPE_LABEL[type] ?? type;
+
+/** Subtypes of Code, so the explorer can group them under one heading and
+ *  offer "everything" alongside the specific classes. */
+export const CODE_TYPES = [
+  "CodeFile",
+  "CodeClass",
+  "CodeInterface",
+  "CodeEnum",
+  "CodeRecord",
+  "CodeMethod",
+  "CodeField",
+];
+
+export const isCodeType = (type: string): boolean =>
+  type === "Code" || CODE_TYPES.includes(type);

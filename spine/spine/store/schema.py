@@ -53,8 +53,12 @@ VERTEX_TYPES: dict[str, dict[str, Any]] = {
     "Deployment": {"key": "deployment_id", "properties": {"deployment_id": "STRING", "environment": "STRING", "status": "STRING", "created_at": "STRING", "gate_approved": "BOOLEAN"}},
     "Release": {"key": "tag", "properties": {"tag": "STRING", "released_at": "STRING"}},
     "Stage": {"key": "stage_id", "properties": {"stage_id": "STRING", "label": "STRING", "position": "INTEGER", "is_gate": "BOOLEAN", "accountable_role": "STRING"}},
-    # Populated by the code graph builder.
-    "CodeUnit": {"key": "unit_id", "properties": {"unit_id": "STRING", "kind": "STRING", "name": "STRING", "path": "STRING", "start_line": "INTEGER", "end_line": "INTEGER", "introduced_in_pr": "INTEGER", "introduced_in_sha": "STRING", "last_changed_pr": "INTEGER", "last_changed_sha": "STRING", "touched_by_prs": "STRING", "signature": "STRING"}},
+    # `Code` is the supertype every parsed unit shares. Concrete subtypes are
+    # declared below and created with EXTENDS, so a node is both `Code` and the
+    # thing it actually is: MATCH (c:Code) spans the codebase, MATCH
+    # (m:CodeMethod) narrows to methods. "CodeUnit" said nothing about what a
+    # node was when we have real classes, methods and fields to name.
+    "Code": {"key": "unit_id", "properties": {"unit_id": "STRING", "kind": "STRING", "name": "STRING", "path": "STRING", "start_line": "INTEGER", "end_line": "INTEGER", "introduced_in_pr": "INTEGER", "introduced_in_sha": "STRING", "last_changed_pr": "INTEGER", "last_changed_sha": "STRING", "touched_by_prs": "STRING", "signature": "STRING"}},
     "CustodySpan": {"key": "span_id", "properties": {"span_id": "STRING", "packet_id": "STRING", "stage_id": "STRING", "person_id": "STRING", "entered_at": "STRING", "exited_at": "STRING", "custody_seconds": "INTEGER", "calendar_adjusted_seconds": "INTEGER", "activity_signal_count": "INTEGER", "active_minutes_estimate": "INTEGER", "is_open": "BOOLEAN", "is_overdue": "BOOLEAN", "flags": "STRING"}},
 }
 
@@ -82,14 +86,35 @@ EDGE_TYPES = [
     "DEPENDS_ON",     # CodeUnit      -> CodeUnit
 ]
 
+#: Concrete code types, each EXTENDS Code. The parser's `kind` maps to these,
+#: so a method lands in CodeMethod and is still reachable as Code.
+CODE_SUBTYPES: dict[str, str] = {
+    "file": "CodeFile",
+    "class": "CodeClass",
+    "interface": "CodeInterface",
+    "enum": "CodeEnum",
+    "record": "CodeRecord",
+    "method": "CodeMethod",
+    "field": "CodeField",
+}
+
+CODE_SUPERTYPE = "Code"
+
+
+def code_type_for(kind: str) -> str:
+    """Concrete vertex type for a parsed unit, falling back to the supertype so
+    an unrecognised kind is still stored rather than dropped."""
+    return CODE_SUBTYPES.get(kind, CODE_SUPERTYPE)
+
+
 #: Everything projected, for reporting.
-PROJECTION_TYPES = list(VERTEX_TYPES) + EDGE_TYPES
+PROJECTION_TYPES = list(VERTEX_TYPES) + list(CODE_SUBTYPES.values()) + EDGE_TYPES
 
 #: The code graph is derived from the SOURCE TREE, not from the event log, so
 #: `reproject` must not drop it -- there would be nothing in the log to rebuild
 #: it from. It is refreshed by `codegraph` instead, and traceability links from
 #: the RTM attach to it, which is why codegraph runs first.
-CODE_TYPES = ["CodeUnit"]
+CODE_TYPES = [CODE_SUPERTYPE, *CODE_SUBTYPES.values()]
 CODE_EDGE_TYPES = ["CONTAINS", "CALLS", "DEPENDS_ON", "TOUCHES"]
 
 #: What `reproject` owns: everything derivable from the event log.

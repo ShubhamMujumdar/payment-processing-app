@@ -393,10 +393,10 @@ class Projector:
                     if not path:
                         continue
                     matches = self.store.query(
-                        "SELECT unit_id FROM CodeUnit WHERE path LIKE ?", f"%{path}"
+                        "SELECT unit_id FROM Code WHERE path LIKE ?", f"%{path}"
                     )
                     for row in matches[:12]:
-                        unit = self.store.lookup("CodeUnit", "unit_id", row.get("unit_id"))
+                        unit = self.store.lookup("Code", "unit_id", row.get("unit_id"))
                         if unit is not None:
                             self.store.link(requirement, "IMPLEMENTS", unit, confidence=0.85,
                                             derived_by="rtm-30-code-column")

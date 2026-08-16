@@ -16,9 +16,9 @@ These cannot be solved by any amount of code. GitHub enforces them structurally.
 | 1.1 | **Add a second GitHub account as a collaborator** on `ShubhamMujumdar/payment-processing-app` | **You cannot review or approve your own pull request.** GitHub blocks it outright. | `review.requested → review.submitted` custody spans stay empty. This is the single strongest accountability signal in the whole system, and the demo has none of it without this. |
 | 1.2 | Have that collaborator approve at least 2–3 PRs | Same reason | Gate 1 (code review) produces no real custody data |
 | 1.3 | Ideally a **third** account for segregation of duties | `prevent_self_review: true` on the `production` environment means whoever pushes the tag cannot approve the release | Gate 5 cannot be demonstrated end-to-end with a real approver |
-| 1.4 | Map roster handles to real GitHub logins in `identity_map.yaml` | The ten `@shubham.mujumdar1…10` handles are Confluence identities, not GitHub accounts | Every custody span resolves to one person; per-person comparison analytics have nothing to compare |
+| 1.4 | ~~Map roster handles in `identity_map.yaml`~~ **Done 16 Aug 2026** | — | Unresolved accounts went 9 → 1, and `HELD_BY` edges 0 → 31, so custody is now attributed to named people. One assumption to confirm: `github:ShubhamMujumdar` is mapped to **p5 (Senior Engineer)**, which puts a real account onto a synthetic persona. `dev@poc.local` is deliberately left unmapped — it is a placeholder, not a person. |
 
-**Minimum viable:** one extra collaborator unlocks 1.1, 1.2 and most of 1.4. Two extra unlocks 1.3.
+**Minimum viable:** one extra collaborator unlocks 1.1 and 1.2. Two extra unlocks 1.3.
 
 ---
 

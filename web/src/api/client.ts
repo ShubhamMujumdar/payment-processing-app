@@ -214,3 +214,52 @@ export async function seedGraph(type = "Requirement", key = ""): Promise<GraphSl
     return { nodes: [], edges: [] };
   }
 }
+
+export interface SavedQuery {
+  id: string;
+  label: string;
+  description: string;
+  cypher: string;
+}
+
+/** Every node of one class, plus the edges already running between them. */
+export async function nodesOfType(type: string, limit = 200): Promise<GraphSlice> {
+  if (!graphAvailable()) return { nodes: [], edges: [] };
+  try {
+    return await fetchJson<GraphSlice>(
+      `/graph/nodes?type=${encodeURIComponent(type)}&limit=${limit}`,
+      30000,
+    );
+  } catch {
+    return { nodes: [], edges: [] };
+  }
+}
+
+export async function getSavedQueries(): Promise<SavedQuery[]> {
+  if (!graphAvailable()) return [];
+  try {
+    const res = await fetchJson<{ queries: SavedQuery[] }>("/graph/queries");
+    return res.queries;
+  } catch {
+    return [];
+  }
+}
+
+/** Run read-only Cypher and get it back as a subgraph. Write operations are
+ *  refused by the server, not merely discouraged here. */
+export async function runCypher(
+  cypher: string,
+): Promise<{ slice: GraphSlice; error: string | null }> {
+  if (!graphAvailable()) return { slice: { nodes: [], edges: [] }, error: "Live graph required." };
+  try {
+    const res = await fetch(`${BASE}/graph/query?cypher=${encodeURIComponent(cypher)}`);
+    const body = await res.json();
+    if (!res.ok) return { slice: { nodes: [], edges: [] }, error: body.detail ?? `HTTP ${res.status}` };
+    return { slice: body as GraphSlice, error: null };
+  } catch (e) {
+    return {
+      slice: { nodes: [], edges: [] },
+      error: e instanceof Error ? e.message : "Query failed",
+    };
+  }
+}

@@ -18,6 +18,8 @@ from typing import Any, Iterable, Iterator
 import arcadedb_embedded as arcade
 
 from .schema import (
+    CODE_SUBTYPES,
+    CODE_SUPERTYPE,
     DOCUMENT_TYPES,
     EDGE_TYPES,
     EVENT_EDGE_TYPES,
@@ -113,6 +115,17 @@ class Store:
                 schema.get_or_create_property(name, prop, kind)
             schema.get_or_create_index(name, [spec["key"]], unique=True)
 
+        # Code subtypes are created with SQL because the Python schema API has
+        # no parameter for a supertype. Inheritance is what lets a node be both
+        # `Code` and the concrete thing it is.
+        for subtype in CODE_SUBTYPES.values():
+            if not schema.exists_type(subtype):
+                self.db.command("sql", f"CREATE VERTEX TYPE {subtype} EXTENDS {CODE_SUPERTYPE}")
+            # A unique index per subtype: ArcadeDB indexes the type it is
+            # declared on, so one on the supertype alone will not serve lookups
+            # against a subtype.
+            schema.get_or_create_index(subtype, ["unit_id"], unique=True)
+
         for name in EDGE_TYPES:
             if not schema.exists_type(name):
                 schema.create_edge_type(name)
@@ -129,6 +142,20 @@ class Store:
         # Edges first: dropping a vertex type with live edges leaves dangling
         # references behind.
         for name in EVENT_EDGE_TYPES + EVENT_VERTEX_TYPES:
+            if schema.exists_type(name):
+                schema.drop_type(name)
+                dropped += 1
+        self.ensure_schema()
+        return dropped
+
+    def drop_code_graph(self) -> int:
+        """Drop the parsed code graph. Subtypes go before the supertype, and
+        edges before either, or the drop leaves dangling references."""
+        schema = self.db.schema
+        dropped = 0
+        from .schema import CODE_EDGE_TYPES
+
+        for name in CODE_EDGE_TYPES + list(CODE_SUBTYPES.values()) + [CODE_SUPERTYPE]:
             if schema.exists_type(name):
                 schema.drop_type(name)
                 dropped += 1
@@ -166,8 +193,15 @@ class Store:
             doc.set("body", json.dumps(body, default=str))
             doc.save()
 
+    def _key_property(self, type_name: str) -> str:
+        if type_name in VERTEX_TYPES:
+            return VERTEX_TYPES[type_name]["key"]
+        if type_name == CODE_SUPERTYPE or type_name in CODE_SUBTYPES.values():
+            return "unit_id"
+        raise KeyError(f"Unknown vertex type {type_name!r}")
+
     def upsert_vertex(self, type_name: str, key_value: str, props: dict[str, Any]) -> Any:
-        key = VERTEX_TYPES[type_name]["key"]
+        key = self._key_property(type_name)
         existing = self.lookup(type_name, key, key_value)
         if existing is not None:
             vertex = existing.modify()
@@ -215,6 +249,59 @@ class Store:
 
     def cypher(self, statement: str, *args: Any) -> list[dict[str, Any]]:
         return self.query(statement, *args, language="cypher")
+
+    def typed_rows(
+        self, statement: str, *args: Any, language: str = "sql"
+    ) -> list[tuple[str | None, dict[str, Any]]]:
+        """Rows as (vertex type name, properties).
+
+        The type comes from the record itself. Inferring it from which key
+        property is present looks reasonable and is wrong: a CustodySpan
+        carries packet_id, stage_id and person_id as ordinary properties, so
+        property-sniffing identifies it as a WorkPacket or a Stage depending on
+        dictionary order.
+        """
+        out: list[tuple[str | None, dict[str, Any]]] = []
+        for result in self.db.query(language, statement, *args):
+            try:
+                vertex = result.get_vertex()
+                out.append((str(vertex.get_type_name()), vertex.to_dict()))
+            except Exception:
+                out.append((None, result.to_dict()))
+        return out
+
+    @staticmethod
+    def _wrap_vertex(value: Any) -> tuple[str, dict[str, Any]] | None:
+        """(type name, properties) for a returned vertex handle, else None."""
+        if isinstance(value, (str, int, float, bool, type(None), dict, list)):
+            return None
+        try:
+            vertex = arcade.Vertex.wrap(value)
+            return str(vertex.get_type_name()), vertex.to_dict()
+        except Exception:
+            return None
+
+    def cypher_rows(self, statement: str, *args: Any) -> list[dict[str, Any]]:
+        """Cypher results split into vertices and scalars.
+
+        `RETURN n` gives back a Java vertex handle, and while the row also
+        carries the property NAMES as keys, their values are empty - reading the
+        row directly yields a record of Nones. The handle has to be wrapped to
+        get the actual data, which is what this does.
+        """
+        rows: list[dict[str, Any]] = []
+        for result in self.db.query("cypher", statement, *args):
+            raw = result.to_dict()
+            vertices: list[tuple[str | None, dict[str, Any]]] = []
+            scalars: dict[str, Any] = {}
+            for key, value in raw.items():
+                wrapped = self._wrap_vertex(value)
+                if wrapped is not None:
+                    vertices.append(wrapped)
+                elif isinstance(value, (str, int, float, bool)):
+                    scalars[key] = value
+            rows.append({"vertices": vertices, "scalars": scalars})
+        return rows
 
     def count(self, type_name: str) -> int:
         try:

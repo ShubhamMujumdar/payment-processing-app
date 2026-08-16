@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PageMeta from "../components/common/PageMeta";
 import GraphCanvas from "../components/graph/GraphCanvas";
-import { NODE_COLOR } from "../components/graph/nodeStyle";
+import ClassBrowser from "../components/graph/ClassBrowser";
+import { NODE_COLOR, typeLabel } from "../components/graph/nodeStyle";
 import {
   expandNode,
   getGraphNode,
   getGraphSchema,
+  getSavedQueries,
+  nodesOfType,
+  runCypher,
   searchGraph,
   seedGraph,
   type GraphEdge,
   type GraphNode,
   type GraphSchema,
+  type SavedQuery,
 } from "../api/client";
 
 /**
@@ -35,11 +40,20 @@ export default function KnowledgeGraph() {
   const [results, setResults] = useState<GraphNode[]>([]);
   const searchTimer = useRef<number | null>(null);
 
+  const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([]);
+  const [loadingClass, setLoadingClass] = useState<string | null>(null);
+  const [queryError, setQueryError] = useState<string | null>(null);
+
   /* --- bootstrap ---------------------------------------------------------- */
   useEffect(() => {
     (async () => {
-      const [s, seed] = await Promise.all([getGraphSchema(), seedGraph("Requirement")]);
+      const [s, seed, saved] = await Promise.all([
+        getGraphSchema(),
+        seedGraph("Requirement"),
+        getSavedQueries(),
+      ]);
       setSchema(s);
+      setSavedQueries(saved);
       setNodes(seed.nodes);
       setEdges(seed.edges);
       // The seed already includes one node's neighbourhood, so mark it opened.
@@ -88,6 +102,47 @@ export default function KnowledgeGraph() {
       merge({ nodes: [...slice.nodes], edges: slice.edges });
       setExpandedIds((prev) => new Set(prev).add(id));
       setBusyId(null);
+    },
+    [merge],
+  );
+
+  const loadClass = useCallback(
+    async (type: string) => {
+      setLoadingClass(type);
+      setQueryError(null);
+      const slice = await nodesOfType(type, 250);
+      if (slice.nodes.length === 0) {
+        setQueryError(`No ${typeLabel(type)} nodes found.`);
+      }
+      merge(slice);
+      setLoadingClass(null);
+    },
+    [merge],
+  );
+
+  const runSaved = useCallback(
+    async (q: SavedQuery) => {
+      setLoadingClass(q.id);
+      setQueryError(null);
+      const { slice, error } = await runCypher(q.cypher);
+      if (error) setQueryError(error);
+      else if (slice.nodes.length === 0) setQueryError("Query returned no nodes.");
+      merge(slice);
+      setLoadingClass(null);
+    },
+    [merge],
+  );
+
+  const runCustom = useCallback(
+    async (cypher: string) => {
+      if (!cypher.trim()) return;
+      setLoadingClass("custom");
+      setQueryError(null);
+      const { slice, error } = await runCypher(cypher);
+      if (error) setQueryError(error);
+      else if (slice.nodes.length === 0) setQueryError("Query returned no nodes.");
+      merge(slice);
+      setLoadingClass(null);
     },
     [merge],
   );
@@ -192,7 +247,7 @@ export default function KnowledgeGraph() {
                   />
                   <span className="truncate font-mono text-[11.5px] text-gray-200">{r.caption}</span>
                   <span className="ml-auto shrink-0 font-mono text-[9px] text-gray-600">
-                    {r.type}
+                    {typeLabel(r.type)}
                   </span>
                 </button>
               ))}
@@ -209,13 +264,23 @@ export default function KnowledgeGraph() {
       </div>
 
       <div className="flex h-[calc(100vh-90px)]">
+        <ClassBrowser
+          types={schema.types}
+          onLoadClass={loadClass}
+          queries={savedQueries}
+          onRunQuery={runSaved}
+          onRunCypher={runCustom}
+          busy={loadingClass}
+          queryError={queryError}
+        />
+
         {/* Canvas */}
         <div className="relative flex-1">
           {nodes.length === 0 ? (
             <div className="flex h-full items-center justify-center">
               <p className="max-w-sm text-center text-[12px] leading-relaxed text-gray-600">
-                Canvas is empty. Search for a requirement, a class or a defect to drop it in, then
-                double-click nodes to expand outwards.
+                Canvas is empty. Click a class on the left, run a saved query, or search for
+                something specific — then double-click nodes to expand outwards.
               </p>
             </div>
           ) : (
@@ -242,7 +307,7 @@ export default function KnowledgeGraph() {
                     style={{ background: NODE_COLOR[detail.type] ?? "var(--color-state-idle)" }}
                   />
                   <span className="font-mono text-[10px] uppercase tracking-wider text-gray-500">
-                    {detail.type}
+                    {typeLabel(detail.type)}
                   </span>
                   {detail.degree != null && (
                     <span className="ml-auto font-mono text-[10px] text-gray-600">
@@ -329,7 +394,7 @@ export default function KnowledgeGraph() {
                         className="size-2.5 rounded-full"
                         style={{ background: NODE_COLOR[type] ?? "var(--color-state-idle)" }}
                       />
-                      <span className="text-[11.5px] text-gray-300">{type}</span>
+                      <span className="text-[11.5px] text-gray-300">{typeLabel(type)}</span>
                       <span className="tnum ml-auto font-mono text-[10px] text-gray-600">
                         {count}
                       </span>

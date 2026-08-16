@@ -36,7 +36,23 @@ app.add_middleware(
 
 @lru_cache(maxsize=1)
 def _store() -> Store:
-    return Store(config().db_path).open()
+    """One shared handle for the process.
+
+    Opened through the ArcadeDB server when a root password is configured, so
+    Studio is served from the same database rather than needing a second copy.
+    """
+    cfg = config()
+    store = Store(cfg.db_path)
+    if cfg.studio_enabled:
+        return store.open_with_studio(cfg.arcade_root_password or "")
+    return store.open()
+
+
+@app.get("/studio")
+def studio() -> dict[str, Any]:
+    """Where ArcadeDB Studio is, if it is running."""
+    url = _store().studio_url
+    return {"enabled": url is not None, "url": url}
 
 
 def _int(value: Any, default: int = 0) -> int:

@@ -1,5 +1,23 @@
 
-2026-08-15 19:20:07.693 WARNI [LocalDatabase] Database 'spine' was not closed properly last time
-2026-08-15 19:20:07.693 WARNI [TransactionManager] Started recovery of database 'spine'
-2026-08-15 19:20:07.728 WARNI [TransactionManager] Recovery of database 'spine' completed
-2026-08-15 19:20:08.430 WARNI [GraalPolyglotEngine] GraalVM Polyglot Engine: no languages found
+2026-08-15 20:02:56.057 INFO  [ArcadeDBServer] <ArcadeDB_0> ArcadeDB Server v26.8.1 (build 727aa4568cdface314ee15cd242f71d6299b2b0c/1785790932717/main) is starting up...
+2026-08-15 20:02:56.060 INFO  [ArcadeDBServer] <ArcadeDB_0> Running on Windows 11 10.0 - OpenJDK 64-Bit Server VM 25.0.4 (Corretto-25.0.4.7.1)
+2026-08-15 20:02:56.078 INFO  [PluginManager] <ArcadeDB_0> Discovered plugin on main class loader: MCPPlugin (auto-discovered)
+2026-08-15 20:02:56.081 INFO  [PluginManager] <ArcadeDB_0> Discovered plugin on main class loader: AutoBackupSchedulerPlugin
+2026-08-15 20:02:56.081 INFO  [PluginManager] <ArcadeDB_0> Plugins directory not found: C:\Shubham\cognizant_projects\visa_platform\dashboard\data\lib\plugins
+2026-08-15 20:02:56.082 INFO  [ArcadeDBServer] <ArcadeDB_0> Starting ArcadeDB Server in development mode with plugins [MCPPlugin, AutoBackupSchedulerPlugin] ...
+2026-08-15 20:02:56.175 WARNI [GraalPolyglotEngine] <ArcadeDB_0> GraalVM Polyglot Engine: no languages found
+2026-08-15 20:02:56.197 INFO  [ArcadeDBServer] <ArcadeDB_0> Metrics Collection Started
+2026-08-15 20:02:56.237 INFO  [ArcadeDBServer] <ArcadeDB_0> Paths - server root: C:\Shubham\cognizant_projects\visa_platform\dashboard\data - databases: C:\Shubham\cognizant_projects\visa_platform\dashboard\data/databases - backups: C:\Shubham\cognizant_projects\visa_platform\dashboard\data/backups
+2026-08-15 20:02:56.431 WARNI [LocalDatabase] <ArcadeDB_0> Database 'spine' was not closed properly last time
+2026-08-15 20:02:56.431 WARNI [TransactionManager] <ArcadeDB_0> Started recovery of database 'spine'
+2026-08-15 20:02:56.470 WARNI [TransactionManager] <ArcadeDB_0> Recovery of database 'spine' completed
+2026-08-15 20:02:56.488 INFO  [PluginManager] <ArcadeDB_0> - MCPPlugin plugin started
+2026-08-15 20:02:56.489 INFO  [HttpServer] <ArcadeDB_0> - Starting HTTP Server (host=localhost port=[2480, 2480] httpsPort=[2490, 2499])...
+2026-08-15 20:02:56.726 INFO  [MCPPlugin] <ArcadeDB_0> MCP server endpoint registered at /api/v1/mcp
+2026-08-15 20:02:56.901 INFO  [HttpServer] <ArcadeDB_0> - HTTP Server started (host=localhost port=2480 httpsPort=2490)
+2026-08-15 20:02:56.903 INFO  [AutoBackupSchedulerPlugin] <ArcadeDB_0> Auto-backup scheduler disabled: config/backup.json not found
+2026-08-15 20:02:56.904 INFO  [PluginManager] <ArcadeDB_0> - AutoBackupSchedulerPlugin plugin configured but not active
+2026-08-15 20:02:56.904 INFO  [ArcadeDBServer] <ArcadeDB_0> Available query languages: [java, sql, sqlscript, opencypher, graphql, redis, cypher]
+2026-08-15 20:02:56.905 INFO  [ArcadeDBServer] <ArcadeDB_0> ArcadeDB Server started in 'development' mode (CPUs=16 MAXRAM=4.00GB)
+2026-08-15 20:02:56.907 INFO  [ArcadeDBServer] <ArcadeDB_0> ❤ ArcadeDB is free and open source, sustained by its community. If it helps you, please consider sponsoring: https://github.com/sponsors/ArcadeData
+2026-08-15 20:02:56.909 INFO  [ArcadeDBServer] <ArcadeDB_0> Studio web tool available at http://localhost:2480 

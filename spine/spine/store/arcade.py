@@ -31,6 +31,8 @@ class Store:
     def __init__(self, path: str | Path):
         self.path = str(Path(path).resolve())
         self._db: Any | None = None
+        self._server: Any | None = None
+        self.studio_url: str | None = None
 
     # --- lifecycle ---------------------------------------------------------
     def open(self) -> "Store":
@@ -41,10 +43,44 @@ class Store:
         self.ensure_schema()
         return self
 
+    def open_with_studio(self, root_password: str) -> "Store":
+        """Open through an ArcadeDB server so Studio is available too.
+
+        The embedded engine takes an exclusive lock on the database directory,
+        so a separate Studio process cannot attach to the same store. Starting
+        the server here and taking its database handle gives both surfaces from
+        one process instead of needing a second copy of the data.
+
+        Layout matters: the server resolves databases as <root>/databases/<name>,
+        which is why db_path follows that convention.
+        """
+        path = Path(self.path)
+        root, name = path.parent.parent, path.name
+        root.mkdir(parents=True, exist_ok=True)
+
+        self._server = arcade.create_server(root_path=str(root), root_password=root_password)
+        self._server.start()
+        self.studio_url = self._server.get_studio_url()
+
+        try:
+            self._db = self._server.get_database(name)
+        except Exception:
+            self._db = self._server.create_database(name)
+
+        self.ensure_schema()
+        return self
+
     def close(self) -> None:
         if self._db is not None:
-            self._db.close()
+            # A server-owned handle is closed by stopping the server; closing it
+            # directly leaves the server holding a dead reference.
+            if self._server is None:
+                self._db.close()
             self._db = None
+        if self._server is not None:
+            self._server.stop()
+            self._server = None
+            self.studio_url = None
 
     def __enter__(self) -> "Store":
         return self.open()

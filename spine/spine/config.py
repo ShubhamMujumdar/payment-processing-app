@@ -32,10 +32,18 @@ class Config:
     #: The subject codebase parsed into CodeUnit vertices.
     source_dir: Path
     identity_map: Path
+    #: Set to also start ArcadeDB Studio alongside the read API.
+    arcade_root_password: str | None
 
     @property
     def has_github(self) -> bool:
         return bool(self.github_token)
+
+    @property
+    def studio_enabled(self) -> bool:
+        # Studio needs a root password of at least 8 characters; anything
+        # shorter is rejected by the server at startup rather than at use.
+        return bool(self.arcade_root_password and len(self.arcade_root_password) >= 8)
 
 
 def _resolve(raw: str | None, default: Path) -> Path:
@@ -53,8 +61,14 @@ def config() -> Config:
     return Config(
         github_token=os.getenv("GITHUB_TOKEN") or None,
         github_repo=os.getenv("GITHUB_REPO", "ShubhamMujumdar/payment-processing-app"),
-        db_path=_resolve(os.getenv("ARCADE_DB_PATH"), DASHBOARD_ROOT / "data" / "spine"),
+        # ArcadeDB server mode looks for databases under <root>/databases/<name>,
+        # so the embedded path follows that convention too. Otherwise the same
+        # store cannot be opened both ways, and Studio would need a second copy.
+        db_path=_resolve(
+            os.getenv("ARCADE_DB_PATH"), DASHBOARD_ROOT / "data" / "databases" / "spine"
+        ),
         requirements_dir=REPO_ROOT / "docs" / "requirements",
         source_dir=REPO_ROOT / "app_src",
         identity_map=DASHBOARD_ROOT / "identity_map.yaml",
+        arcade_root_password=os.getenv("ARCADE_ROOT_PASSWORD") or None,
     )

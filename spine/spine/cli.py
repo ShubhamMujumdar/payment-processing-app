@@ -133,6 +133,12 @@ def serve() -> int:
     import uvicorn
 
     port = int(os.getenv("SPINE_PORT", "8077"))
+    cfg = config()
+    print(f"read API      http://127.0.0.1:{port}")
+    if cfg.studio_enabled:
+        print("ArcadeDB Studio http://localhost:2480  (user 'root')")
+    else:
+        print("ArcadeDB Studio disabled - set ARCADE_ROOT_PASSWORD (8+ chars) in dashboard/.env")
     uvicorn.run("spine.api.server:app", host="127.0.0.1", port=port, reload=False)
     return 0
 

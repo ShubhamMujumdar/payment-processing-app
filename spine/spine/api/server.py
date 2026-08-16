@@ -21,6 +21,7 @@ from ..config import config
 from ..core.identity import ROSTER
 from ..projector.graph import STAGES, STAGE_POSITION
 from ..store.arcade import Store
+from ..store.schema import EDGE_TYPES as EDGE_TYPES_FOR_UI
 
 app = FastAPI(title="SDLC Spine", version="0.1.0")
 
@@ -458,3 +459,52 @@ def code_by_pr(number: int) -> dict[str, Any]:
         "changed": [r for r in hit if _int(r.get("introduced_in_pr")) != number],
         "total": len(hit),
     }
+
+
+# ---------------------------------------------------------------------------
+# Generic graph exploration, for the canvas.
+# ---------------------------------------------------------------------------
+from .graph import GraphExplorer  # noqa: E402
+
+
+def _explorer() -> GraphExplorer:
+    return GraphExplorer(_store())
+
+
+@app.get("/graph/schema")
+def graph_schema() -> dict[str, Any]:
+    return {"types": _explorer().type_counts(), "edgeTypes": EDGE_TYPES_FOR_UI}
+
+
+@app.get("/graph/search")
+def graph_search(q: str = "", limit: int = 40) -> dict[str, Any]:
+    if not q.strip():
+        return {"nodes": []}
+    return {"nodes": _explorer().search(q, limit)}
+
+
+@app.get("/graph/node")
+def graph_node(id: str) -> dict[str, Any]:
+    found = _explorer().node(id)
+    if found is None:
+        raise HTTPException(status_code=404, detail="No such node")
+    explorer = _explorer()
+    return {**found, "degree": explorer.degree(id)}
+
+
+@app.get("/graph/expand")
+def graph_expand(id: str, limit: int = 25) -> dict[str, Any]:
+    return _explorer().expand(id, limit)
+
+
+@app.get("/graph/seed")
+def graph_seed(type: str = "Requirement", key: str = "", limit: int = 12) -> dict[str, Any]:
+    """An opening view. Defaults to the most connected requirement rather than
+    an arbitrary one, so the canvas opens on something worth looking at."""
+    explorer = _explorer()
+    if key:
+        return explorer.subgraph([f"{type}:{key}"], limit)
+    best = explorer.most_connected(type)
+    if best is None:
+        return {"nodes": [], "edges": []}
+    return explorer.subgraph([best], limit)

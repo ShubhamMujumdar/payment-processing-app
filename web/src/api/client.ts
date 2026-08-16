@@ -129,3 +129,88 @@ export async function getCodeGraph(): Promise<CodeGraph | null> {
     return null;
   }
 }
+
+/* --- generic graph exploration ------------------------------------------- */
+
+export interface GraphNode {
+  /** `Type:naturalKey`. Stable across reprojection, unlike a storage RID. */
+  id: string;
+  type: string;
+  key: string;
+  caption: string;
+  subtitle: string;
+  properties: Record<string, unknown>;
+  degree?: number;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  type: string;
+}
+
+export interface GraphSlice {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+export interface GraphSchema {
+  types: { type: string; count: number }[];
+  edgeTypes: string[];
+}
+
+const graphAvailable = () => MODE === "live";
+
+export async function getGraphSchema(): Promise<GraphSchema | null> {
+  if (!graphAvailable()) return null;
+  try {
+    return await fetchJson<GraphSchema>("/graph/schema");
+  } catch {
+    return null;
+  }
+}
+
+export async function searchGraph(q: string, limit = 40): Promise<GraphNode[]> {
+  if (!graphAvailable() || !q.trim()) return [];
+  try {
+    const res = await fetchJson<{ nodes: GraphNode[] }>(
+      `/graph/search?q=${encodeURIComponent(q)}&limit=${limit}`,
+    );
+    return res.nodes;
+  } catch {
+    return [];
+  }
+}
+
+export async function expandNode(id: string, limit = 25): Promise<GraphSlice> {
+  if (!graphAvailable()) return { nodes: [], edges: [] };
+  try {
+    return await fetchJson<GraphSlice>(
+      `/graph/expand?id=${encodeURIComponent(id)}&limit=${limit}`,
+      25000,
+    );
+  } catch {
+    return { nodes: [], edges: [] };
+  }
+}
+
+export async function getGraphNode(id: string): Promise<GraphNode | null> {
+  if (!graphAvailable()) return null;
+  try {
+    return await fetchJson<GraphNode>(`/graph/node?id=${encodeURIComponent(id)}`);
+  } catch {
+    return null;
+  }
+}
+
+export async function seedGraph(type = "Requirement", key = ""): Promise<GraphSlice> {
+  if (!graphAvailable()) return { nodes: [], edges: [] };
+  try {
+    return await fetchJson<GraphSlice>(
+      `/graph/seed?type=${encodeURIComponent(type)}&key=${encodeURIComponent(key)}`,
+      25000,
+    );
+  } catch {
+    return { nodes: [], edges: [] };
+  }
+}

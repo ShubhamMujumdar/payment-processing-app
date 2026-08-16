@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/d3-force": "^3.0.10",
     "apexcharts": "^4.1.0",
     "clsx": "^2.1.1",
+    "d3-force": "^3.0.0",
     "react": "^19.0.0",
     "react-apexcharts": "^1.7.0",
     "react-dom": "^19.0.0",

@@ -63,7 +63,16 @@ class GitHubConnector:
         self._client.close()
 
     # --- transport ---------------------------------------------------------
-    def _get(self, path: str, **params: Any) -> Any:
+    def _get(self, path: str, tolerate_missing: bool = False, **params: Any) -> Any:
+        """One GET, with retries.
+
+        ``tolerate_missing`` turns a 404 into an empty result instead of an
+        error. GitHub answers 404 for sub-resources that exist but are empty --
+        a pull request with no reviews returns 404 carrying a body of ``[]`` --
+        and treating that as fatal aborted the entire ingest over a pull request
+        that simply had not been reviewed. Which, on this repository, is all of
+        them: GitHub does not permit reviewing your own.
+        """
         for attempt in range(4):
             response = self._client.get(path, params=params)
             if response.status_code == 403 and "rate limit" in response.text.lower():
@@ -76,6 +85,8 @@ class GitHubConnector:
             if response.status_code >= 500:
                 time.sleep(2**attempt)
                 continue
+            if response.status_code == 404 and tolerate_missing:
+                return []
             response.raise_for_status()
             return response.json()
         raise RuntimeError(f"GitHub did not respond successfully for {path}")
@@ -176,7 +187,7 @@ class GitHubConnector:
 
             # Empty on this repository today: a single account cannot review its
             # own pull request.
-            for review in self._get(f"/repos/{self.repo}/pulls/{number}/reviews") or []:
+            for review in self._get(f"/repos/{self.repo}/pulls/{number}/reviews", tolerate_missing=True) or []:
                 yield Event(
                     source=self.source,
                     source_event_id=f"review-{review['id']}",
@@ -243,7 +254,7 @@ class GitHubConnector:
                 raw=deployment,
             )
 
-            for status in self._get(f"/repos/{self.repo}/deployments/{dep_id}/statuses") or []:
+            for status in self._get(f"/repos/{self.repo}/deployments/{dep_id}/statuses", tolerate_missing=True) or []:
                 state = status.get("state")
                 verb = {
                     "success": Verb.DEPLOYMENT_SUCCEEDED,

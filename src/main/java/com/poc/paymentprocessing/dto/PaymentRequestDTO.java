@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +36,7 @@ public class PaymentRequestDTO {
 
     @NotBlank(message = "currency is required")
     @Size(min = 3, max = 3, message = "currency must be a 3-letter ISO code")
+    @Pattern(regexp = "[A-Z]{3}", message = "currency must be uppercase")
     private String currency;
 
     @NotNull(message = "paymentMethod is required")

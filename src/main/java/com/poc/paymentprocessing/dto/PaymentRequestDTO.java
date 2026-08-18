@@ -1,6 +1,7 @@
 package com.poc.paymentprocessing.dto;
 
 import com.poc.paymentprocessing.entity.PaymentMethod;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,6 +30,7 @@ public class PaymentRequestDTO {
 
     @NotNull(message = "amount is required")
     @DecimalMin(value = "1.00", message = "amount must be at least 1.00")
+    @DecimalMax(value = "1000000.00", message = "amount must not exceed 1000000.00")
     private BigDecimal amount;
 
     @NotBlank(message = "currency is required")

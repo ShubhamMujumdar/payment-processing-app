@@ -36,6 +36,19 @@ Every script is safe to re-run. `setup` checks before it acts, so a second run
 finishes in seconds and tells you what it found. If something is wrong later,
 `./doctor.sh` (or `doctor.cmd`) reports what without changing anything.
 
+**One thing a clone does not bring with it: the delivery graph.** ArcadeDB is a
+live database directory, so `data/` is not in git. code2doc is complete on a
+fresh clone -- the documentation corpus and its index are committed -- but the
+delivery, traceability and graph views are empty until you build the graph once:
+
+```bash
+python scripts/run.py start --rebuild
+```
+
+That reads GitHub, so it needs a `GITHUB_TOKEN` with access to the subject
+repository. It takes a few minutes and you only do it once; `setup` tells you
+whether you still need to.
+
 ### Where things end up
 
 | Surface | URL | What it is |
@@ -84,9 +97,13 @@ disables exactly one part of the demo if left blank, and `doctor` says which.
 | `ANTHROPIC_API_KEY` | https://console.anthropic.com/settings/keys | No analysis or redlines |
 
 **The committed index means you can skip Confluence entirely to start.**
-`demo/docs/` (the corpus as Markdown) and `demo/data/` (the Chroma index) are in
-git, so retrieval works on a fresh clone with no Atlassian account. You only
-need Confluence credentials to re-ingest or to publish.
+`demo/docs/` (the corpus as Markdown) and `demo/data/` (the ~1 MB Chroma index)
+are in git, so retrieval works on a fresh clone with no Atlassian account. You
+only need Confluence credentials to re-ingest or to publish.
+
+`GITHUB_TOKEN` is the one credential with a second job: besides watching commits
+it is what `--rebuild` uses to build the delivery graph, so the delivery and
+traceability views need it even though code2doc does not.
 
 ---
 

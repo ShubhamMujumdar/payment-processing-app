@@ -46,10 +46,19 @@ MODELS = {
 
 #: Imported by the demo service. torch and sentence-transformers are excluded
 #: on purpose -- they are 2.5GB and their install varies by GPU, so they get
-#: their own check and their own message.
-PY_PACKAGES = [
+#: their own check and their own message. Every name here must be satisfied by
+#: demo/requirements.txt, or --fix installs and then reports the same package
+#: missing forever.
+DEMO_PACKAGES = [
     "fastapi", "uvicorn", "pydantic", "dotenv", "httpx", "numpy",
     "bs4", "lxml", "chromadb", "anthropic",
+]
+
+#: Imported by the spine. Kept separate from the demo's because the two services
+#: may run on different interpreters -- see interpreter_for().
+SPINE_PACKAGES = [
+    "arcadedb_embedded", "fastapi", "uvicorn", "httpx", "dotenv",
+    "tree_sitter", "tree_sitter_java",
 ]
 
 results: list[tuple[str, str, str]] = []
@@ -125,21 +134,50 @@ def check_torch() -> None:
             report("fail", package, "pip install sentence-transformers transformers")
 
 
-def check_packages(fix: bool) -> None:
-    missing = [p for p in PY_PACKAGES if importlib.util.find_spec(p) is None]
+def interpreter_for(service_dir: Path) -> str:
+    """The interpreter that will actually run this service.
+
+    Mirrors `run.py:python_for()` exactly. Checking sys.executable while the
+    service will start from `spine/.venv` is how setup reports Ready and start
+    then fails on `tree_sitter_java`.
+    """
+    bin_dir, exe = ("Scripts", "python.exe") if os.name == "nt" else ("bin", "python")
+    candidate = service_dir / ".venv" / bin_dir / exe
+    return str(candidate) if candidate.exists() else sys.executable
+
+
+PROBE = (
+    "import importlib.util, sys; "
+    "print(' '.join(p for p in sys.argv[1:] if importlib.util.find_spec(p) is None))"
+)
+
+
+def missing_from(python: str, packages: list[str]) -> list[str]:
+    if python == sys.executable:
+        return [p for p in packages if importlib.util.find_spec(p) is None]
+    code, out = run(python, "-c", PROBE, *packages)
+    if code != 0:
+        return packages  # cannot probe it, so treat everything as absent
+    return out.split()
+
+
+def check_packages(fix: bool, label: str, packages: list[str], requirements: Path, python: str) -> None:
+    where = "" if python == sys.executable else f"\ninterpreter: {python}"
+    rel = requirements.relative_to(ROOT).as_posix()
+    missing = missing_from(python, packages)
     if not missing:
-        report("ok", "Python packages", f"{len(PY_PACKAGES)} present")
+        report("ok", label, f"{len(packages)} present{where}")
         return
     if fix:
-        print(f"         {DIM}installing {', '.join(missing)}…{RESET}")
-        code, out = run(sys.executable, "-m", "pip", "install", "-q", "-r", str(DEMO / "requirements.txt"))
-        still = [p for p in missing if importlib.util.find_spec(p) is None]
+        print(f"         {DIM}installing {', '.join(missing)}{RESET}")
+        code, out = run(python, "-m", "pip", "install", "-q", "-r", str(requirements))
+        still = missing_from(python, packages)
         if still:
-            report("fail", "Python packages", f"still missing: {', '.join(still)}\n{out[-400:]}")
+            report("fail", label, f"still missing: {', '.join(still)}\nFix: pip install -r {rel}{where}\n{out[-400:]}")
         else:
-            report("ok", "Python packages", "installed")
+            report("ok", label, f"installed{where}")
     else:
-        report("fail", "Python packages", f"missing: {', '.join(missing)}\nFix: pip install -r demo/requirements.txt")
+        report("fail", label, f"missing: {', '.join(missing)}\nFix: pip install -r {rel}{where}")
 
 
 def model_dir(name: str) -> Path | None:
@@ -198,6 +236,44 @@ def check_models(fix: bool) -> None:
             report("fail", name, f"download failed: {exc}")
 
 
+def check_root_env(fix: bool) -> None:
+    """The spine's own .env. Separate from the demo's, and easy to forget.
+
+    Nothing here is required -- a blank ARCADE_ROOT_PASSWORD just means the
+    graph opens embedded and Studio is not served -- so this never fails.
+    """
+    env, example = ROOT / ".env", ROOT / ".env.example"
+    if not env.exists():
+        if not (fix and example.exists()):
+            report("warn", ".env", "missing. Fix: copy .env.example to .env")
+            return
+        env.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
+        report("warn", ".env", "created from .env.example")
+
+    values = read_env(env)
+    password = values.get("ARCADE_ROOT_PASSWORD", "")
+    if len(password) >= 8:
+        report("ok", ".env", "ArcadeDB Studio enabled on :2480")
+    else:
+        report(
+            "warn", ".env",
+            "ARCADE_ROOT_PASSWORD is blank or under 8 characters.\n"
+            "The graph opens embedded and works; only Studio on :2480 is off.",
+        )
+
+
+def read_env(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if not path.exists():
+        return values
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            values[key.strip()] = value.strip()
+    return values
+
+
 def check_env(fix: bool) -> None:
     env, example = DEMO / ".env", DEMO / ".env.example"
     if not env.exists():
@@ -212,14 +288,9 @@ def check_env(fix: bool) -> None:
     # runtime — GITHUB_TOKEN normally lives there and is inherited.
     values: dict[str, str] = {}
     for path in (ROOT / ".env", env):
-        if not path.exists():
-            continue
-        for line in path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line and not line.startswith("#") and "=" in line:
-                key, value = line.split("=", 1)
-                if value.strip() or key.strip() not in values:
-                    values[key.strip()] = value.strip()
+        for key, value in read_env(path).items():
+            if value or key not in values:
+                values[key] = value
 
     needed = {
         "CONFLUENCE_EMAIL": "Atlassian account email",
@@ -249,6 +320,30 @@ def check_index() -> None:
         report("warn", "Documentation index", "empty. Fix: python -m code2doc.cli ingest && python -m code2doc.cli index")
 
 
+def check_graph() -> None:
+    """The ArcadeDB graph, which is the one thing a clone does not bring with it.
+
+    `data/` is a live database directory, so it stays out of git. Without this
+    check the delivery, traceability and graph views just render empty and the
+    reason is invisible.
+    """
+    db = Path(read_env(ROOT / ".env").get("ARCADE_DB_PATH", "") or (ROOT / "data" / "databases" / "spine"))
+    if not db.is_absolute():
+        db = (ROOT / db).resolve()
+    files = list(db.glob("*")) if db.is_dir() else []
+    if files:
+        report("ok", "Delivery graph", f"{len(files)} files in {db}")
+        return
+    report(
+        "warn", "Delivery graph",
+        f"empty or absent at {db}.\n"
+        "It is a live database, so it is not in git. Build it once with:\n"
+        "  python scripts/run.py start --rebuild\n"
+        "That needs a GITHUB_TOKEN which can read the subject repository. Until\n"
+        "then code2doc works fully and the delivery views are empty.",
+    )
+
+
 def check_web(fix: bool) -> None:
     if (WEB / "node_modules").is_dir():
         report("ok", "Dashboard dependencies", "node_modules present")
@@ -275,10 +370,15 @@ def main() -> int:
     check_python()
     check_node()
     check_torch()
-    check_packages(args.fix)
+    check_packages(args.fix, "Python packages (demo)", DEMO_PACKAGES,
+                   DEMO / "requirements.txt", interpreter_for(DEMO))
+    check_packages(args.fix, "Python packages (spine)", SPINE_PACKAGES,
+                   SPINE / "requirements.txt", interpreter_for(SPINE))
     check_models(args.fix)
+    check_root_env(args.fix)
     check_env(args.fix)
     check_index()
+    check_graph()
     check_web(args.fix)
 
     failures = [r for r in results if r[0] == "fail"]

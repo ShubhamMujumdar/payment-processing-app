@@ -5,7 +5,10 @@
 *.key
 
 # ArcadeDB databases and generated fixture output — both reproducible.
-data/
+# Anchored with a leading slash so it means *this* data/ only. Unanchored it
+# also swallowed demo/data/, the committed Chroma index, which demo/.gitignore
+# believed it was keeping.
+/data/
 *.arcadedb/
 
 # Python

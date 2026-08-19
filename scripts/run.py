@@ -122,9 +122,11 @@ REBUILD_STEPS = [
 def rebuild() -> int:
     """Re-derive everything from its sources.
 
-    Rarely needed: the graph and the documentation index are both committed, so
-    a fresh clone already has them. This exists for when the Confluence space or
-    the subject repository has moved on.
+    The documentation index is committed, so retrieval works on a fresh clone
+    with no credentials. The ArcadeDB graph is not -- it is a live database
+    directory, so `data/` stays ignored -- which means a fresh clone must run
+    this once, with a GITHUB_TOKEN that can read the subject repository, before
+    the delivery and traceability views have anything to show.
     """
     for cwd, args, why in REBUILD_STEPS:
         print(f"  {DIM}{why}…{RESET}")

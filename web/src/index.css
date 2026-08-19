@@ -908,3 +908,16 @@ span.flatpickr-weekday,
 @utility col-label {
   @apply px-3 py-1.5 text-left font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500;
 }
+
+/* The commit toast slides in from the right. Motion is short and one-way:
+   it should register as an interruption, not as an animation. */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

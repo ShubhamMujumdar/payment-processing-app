@@ -1,0 +1,16 @@
+# torch and sentence-transformers are deliberately absent: they are already
+# installed in the interpreter this runs on, and a fresh copy of torch is
+# ~2.5GB against a disk that is 98% full.
+#
+#   torch>=2.13
+#   sentence-transformers>=6.0
+#   transformers>=5.15
+
+fastapi>=0.115
+uvicorn>=0.34
+pydantic>=2.9
+python-dotenv>=1.0
+httpx>=0.27
+numpy>=1.26
+beautifulsoup4>=4.12
+lxml>=5.0

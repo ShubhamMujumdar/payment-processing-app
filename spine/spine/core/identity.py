@@ -1,7 +1,7 @@
 """Resolving source accounts to people.
 
 The same human is ``smujumdar`` on GitHub, an opaque ``557058:...`` account id
-in Jira, and ``shubham.mujumdar8@cognizantfs.com`` in Confluence.
+in Jira, and ``shubham.mujumdar8@example.com`` in Confluence.
 app_src/docs/CI-CD.md section 7 already records this as an open programme
 problem: the roster handles are not GitHub accounts and must be mapped.
 

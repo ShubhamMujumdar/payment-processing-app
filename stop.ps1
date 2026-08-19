@@ -1,42 +1,22 @@
-<#
-.SYNOPSIS
-    Stop everything start.ps1 started.
+# Stop everything this started.
+# Windows PowerShell. Finds a Python 3.10+ and hands over to scripts\run.py.
+$ErrorActionPreference = "Stop"
+Set-Location -Path $PSScriptRoot
 
-.DESCRIPTION
-    Frees the three ports the demo uses. Stopping by port rather than by process
-    name is deliberate: killing every python.exe or node.exe on the machine would
-    take out unrelated work, and during a demo that is a bad afternoon.
-
-.EXAMPLE
-    .\stop.ps1
-#>
-[CmdletBinding()]
-param()
-
-$ports = @{ 8077 = 'spine API'; 2480 = 'ArcadeDB Studio'; 5174 = 'console' }
-$stopped = 0
-
-foreach ($port in $ports.Keys) {
-    $conns = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
-    if (-not $conns) {
-        Write-Host "  [ok]   $($ports[$port]) (port $port) not running" -ForegroundColor DarkGray
-        continue
-    }
-    foreach ($procId in ($conns | Select-Object -ExpandProperty OwningProcess -Unique)) {
-        try {
-            Stop-Process -Id $procId -Force -ErrorAction Stop
-            Write-Host "  [done] stopped $($ports[$port]) (port $port, pid $procId)" -ForegroundColor Green
-            $stopped++
-        } catch {
-            Write-Host "  [warn] could not stop pid $procId on port $port" -ForegroundColor Yellow
-        }
-    }
+$py = $null
+foreach ($candidate in @("python", "python3", "py")) {
+  $cmd = Get-Command $candidate -ErrorAction SilentlyContinue
+  if ($cmd) {
+    & $candidate -c "import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)" 2>$null
+    if ($LASTEXITCODE -eq 0) { $py = $candidate; break }
+  }
 }
 
-# The Studio port is served by the API process, so it usually disappears with it.
-Write-Host ""
-if ($stopped -eq 0) {
-    Write-Host "  Nothing was running." -ForegroundColor DarkGray
-} else {
-    Write-Host "  Stopped $stopped process(es)." -ForegroundColor Green
+if (-not $py) {
+  Write-Host "No Python 3.10 or newer found on PATH." -ForegroundColor Red
+  Write-Host "  Install from https://www.python.org/downloads/ and tick 'Add to PATH'."
+  exit 1
 }
+
+& $py scripts\run.py stop @args
+exit $LASTEXITCODE

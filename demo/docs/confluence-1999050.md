@@ -1,0 +1,11 @@
+## Problem
+
+## Solution
+
+1. 
+2. 
+3. 
+
+Highlight important information in a panel like this one. To edit this panel's color or style, select one of the options in the menu.
+
+## Related articles

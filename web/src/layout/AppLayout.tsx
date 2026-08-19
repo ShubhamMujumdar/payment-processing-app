@@ -3,6 +3,7 @@ import { Outlet } from "react-router";
 import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
+import CommitToast from "../components/code2doc/CommitToast";
 
 /**
  * Console chrome. Content is edge-to-edge with no page padding - tables own
@@ -23,6 +24,8 @@ const LayoutContent: React.FC = () => {
         <AppHeader />
         <Outlet />
       </div>
+      {/* Outside the content column: it must find you on any page. */}
+      <CommitToast />
     </div>
   );
 };

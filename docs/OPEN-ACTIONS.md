@@ -29,7 +29,7 @@ These cannot be solved by any amount of code. GitHub enforces them structurally.
 | 2.1 | **Rotate the disclosed PAT** | A token was pasted into a chat transcript on 15 Aug 2026. It cannot reach the demo repo, but it *does* have access to 11 other repositories, 4 of them private. Revoke it. |
 | 2.2 | Short-lived `Administration: write` + `Contents: write` token | Required once by `scripts/bootstrap-governance.sh`. Must **not** be the token the spine uses — the spine is read-only by design. Delete after use. |
 | 2.3 | Install the `gh` CLI | `bootstrap-governance.sh` depends on it. Not installed on this machine. |
-| 2.4 | Cognizant logo asset (SVG) from the internal brand portal | Do not scrape it from the public site — wrong resolution, wrong variant, and brand compliance matters if this is shown to a client as Cognizant's product. Dark-theme variant needed specifically. |
+| 2.4 | Vector (SVG) logo asset | The current mark was regenerated from a PNG. A proper vector, dark-theme variant, would render cleanly at any size. |
 | 2.5 | Atlassian Cloud sandbox *(optional)* | Only if you ever want Jira/Confluence to be live rather than fixture-backed. Not required for the POC. |
 
 ---
@@ -39,7 +39,7 @@ These cannot be solved by any amount of code. GitHub enforces them structurally.
 | # | Item | Detail |
 |---|---|---|
 | 3.1 | Run `scripts/bootstrap-governance.sh` | Creates the four environments, their reviewers, the 10-minute production wait timer, and branch protection on `development` and `main`. **Until this runs, gates 1–5 do not stop anything.** |
-| 3.2 | Replace `@cognizantfs/payments-*` team handles in CODEOWNERS | GitHub **silently ignores** CODEOWNERS entries naming teams that do not exist. The file stays "valid" and Gate 1 simply never fires. Personal accounts have no teams — use the script's `REVIEWER_USERS` fallback. |
+| 3.2 | Replace the `@org/payments-*` team handles in CODEOWNERS | GitHub **silently ignores** CODEOWNERS entries naming teams that do not exist. The file stays "valid" and Gate 1 simply never fires. Personal accounts have no teams — use the script's `REVIEWER_USERS` fallback. |
 | 3.3 | Branch protection on `development` and `main` | Currently absent. PR #1 was merged 10 seconds after opening, with no review and before CI finished. |
 
 > **Now unblocked:** the repository is **public**, so environment protection rules are available on
@@ -90,7 +90,7 @@ so it never reads CI's conclusion. On 15 Aug 2026 CD **published an image and de
 dev, staging and UAT while CI was failing**.
 
 Not a bug in the sense of broken code, and deliberately left alone — but on a real payments
-pipeline promotion should be gated on the CI conclusion. Good material for the RFP: it is
+pipeline promotion should be gated on the CI conclusion. Worth writing up: it is
 exactly the kind of accountability gap the dashboard is built to surface.
 
 ---
@@ -113,4 +113,4 @@ exactly the kind of accountability gap the dashboard is built to surface.
 | AST-level parse of `app_src` into `CodeUnit` vertices | C |
 | Write-back of impact assessments as `CR-PAY-###` change requests | D |
 | Commit-time impact reports in the CI pipeline | E |
-| Real Cognizant logo swap-in | F |
+| Vector logo swap-in | F |

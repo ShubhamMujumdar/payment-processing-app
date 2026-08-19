@@ -1,0 +1,13 @@
+{
+  "page_id": "1999037",
+  "title": "Template - How-to guide",
+  "url": "https://cognizant-team-code2doc.atlassian.net/wiki/spaces/KnowledgeH/pages/1999037/Template+-+How-to+guide",
+  "source": "confluence",
+  "space_key": "KnowledgeH",
+  "version": 1,
+  "last_updated": "2026-08-18T09:33:15.966Z",
+  "extra": {
+    "storage": "<p><ac:placeholder>Explain what this how-to article is for. For example, you might write an article to teach people at your company how to set up a corporate email account or file an expense report.</ac:placeholder></p><h2><ac:emoticon ac:name=\"blue-star\" ac:emoji-shortname=\":blue_book:\" ac:emoji-id=\"1f4d8\" ac:emoji-fallback=\"\\uD83D\\uDCD8\" />&nbsp;Instructions</h2><p><ac:placeholder>Create a step-by-step guide:</ac:placeholder></p><ol><li><p><ac:placeholder>Add steps that are simple and self-contained</ac:placeholder></p></li><li><p><ac:placeholder>Add illustrations to instructions by typing /image</ac:placeholder></p></li><li><p><ac:placeholder>Stick to 3-5 steps per task to avoid overloading readers</ac:placeholder></p></li></ol><ac:structured-macro ac:name=\"info\" ac:schema-version=\"1\"><ac:rich-text-body><p>Highlight important information in a panel like this one. To edit this panel's color or style, select one of the options in the menu.</p></ac:rich-text-body></ac:structured-macro><h2><ac:emoticon ac:name=\"blue-star\" ac:emoji-shortname=\":clipboard:\" ac:emoji-id=\"1f4cb\" ac:emoji-fallback=\"\\uD83D\\uDCCB\" />&nbsp;Related articles</h2><p><ac:placeholder>The content by label feature automatically displays related articles based on labels you choose. To edit options for this feature, select the placeholder and tap the pencil icon.</ac:placeholder></p>",
+    "parentId": "1999023"
+  }
+}

@@ -1,0 +1,26 @@
+# Credentials. The Atlassian token, the GitHub token and the Anthropic key all
+# live in .env, and none of them belong in git.
+.env
+
+# Run history is per-machine demo state: whoever clones this will produce their
+# own, and committing it would collide on every pull.
+data/runs.sqlite
+data/runs.sqlite-shm
+data/runs.sqlite-wal
+
+# Model weights, if setup puts them here. 3.6GB.
+models/
+
+# NOTE: docs/ and data/ ARE committed on purpose.
+#   docs/  the Confluence corpus as Markdown — 83KB, and the thing that makes
+#          the retrieval reviewable without an Atlassian account
+#   data/  the Chroma index — 1MB, so the demo runs without credentials
+# Both are reproducible with `ingest` + `index`; they are committed so that
+# someone without access to the space can still run this.
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/

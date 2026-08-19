@@ -3,7 +3,7 @@
 **Status:** Approved for implementation planning
 **Date:** 15 Aug 2026
 **Slice:** A of six (see [§15](#15-relationship-to-the-other-slices))
-**Programme context:** Payments Platform (`PAY`) — Cognizant Financial Services
+**Project context:** Payments Platform (`PAY`)
 
 ---
 
@@ -47,7 +47,7 @@ slice D and are explicitly out of scope here.
 | D4 | Custody time as the durable measure; activity signal as a labelled overlay | Git and Jira record events, not effort. Conflating elapsed time with effort produces numbers that do not survive scrutiny from an engineering manager. |
 | D5 | Work Packet is synthetic, spanning requirement → issue → PR → test → defect | Matches how work actually flows. A Jira issue alone fragments work that spans tickets; a requirement alone accumulates unbounded chains across releases. |
 | D6 | GitHub and CI live via read-only PAT; Jira, Confluence and Zephyr from fixtures | No Atlassian tenant is available. GitHub access was secured by taking ownership of the repository, [§9.1](#91-github-access). See also [§10](#10-fixture-generator). |
-| D7 | Team-aggregate analytics by default; individual drill-down is permissioned | Per-person timing data is workforce monitoring. A team-level default is both the safer control posture and the better story in an RFP defence. |
+| D7 | Team-aggregate analytics by default; individual drill-down is permissioned | Per-person timing data is workforce monitoring. A team-level default is both the safer control posture and the easier one to defend. |
 | D8 | Identity resolution never merges on name similarity | A false merge silently corrupts every downstream number and is undetectable once it has happened. |
 
 ---
@@ -380,7 +380,7 @@ underlying measurement still stands.
 ## 8. Identity resolution
 
 The same human is `smujumdar` on GitHub, an opaque `557058:...` account id in Jira, and
-`shubham.mujumdar8@cognizantfs.com` in Confluence. `docs/CI-CD.md` §7 already records this as
+`shubham.mujumdar8@example.com` in Confluence. `docs/CI-CD.md` §7 already records this as
 an open programme problem: *"The roster handles are not GitHub accounts… they must be mapped
 to real GitHub accounts."* The spine closes a gap the delivery team has already logged.
 
@@ -455,7 +455,7 @@ Two conditions to state plainly rather than discover during a demo:
   are no pull requests and therefore no review events. Until real PRs exist, review custody
   comes from fixtures. Pushing two or three genuine PRs through the gates converts the single
   strongest signal in the system from synthetic to real, and is recommended before the demo.
-- CODEOWNERS references `@cognizantfs/payments-*` teams, which do not exist on a personal
+- CODEOWNERS references `@org/payments-*` teams, which do not exist on a personal
   account. GitHub silently ignores such entries, so Gate 1 will not fire until they are
   replaced with real accounts via the script's `REVIEWER_USERS` fallback.
 

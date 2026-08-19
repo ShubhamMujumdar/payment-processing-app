@@ -1,187 +1,241 @@
-# SDLC Spine
+# SDLC Spine & code2doc
 
-A delivery console for a fintech programme. It reads the tools people already
-use — GitHub, CI, Confluence — and answers three questions they cannot answer
-individually:
+Two systems in one repository, sharing a dashboard.
 
-- **Who is accountable for this right now, and who had it before them?**
-- **What does this requirement actually depend on, and is it proven?**
-- **If we roll back that pull request, what goes with it?**
+**Spine** reads the tools a delivery team already uses — GitHub, CI, Confluence
+— and answers questions none of them answer alone: who is accountable for this
+right now, who had it before them, what does this requirement depend on, and if
+we roll back that pull request what goes with it. It only reads.
 
-Nothing writes back to any source system. This is an observability layer.
+**code2doc** watches a git branch. When a commit lands it works out which
+documentation that commit just made untrue, drafts the correction, and waits for
+a human to approve it. On approval it **writes to Confluence** — the one place
+anything in this repository modifies a source system, and it is gated behind an
+explicit two-step confirmation.
 
 ---
 
 ## Quick start
 
-```powershell
-.\setup.ps1      # check prerequisites, install, build the graph
-.\start.ps1      # run everything and print the URLs
-.\stop.ps1       # shut down
+```bash
+# macOS / Linux
+./setup.sh          # check everything, install what is missing
+./start.sh          # run all three services, print the URLs
+./stop.sh
+
+# Windows (PowerShell)
+.\setup.ps1
+.\start.ps1
+.\stop.ps1
+
+# Windows (double-click)
+setup.cmd  ·  start.cmd  ·  stop.cmd
 ```
 
-Both scripts are safe to re-run and check before they act — a second `setup`
-finishes in seconds and reports what it found. If you double-click instead of
-using a terminal, `setup.cmd` / `start.cmd` / `stop.cmd` do the same thing.
-
-`start.ps1` runs setup automatically if anything is missing, so on a fresh
-checkout you can just run `start.ps1`.
+Every script is safe to re-run. `setup` checks before it acts, so a second run
+finishes in seconds and tells you what it found. If something is wrong later,
+`./doctor.sh` (or `doctor.cmd`) reports what without changing anything.
 
 ### Where things end up
 
 | Surface | URL | What it is |
 |---|---|---|
-| Delivery console | http://localhost:5174/ | Work packets, requirements, PRs, tests, defects, deployments, people |
-| Traceability | http://localhost:5174/traceability | Requirement → code → test → defect closure |
-| Graph explorer | http://localhost:5174/graph | Interactive knowledge graph |
-| Read API | http://127.0.0.1:8077/health | JSON over the graph |
-| ArcadeDB Studio | http://localhost:2480/ | The database's own graph browser (sign in as `root`) |
+| **My actions** | http://127.0.0.1:5173/ | What is waiting on one engineer |
+| **Live pipeline** | http://127.0.0.1:5173/live | A commit, and the docs it made stale |
+| Delivery console | http://127.0.0.1:5173/delivery | Packets, requirements, PRs, tests, defects, people |
+| Traceability | http://127.0.0.1:5173/traceability | Requirement → code → test → defect |
+| Graph explorer | http://127.0.0.1:5173/graph | The knowledge graph, interactive |
+| Spine API | http://127.0.0.1:8077/health | JSON over the graph |
+| code2doc API | http://127.0.0.1:8099/docs | OpenAPI, including `/impact` |
+| ArcadeDB Studio | http://localhost:2480/ | The database's own browser (user `root`) |
 
 ---
 
-## Prerequisites
+## What you need
 
-- **Python 3.10+**
-- **Node 18+**
-- **git** — only for pull-request provenance in the code graph; everything else
-  works without it
+| | Why | If missing |
+|---|---|---|
+| **Python 3.10+** | Both services | setup tells you |
+| **Node.js 18+** | The dashboard | https://nodejs.org |
+| **PyTorch** | Embeddings and reranking | see below — the install differs by machine |
+| **~3.6 GB of models** | `bge-large-en-v1.5`, `bge-reranker-v2-m3` | `setup` downloads them |
+| **NVIDIA GPU** | Optional | CPU works; a query takes ~10s instead of ~1s |
+| **~2 GB free disk** | Beyond the models | — |
 
-No JDK and no Docker. The ArcadeDB package bundles its own Java runtime, which
-is why the first `pip install` takes a minute and downloads ~70MB.
+PyTorch is the one thing `setup` will not install for you, because the correct
+build depends on your hardware and guessing wrong wastes 2.5 GB:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu126   # NVIDIA
+pip install torch                                                      # CPU / Apple Silicon
+pip install sentence-transformers transformers
+```
+
+### Credentials
+
+Copy `demo/.env.example` to `demo/.env` and fill in four values. Each one
+disables exactly one part of the demo if left blank, and `doctor` says which.
+
+| Variable | Where to get it | Without it |
+|---|---|---|
+| `CONFLUENCE_EMAIL` | Your Atlassian account email | No Confluence read or write |
+| `CONFLUENCE_API_TOKEN` | https://id.atlassian.com/manage-profile/security/api-tokens | ⤴ |
+| `GITHUB_TOKEN` | A read-only fine-grained PAT for the watched repo | No commit watching |
+| `ANTHROPIC_API_KEY` | https://console.anthropic.com/settings/keys | No analysis or redlines |
+
+**The committed index means you can skip Confluence entirely to start.**
+`demo/docs/` (the corpus as Markdown) and `demo/data/` (the Chroma index) are in
+git, so retrieval works on a fresh clone with no Atlassian account. You only
+need Confluence credentials to re-ingest or to publish.
 
 ---
 
-## Configuration
+## The demo
 
-Secrets live in `.env`, which is gitignored. `setup.ps1` creates it from
-`.env.example` on first run.
+The story: **you change one line of code, and the system works out which
+documentation that just made wrong.**
 
-| Variable | Effect if unset |
+1. **Start everything** — `./start.sh`, then open http://127.0.0.1:5173/
+2. **Point it at a branch** — `WATCH_BRANCH` in `demo/.env`, or
+   `./start.sh --branch my-branch`
+3. **Make a small, meaningful change** and push it. It has to be semantically
+   real: a rename or a reformat gives the retrieval nothing to work with.
+   The reference change is in `PaymentRequestDTO.java`:
+   ```java
+   -    @DecimalMin(value = "0.01", message = "amount must be greater than zero")
+   +    @DecimalMin(value = "1.00", message = "amount must be at least 1.00")
+   ```
+   The Confluence page documents that constraint as a table cell reading
+   `Minimum 0.01`, so the change provably makes it stale.
+4. **A popup appears within ~7 seconds** of the push, wherever you are in the
+   dashboard, and tracks the stages as they happen.
+5. **Open the live pipeline.** Two tracks: GitHub's, which takes minutes, and
+   code2doc's, which takes about thirty seconds. The gap is the point — the doc
+   track finishes while the build is still running.
+6. **Read "What happened"** — five numbered steps, each showing its real output
+   and how long it took.
+7. **Approve.** *Check against the live page* plans the edit; *Approve &
+   publish* performs it. Then open the Confluence page and show the new version.
+
+### Rehearsing without pushing
+
+```bash
+cd demo
+python -m code2doc.cli replay <sha> --force
+```
+
+Runs the whole pipeline against a commit that already exists, as many times as
+you like. Use it before presenting.
+
+---
+
+## How code2doc works
+
+```
+   commit ──▶ filter noise ──▶ analyse (Claude) ──▶ retrieve ──▶ rerank
+                                                                   │
+                     Confluence ◀── publish ◀── approve ◀── draft ◀─╯
+```
+
+Five stages, each with a job small enough that a bad result can be attributed to
+one of them rather than to "the AI".
+
+**Three findings worth knowing**, all measured on this corpus:
+
+**Query phrasing dominates everything.** Scoring the same target section against
+the same distractor, changing only how the query is worded:
+
+| Query form | Score |
 |---|---|
-| `GITHUB_TOKEN` | GitHub and CI are skipped during ingest. Confluence still loads, so the console still has data. |
-| `GITHUB_REPO` | Defaults to `ShubhamMujumdar/payment-processing-app`. |
-| `ARCADE_ROOT_PASSWORD` | ArcadeDB Studio does not start. Needs 8+ characters. |
-| `ARCADE_DB_PATH` | Defaults to `./data/databases/spine`. |
+| A statement about the change | **−2.78** |
+| The raw `git diff` | −0.75 |
+| **A topic / noun phrase** | **+2.97** |
 
-The token needs **read** on Contents, Pull requests, Actions, Deployments and
-Issues — nothing more. The spine never writes to GitHub.
+A 5.7-point swing from phrasing alone. Documentation states what a system *is*;
+it never narrates changes. So the agent is instructed to query the **subject
+matter**, never the edit — that is what pulls the right section from −2.78 to
++2.65 in the live demo.
 
-> A fine-grained token cannot reach a repository owned by *another* user, even
-> if you are a collaborator on it, and the failure looks like a 404 rather than
-> a permission error. If ingest reports "not found" for a repo you can browse,
-> that is why.
+**Absolute scores are not portable.** The same well-formed query scored +4.06 on
+one corpus and +2.97 on another. Ranking and the gap between results are
+reliable; a fixed threshold is not. The UI shows bars relative to the best
+result in each search, never an absolute confidence.
 
----
+**Declining to edit is a first-class answer.** Across three real commits the
+system considered nine sections and edited two. One decline reads: *"The table
+already documents currency as '3 uppercase letters', which matches the newly
+added `@Pattern(regexp = "[A-Z]{3}")`"* — it worked out the code had caught up
+to the docs. That restraint is what makes the rest trustworthy.
 
-## How it fits together
-
-```
-  GitHub ─┐
-  CI     ─┼─▶ connectors ──▶ event log  ──▶ projector ──▶ graph ──▶ read API ──▶ console
-  Conf.  ─┘   (emit events   (append-only,  (pure fn)     │          :8077        :5174
-               only)          system of                   │
-                              record)                     └──▶ ArcadeDB Studio :2480
-       app_src ──▶ code graph ────────────────────────────┘
-                   (git blame for PR provenance)
-```
-
-Two rules hold the design together:
-
-1. **Connectors never touch the graph.** They emit normalized events, nothing else.
-2. **The projector never calls a source.** It is a pure function from the event
-   log to the graph.
-
-That is what makes `reproject` safe to run whenever you like: drop every derived
-vertex and edge, rebuild from the log, no re-fetching. The code graph is the one
-exception — it is derived from the source tree rather than from events, so
-`reproject` deliberately leaves it alone and `codegraph` refreshes it.
-
----
-
-## Working with the spine directly
-
-```powershell
-cd spine
-.\.venv\Scripts\python -m spine.cli ingest      # sources -> event log
-.\.venv\Scripts\python -m spine.cli codegraph   # app_src -> CodeUnit vertices
-.\.venv\Scripts\python -m spine.cli reproject   # drop the graph, rebuild from the log
-.\.venv\Scripts\python -m spine.cli status      # what is in the store
-.\.venv\Scripts\python -m spine.cli serve       # read API + Studio
-```
-
-**Order matters once:** `codegraph` before `reproject`, because the traceability
-matrix links requirements to code units by file path, and those units have to
-exist first.
-
----
-
-## What is real and what is seeded
-
-Stated plainly, because a console that looks authoritative while showing invented
-numbers is worse than no console. The header shows which of these is live, and
-every simulated custody span carries a flag the UI can filter on.
-
-**Live** — GitHub commits, branches, pull requests, reviews and review
-timestamps; CI workflow runs and conclusions; deployments and deployment
-statuses; the code graph parsed from source; every requirement, test link and
-defect link parsed from the Confluence export.
-
-**Seeded** — Jira issue changelogs and Zephyr executions, which have no
-connector yet. Their endpoints return empty against the live API rather than
-inventing rows; the console falls back to fixtures for a self-contained demo.
-
-Run `.\start.ps1 -Fixtures` to force the seeded dataset — useful with no network,
-or to show the console without the API running.
-
----
-
-## Troubleshooting
-
-**"Port 8077 is already in use."**
-`start.ps1` refuses to reuse a port rather than silently attaching to a stale
-server from an earlier session. Run `.\stop.ps1`.
-
-**"Database 'spine' was not closed properly last time."**
-Expected after `stop.ps1`, which terminates the process rather than asking it
-politely. ArcadeDB replays its write-ahead log and reports recovery completed on
-the next line; no data is lost.
-
-**The console says "spine unreachable — seeded".**
-Live mode is configured but the API did not answer, so you are looking at
-fixtures. That badge exists precisely so this is never mistaken for real data.
-Check `logs\spine-api.err.log`.
-
-**Graph explorer is empty.**
-It reads the live store, so the spine has to be running. The page prints the
-command if it cannot reach it.
-
-**Ingest reports 0 GitHub events.**
-Either `GITHUB_TOKEN` is unset, or the token cannot see the repo — see the note
-under Configuration.
-
-Logs are in `logs\`, one file per process plus a matching `.err.log`.
+Deeper design notes, including why the vector store is Chroma and why the
+Confluence write edits raw XHTML rather than a parsed tree, are in
+[`demo/README.md`](demo/README.md).
 
 ---
 
 ## Layout
 
 ```
-dashboard/
-  setup.ps1 / start.ps1 / stop.ps1   this tooling
-  spine/                             Python: connectors, projector, code graph, API
-    spine/connectors/                source -> events
-    spine/projector/                 events -> graph
-    spine/codegraph/                 Java source -> CodeUnit, with PR provenance
-    spine/api/                       FastAPI read surface
-  web/                               React console
-    src/api/                         the wire contract, and fixtures matching it
-    src/components/graph/            the graph canvas
-  data/databases/spine/              ArcadeDB store (gitignored, rebuildable)
-  docs/
-    superpowers/specs/               the design this implements
-    OPEN-ACTIONS.md                  what still needs a human
+spine/     event-sourced ingestion → ArcadeDB graph → read API   (:8077)
+demo/      code2doc: watch, analyse, retrieve, draft, publish    (:8099)
+web/       React dashboard over both                             (:5173)
+scripts/   doctor.py and run.py — one implementation, three OSes
+docs/      design spec, and OPEN-ACTIONS.md (what needs a human)
+logs/      service output, written by start
 ```
 
-`docs/OPEN-ACTIONS.md` is the honest list of what is not done, what needs a
-second GitHub account, and which gaps are findings rather than bugs. Read it
-before demoing.
+The OS wrappers (`*.sh`, `*.ps1`, `*.cmd`) do only what a shell must — find a
+Python — then hand over to `scripts/`. That keeps the checks from drifting
+between platforms.
+
+---
+
+## Known issues
+
+Read this before demoing.
+
+- **Proposals go stale once one is published.** Each proposal is drafted against
+  the page as it was. Publish one and any other proposal touching the same text
+  will fail its check — safely, with a message, but it will fail. Approve one
+  change per page, then re-run. Proper handling is not built.
+- **The Confluence space and `app_src` only partly match.** Both have
+  `PaymentController` and `PaymentServiceImpl`, and `createPayment` is real. The
+  docs also describe `initiate`, `track` and a `PUT` that **do not exist** in the
+  code, while the code has `cancelPayment` the docs never mention. Demo the
+  `amount` change, which both sides genuinely share — or use the mismatch
+  deliberately as the problem statement.
+- **The corpus is small — 43 chunks over 7 pages.** Retrieval works and looks
+  good, but this is not evidence it scales. Do not claim top-3 accuracy figures.
+- **Section anchors are best-effort.** Confluence builds heading anchors
+  client-side and the rule has changed between editors; a URL fragment never
+  reaches the server, so no request can verify one. The page URL is always
+  correct; the anchor may need a scroll.
+- **Self-approval of pull requests is impossible on GitHub.** If you want an
+  approval step in the demo, use a deployment environment gate (which *can* be
+  self-approved) — `scripts/bootstrap-governance.sh` configures it. The current
+  demo drops the code-approval beat entirely.
+- **The live pipeline page scroll-jumps** when switching between commits,
+  because the page height changes. Cosmetic.
+- **`GITHUB_TOKEN` in the repository history is compromised** — it was pasted
+  into a chat. It is read-only and cannot reach the demo repo, but it can read
+  11 other repositories, 4 of them private. **Rotate it.**
+
+Longer list, including everything needing a second account or a credential:
+[`docs/OPEN-ACTIONS.md`](docs/OPEN-ACTIONS.md).
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `./doctor.sh` reports missing packages | Fresh checkout | `./setup.sh` |
+| Spine fails on `tree_sitter_java` | Its deps live in `spine/.venv` | `./setup.sh`, or `cd spine && pip install -r requirements.txt` |
+| Dashboard shows *"spine unreachable — seeded"* | Spine not running | `./start.sh`; it is honest, not broken — it refuses to imply live data |
+| Live pipeline shows *"Cannot reach code2doc"* | Port 8099 down | `./start.sh`, then check `logs/code2doc.log` |
+| Models re-download every run | Path not found | `./doctor.sh` prints where it looked |
+| `UnicodeEncodeError` in a terminal | Windows cp1252 | Already handled in the scripts; if you see it elsewhere, `set PYTHONUTF8=1` |
+| Publish says *"could not find this text"* | The page moved on | Re-run `ingest` then `index`, then re-analyse the commit |
+| Watcher sees nothing | Wrong branch | `./start.sh --branch <name>`; check `logs/code2doc.log` for `watching …` |
+
+Logs for every service are in `logs/`. Start there.

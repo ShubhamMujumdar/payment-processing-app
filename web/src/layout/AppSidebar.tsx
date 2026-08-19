@@ -15,7 +15,9 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { label: "Delivery", path: "/", ready: true, icon: "M3 6h14M3 10h14M3 14h9" },
+  { label: "My actions", path: "/", ready: true, icon: "M4 10.5 8 14l8-8" },
+  { label: "Delivery", path: "/delivery", ready: true, icon: "M3 6h14M3 10h14M3 14h9" },
+  { label: "Live pipeline", path: "/live", ready: true, icon: "M3 10h3l2-5 3 10 2-5h4" },
   { label: "Traceability", path: "/traceability", ready: true, icon: "M6 4v4m0 0a2 2 0 1 0 0 4m0-4h8a2 2 0 0 1 2 2v2m-2 4v-4" },
   { label: "Knowledge graph", path: "/graph", ready: true, icon: "M10 3v4m0 6v4M4.5 6.5l3 3m5 5 3 3m0-11-3 3m-5 5-3 3" },
   { label: "Insights", path: "/insights", ready: false, icon: "M4 16V9m4 7V5m4 11v-5m4 5V7" },

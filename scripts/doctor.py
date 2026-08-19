@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -106,15 +107,79 @@ def check_node() -> None:
         report("ok", f"Node.js {version}", node)
 
 
-def check_torch() -> None:
+#: CUDA 12.x drivers run 12.6 wheels -- CUDA guarantees minor-version
+#: compatibility, and this machine proves it: driver 12.5, torch cu126, working.
+#: So this maps a driver's major version to a wheel index, not an exact match.
+CUDA_WHEELS = [
+    (12, "https://download.pytorch.org/whl/cu126"),
+    (11, "https://download.pytorch.org/whl/cu118"),
+]
+CPU_WHEELS = "https://download.pytorch.org/whl/cpu"
+
+
+def cuda_major() -> int | None:
+    """The driver's CUDA major version, or None when there is no NVIDIA GPU.
+
+    Read from nvidia-smi rather than from torch, because the whole point is to
+    decide which torch to install before there is one.
+    """
+    smi = shutil.which("nvidia-smi")
+    if not smi:
+        return None
+    code, out = run(smi)
+    if code != 0:
+        return None
+    found = re.search(r"CUDA Version:\s*(\d+)\.", out)
+    # nvidia-smi ran, so a GPU is present even if the banner did not parse.
+    return int(found.group(1)) if found else 12
+
+
+def torch_source() -> tuple[str | None, str]:
+    """(pip index url, what was detected). None means the default PyPI wheel."""
+    major = cuda_major()
+    if major is not None:
+        for minimum, url in CUDA_WHEELS:
+            if major >= minimum:
+                return url, f"NVIDIA GPU, driver CUDA {major}.x"
+        return CPU_WHEELS, f"NVIDIA driver CUDA {major}.x is too old for a current wheel"
+    if sys.platform == "darwin":
+        return None, "Apple Silicon (Metal)"
+    return CPU_WHEELS, "no NVIDIA GPU detected"
+
+
+def check_torch(fix: bool) -> None:
     if importlib.util.find_spec("torch") is None:
-        report(
-            "fail", "PyTorch",
-            "Not installed. It is ~2.5GB and the right build depends on your GPU:\n"
-            "  NVIDIA GPU : pip install torch --index-url https://download.pytorch.org/whl/cu126\n"
-            "  CPU / Mac  : pip install torch\n"
-            "Then: pip install sentence-transformers transformers",
-        )
+        index, why = torch_source()
+        if not fix:
+            report(
+                "fail", "PyTorch",
+                f"Not installed. Detected: {why}.\n"
+                "It is ~2.5GB. Fix: python scripts/doctor.py --fix",
+            )
+            return
+
+        print(f"         {DIM}{why} -- installing torch (~2.5GB, this takes a while){RESET}")
+        args = [sys.executable, "-m", "pip", "install", "-q", "torch"]
+        if index:
+            args += ["--index-url", index]
+        code, out = run(*args)
+        if code != 0:
+            report("fail", "PyTorch", f"install failed ({why})\n{out[-400:]}")
+            return
+        importlib.invalidate_caches()
+
+    for package, wheel in (("sentence_transformers", "sentence-transformers"), ("transformers", "transformers")):
+        if importlib.util.find_spec(package) is None:
+            if not fix:
+                report("fail", package, "pip install sentence-transformers transformers")
+                continue
+            code, out = run(sys.executable, "-m", "pip", "install", "-q", wheel)
+            importlib.invalidate_caches()
+            if code != 0:
+                report("fail", package, out[-400:])
+
+    if importlib.util.find_spec("torch") is None:
+        report("fail", "PyTorch", "still not importable after install")
         return
     import torch  # noqa: PLC0415
 
@@ -127,11 +192,8 @@ def check_torch() -> None:
     else:
         report(
             "warn", f"PyTorch {torch.__version__}",
-            "CPU only. It works — a query takes roughly 10s instead of 1s.",
+            "CPU only. It works -- a query takes roughly 10s instead of 1s.",
         )
-    for package in ("sentence_transformers", "transformers"):
-        if importlib.util.find_spec(package) is None:
-            report("fail", package, "pip install sentence-transformers transformers")
 
 
 def interpreter_for(service_dir: Path) -> str:
@@ -243,21 +305,20 @@ def check_root_env(fix: bool) -> None:
     graph opens embedded and Studio is not served -- so this never fails.
     """
     env, example = ROOT / ".env", ROOT / ".env.example"
+    created = ""
     if not env.exists():
         if not (fix and example.exists()):
             report("warn", ".env", "missing. Fix: copy .env.example to .env")
             return
         env.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
-        report("warn", ".env", "created from .env.example")
+        created = "created from .env.example. "
 
-    values = read_env(env)
-    password = values.get("ARCADE_ROOT_PASSWORD", "")
-    if len(password) >= 8:
-        report("ok", ".env", "ArcadeDB Studio enabled on :2480")
+    if len(read_env(env).get("ARCADE_ROOT_PASSWORD", "")) >= 8:
+        report("ok", ".env", f"{created}ArcadeDB Studio enabled on :2480")
     else:
         report(
             "warn", ".env",
-            "ARCADE_ROOT_PASSWORD is blank or under 8 characters.\n"
+            f"{created}ARCADE_ROOT_PASSWORD is blank or under 8 characters.\n"
             "The graph opens embedded and works; only Studio on :2480 is off.",
         )
 
@@ -369,7 +430,7 @@ def main() -> int:
     print(f"\n  code2doc — {'setup' if args.fix else 'check'}\n  {'─' * 58}")
     check_python()
     check_node()
-    check_torch()
+    check_torch(args.fix)
     check_packages(args.fix, "Python packages (demo)", DEMO_PACKAGES,
                    DEMO / "requirements.txt", interpreter_for(DEMO))
     check_packages(args.fix, "Python packages (spine)", SPINE_PACKAGES,

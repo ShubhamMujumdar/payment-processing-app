@@ -70,19 +70,25 @@ whether you still need to.
 |---|---|---|
 | **Python 3.10+** | Both services | setup tells you |
 | **Node.js 18+** | The dashboard | https://nodejs.org |
-| **PyTorch** | Embeddings and reranking | see below — the install differs by machine |
+| **PyTorch** | Embeddings and reranking | `setup` installs the right build — see below |
 | **~3.6 GB of models** | `bge-large-en-v1.5`, `bge-reranker-v2-m3` | `setup` downloads them |
 | **NVIDIA GPU** | Optional | CPU works; a query takes ~10s instead of ~1s |
 | **~2 GB free disk** | Beyond the models | — |
 
-PyTorch is the one thing `setup` will not install for you, because the correct
-build depends on your hardware and guessing wrong wastes 2.5 GB:
+`setup` installs PyTorch for you and picks the build from your hardware. It
+reads `nvidia-smi` for the driver's CUDA major version and chooses accordingly:
 
-```bash
-pip install torch --index-url https://download.pytorch.org/whl/cu126   # NVIDIA
-pip install torch                                                      # CPU / Apple Silicon
-pip install sentence-transformers transformers
-```
+| Detected | Wheel |
+|---|---|
+| NVIDIA, CUDA 12.x driver | `download.pytorch.org/whl/cu126` |
+| NVIDIA, CUDA 11.x driver | `download.pytorch.org/whl/cu118` |
+| Apple Silicon | default PyPI wheel (Metal) |
+| No NVIDIA GPU | `download.pytorch.org/whl/cpu` |
+
+A 12.x driver takes a cu126 wheel on purpose -- CUDA guarantees minor-version
+compatibility, so pinning the exact driver version would reject builds that
+work. It is a ~2.5 GB download, so the first `setup` is slow; `doctor` tells you
+what it detected without installing anything.
 
 ### Credentials
 

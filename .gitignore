@@ -32,4 +32,9 @@ node_modules/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Service output. `logs/` is what scripts/run.py writes; `spine/log/` is
+# ArcadeDB's own, which is singular and so slipped past the rule for weeks --
+# committed, permanently dirty, and carrying absolute local paths.
 logs/
+spine/log/

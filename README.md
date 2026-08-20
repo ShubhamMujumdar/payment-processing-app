@@ -15,6 +15,84 @@ explicit two-step confirmation.
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph SRC["Sources"]
+        GH["GitHub API<br/>commits - PRs - reviews - Actions<br/>live"]
+        CFL["Confluence Cloud<br/>documentation space<br/>live"]
+        FX["Jira - Zephyr - Confluence export<br/>fixture-backed<br/>no Atlassian tenant for the spine"]
+    end
+
+    subgraph SPINE["spine - port 8077"]
+        direction TB
+        CONN["connectors<br/>GET only"]
+        LOG["event log<br/>append-only, replayable"]
+        PROJ["projector"]
+        GRAPH["ArcadeDB graph<br/>custody - traceability - code graph"]
+        SAPI["read API"]
+        CONN --> LOG --> PROJ --> GRAPH --> SAPI
+    end
+
+    subgraph C2D["code2doc - port 8099"]
+        direction TB
+        W["watcher<br/>polls a branch"]
+        F["filter noise"]
+        A["analyse - Claude<br/>queries the subject, not the diff"]
+        IDX["Chroma index<br/>chunked - embedded"]
+        R["retrieve<br/>vector recall"]
+        RR["rerank<br/>bge-reranker-v2-m3"]
+        D["draft redline - Claude"]
+        G{"human approval<br/>two explicit steps"}
+        P["publish"]
+        N["no change<br/>a first-class answer"]
+        CAPI["run API - SSE"]
+        W --> F --> A --> R
+        IDX --> R --> RR --> D --> G
+        G -->|approve| P
+        G -->|decline| N
+        D --> CAPI
+    end
+
+    MCP["MCP server<br/>search - plan - publish"]
+    WEB["dashboard - port 5173"]
+
+    GH --> CONN
+    FX --> CONN
+    GH --> W
+    CFL -.->|ingest, build time| IDX
+    P ==>|the only write in the system| CFL
+
+    SAPI --> WEB
+    CAPI --> WEB
+    MCP -.->|same functions| R
+    MCP -.->|same functions| P
+```
+
+**Read everywhere, write in one place.** Every arrow into the system is a GET.
+The single exception is `publish → Confluence`, drawn thick above, and it is
+gated behind two explicit human confirmations. The spine's GitHub connector has
+no write path at all — not disabled, absent.
+
+**Two retrieval stages, because one is not enough.** Vector recall finds
+candidates; the cross-encoder decides. They disagree often enough to matter — on
+a live run the embedding ranked a wrong section *above* the right one (0.724 vs
+0.696) and the reranker inverted it (−3.43 vs +2.65). Trust the ordering and the
+gap, never the absolute score.
+
+**The MCP server is a facade, not a second implementation.** Its tools call the
+same `Retriever.search` and `publish_proposal` the HTTP routes call, so results
+are identical rather than similar. Nothing in the pipeline imports it. See
+[`demo/README.md`](demo/README.md#mcp).
+
+**What is live and what is not.** GitHub and CI are real. The spine's
+Confluence, Jira and Zephyr inputs are fixture-backed because there is no
+Atlassian tenant behind them — while code2doc's Confluence is genuinely live,
+and is what it reads and writes.
+
+---
+
 ## Quick start
 
 ```bash

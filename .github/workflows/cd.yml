@@ -1,4 +1,4 @@
-name: CD — development pipeline
+name: CD
 
 # Continuous delivery for the development branch.
 #

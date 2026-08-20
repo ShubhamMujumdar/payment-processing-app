@@ -5,7 +5,7 @@
 # so the shipped image contains no Maven, no source and no build cache.
 
 # ---------- Stage 1: build ----------
-FROM maven:3.9-eclipse-temurin-17 AS build
+FROM maven:3-eclipse-temurin-24 AS build
 WORKDIR /build
 
 # Resolve dependencies as their own layer so a source-only change does not

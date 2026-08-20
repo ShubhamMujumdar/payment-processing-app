@@ -1,0 +1,83 @@
+name: Defect report
+description: Raise a defect against the Payments Platform (becomes a DEF-PAY-### record)
+title: "[DEF] "
+labels: ["defect", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Defects are triaged daily at 09:30 IST, chaired by the Engineering Lead.
+        Severity and target release are set at triage, not here.
+
+  - type: input
+    id: requirement
+    attributes:
+      label: Requirement affected
+      description: Which requirement does this violate? Must resolve to a row in RTM-30.
+      placeholder: FR-PAY-045
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Proposed severity
+      description: Triage confirms or revises this.
+      options:
+        - S1 — money moved incorrectly, or service unavailable
+        - S2 — core function broken, no workaround
+        - S3 — function impaired, workaround exists
+        - S4 — cosmetic or documentation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options: [local, dev, staging, uat, production]
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: Quote the requirement or specification section this is measured against.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. POST /api/v1/payments with { ... }
+        2. POST /api/v1/payments/{id}/refunds with { ... }
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: input
+    id: build
+    attributes:
+      label: Build / image digest
+      description: From the CD job summary, if known.
+      placeholder: sha-a1b2c3d
+
+  - type: checkboxes
+    id: known
+    attributes:
+      label: Pre-submission check
+      options:
+        - label: I have checked this is not an already-documented gap in SPEC.md section 6
+          required: true
+        - label: This report contains no real cardholder, customer or merchant data
+          required: true

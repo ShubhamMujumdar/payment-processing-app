@@ -19,6 +19,15 @@
 
     <properties>
         <java.version>17</java.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <spotbugs.version>4.8.6.4</spotbugs.version>
+        <!--
+          Coverage floor for the CI quality gate. Measured at 47.49% line coverage
+          when the initial suite landed, so the floor sits just below that.
+          This is a RATCHET: it may only ever be raised, never lowered to make a
+          red build green. See docs/CI-CD.md "Coverage ratchet".
+        -->
+        <jacoco.line.coverage.minimum>0.45</jacoco.line.coverage.minimum>
     </properties>
 
     <dependencies>
@@ -56,6 +65,43 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <!--
+          Static analysis is expensive and noisy for a local `mvn test` loop, so it
+          is opt-in. CI activates it explicitly with `-Pquality`.
+        -->
+        <profile>
+            <id>quality</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <version>${spotbugs.version}</version>
+                        <configuration>
+                            <effort>Max</effort>
+                            <threshold>Medium</threshold>
+                            <!-- Report findings without failing the build yet; see
+                                 docs/CI-CD.md "Known gaps". Flip to true once the
+                                 SPEC.md section 6 defects are burned down. -->
+                            <failOnError>false</failOnError>
+                            <xmlOutput>true</xmlOutput>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>spotbugs-analyse</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>
@@ -69,6 +115,58 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <configuration>
+                    <excludes>
+                        <!-- Lombok-generated accessors and the Boot entry point carry
+                             no branching logic worth measuring. -->
+                        <exclude>com/poc/paymentprocessing/entity/**</exclude>
+                        <exclude>com/poc/paymentprocessing/dto/**</exclude>
+                        <exclude>com/poc/paymentprocessing/config/**</exclude>
+                        <exclude>com/poc/paymentprocessing/PaymentProcessingApplication.class</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>jacoco-instrument</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-coverage-gate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>${jacoco.line.coverage.minimum}</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

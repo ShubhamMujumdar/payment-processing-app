@@ -1,0 +1,24 @@
+# Normalise text files to LF in the repository.
+* text=auto eol=lf
+
+# These are executed by Linux CI runners. A CRLF line ending in a shell script
+# produces "bad interpreter: /usr/bin/env bash^M" or silently corrupts the last
+# token of every line, so it must never be converted — including on Windows
+# checkouts, where the default would otherwise be CRLF.
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+.gitattributes  text eol=lf
+.gitignore      text eol=lf
+.dockerignore   text eol=lf
+
+# Windows-only tooling, if it is ever added.
+*.bat           text eol=crlf
+*.cmd           text eol=crlf
+
+# Binary — never touch.
+*.jar           binary
+*.png           binary
+*.pdf           binary
+*.xlsx          binary

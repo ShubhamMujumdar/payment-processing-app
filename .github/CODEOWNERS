@@ -1,0 +1,81 @@
+# ---------------------------------------------------------------------------
+# CODEOWNERS — Gate 1 of the delivery pipeline
+#
+# Every rule here becomes a MANDATORY reviewer on any PR touching the matched
+# paths, provided "Require review from Code Owners" is enabled in branch
+# protection. See docs/CI-CD.md and scripts/bootstrap-governance.sh.
+#
+# Last match wins. Order is therefore significant — the most specific rule for a
+# path must appear last.
+#
+# ---------------------------------------------------------------------------
+# !! IMPORTANT — TEAM HANDLES ARE PLACEHOLDERS !!
+#
+# The programme roster in docs/requirements/index.md identifies people by
+# Confluence handle (@shubham.mujumdar1 … @shubham.mujumdar10). Those are NOT
+# GitHub accounts. GitHub SILENTLY IGNORES a CODEOWNERS entry naming a user or
+# team that does not exist or lacks write access to this repository — the file
+# stays "valid" and the gate simply never fires.
+#
+# So this file uses GitHub *team* slugs, which must be created in the
+# organisation and populated with the corresponding people before Gate 1 is
+# real. The mapping is below. Verify with:
+#     Repo → Settings → Branches → CODEOWNERS errors
+#
+# GitHub team                        Roster handle        Role
+# ---------------------------------  -------------------  -------------------------------
+# @cognizantfs/payments-eng-leads    @shubham.mujumdar4   Engineering Lead — Payments
+# @cognizantfs/payments-architects   @shubham.mujumdar3   Solution Architect / DA chair
+# @cognizantfs/payments-qa           @shubham.mujumdar6   QA Lead
+# @cognizantfs/payments-compliance   @shubham.mujumdar7   Compliance & Financial Crime Risk
+# @cognizantfs/payments-sre          @shubham.mujumdar9   SRE / Platform Engineering
+# @cognizantfs/payments-product      @shubham.mujumdar1   Product Owner / Lead BA
+# @cognizantfs/payments-delivery     @shubham.mujumdar8   Delivery / Programme Manager
+# ---------------------------------------------------------------------------
+
+
+# --- Default owner -----------------------------------------------------------
+# The Engineering Lead is accountable for code review standards across the
+# repository (roster: "code review standards").
+*                                   @cognizantfs/payments-eng-leads
+
+
+# --- Design Authority scope --------------------------------------------------
+# The Solution Architect chairs the DA, which owns architectural decisions and
+# NFRs. These paths are the seams ARCHITECTURE.md section 10 calls out as load
+# bearing: changing them changes the shape of the system, not just its detail.
+/src/main/java/com/poc/paymentprocessing/gateway/    @cognizantfs/payments-eng-leads @cognizantfs/payments-architects
+/src/main/java/com/poc/paymentprocessing/service/    @cognizantfs/payments-eng-leads @cognizantfs/payments-architects
+/src/main/java/com/poc/paymentprocessing/entity/     @cognizantfs/payments-eng-leads @cognizantfs/payments-architects
+/pom.xml                                             @cognizantfs/payments-eng-leads @cognizantfs/payments-architects
+
+
+# --- Compliance scope --------------------------------------------------------
+# The audit trail is the compliance control evidence for this service, and the
+# exception handler decides what leaves the system boundary on a failure.
+# Configuration is here because it governs whether the H2 console is exposed
+# (SPEC.md section 6.11).
+/src/main/java/com/poc/paymentprocessing/service/PaymentAuditService.java   @cognizantfs/payments-eng-leads @cognizantfs/payments-compliance
+/src/main/java/com/poc/paymentprocessing/exception/                        @cognizantfs/payments-eng-leads @cognizantfs/payments-compliance
+/src/main/resources/                                                       @cognizantfs/payments-eng-leads @cognizantfs/payments-compliance
+
+
+# --- Quality scope -----------------------------------------------------------
+# The QA Lead owns RTM-30, the test strategy and coverage reporting, so test
+# changes — especially ones that would weaken a gate — need their review.
+/src/test/                          @cognizantfs/payments-qa
+
+
+# --- Platform scope ----------------------------------------------------------
+# SRE owns deployment and observability. Note this deliberately does NOT include
+# the eng-leads team: a developer must not be able to approve a change that
+# relaxes the pipeline's own gates.
+/.github/workflows/                 @cognizantfs/payments-sre @cognizantfs/payments-architects
+/.github/CODEOWNERS                 @cognizantfs/payments-sre @cognizantfs/payments-delivery
+/Dockerfile                         @cognizantfs/payments-sre
+/.dockerignore                      @cognizantfs/payments-sre
+/scripts/                           @cognizantfs/payments-sre
+
+
+# --- Documentation -----------------------------------------------------------
+/docs/CI-CD.md                      @cognizantfs/payments-sre @cognizantfs/payments-delivery

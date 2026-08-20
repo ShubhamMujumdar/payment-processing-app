@@ -1,0 +1,74 @@
+version: 2
+
+updates:
+  # --- Application dependencies ---------------------------------------------
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Kolkata
+    open-pull-requests-limit: 5
+    target-branch: development
+    labels:
+      - dependencies
+      - java
+    reviewers:
+      - cognizantfs/payments-eng-leads
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # Spring Boot's modules are released together; separate PRs for each would
+      # produce a set of individually-unmergeable version mismatches.
+      spring-boot:
+        patterns:
+          - "org.springframework.boot:*"
+          - "org.springframework:*"
+      test-tooling:
+        patterns:
+          - "org.junit*"
+          - "org.mockito:*"
+          - "org.assertj:*"
+    ignore:
+      # Major upgrades change the supported Java baseline and are a Design
+      # Authority decision, not a bot's. Raised as a DEC-### instead.
+      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
+        update-types: ["version-update:semver-major"]
+
+  # --- Pipeline dependencies ------------------------------------------------
+  # Actions are executable code with access to the build. They are patched on
+  # the same cadence as application dependencies, not less often.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Kolkata
+    target-branch: development
+    labels:
+      - dependencies
+      - ci
+    reviewers:
+      - cognizantfs/payments-sre
+    commit-message:
+      prefix: "chore(ci)"
+
+  # --- Base image -----------------------------------------------------------
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Kolkata
+    target-branch: development
+    labels:
+      - dependencies
+      - docker
+      - security
+    reviewers:
+      - cognizantfs/payments-sre
+    commit-message:
+      prefix: "chore(docker)"

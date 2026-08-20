@@ -1,0 +1,246 @@
+name: Release — production
+
+# Production release. Triggered by a semver tag on main, which can only exist
+# once a release PR has passed GATE 4 (CAB review via CODEOWNERS on main).
+#
+#   verify  →  [GATE 5: Delivery Manager + Compliance + SRE]  →  deploy  →  verify  →  (rollback on failure)
+#
+# Two properties matter here and are easy to get wrong:
+#
+#   1. NOTHING IS REBUILT. The image promoted to production is the digest that
+#      was signed off at UAT. This workflow resolves and re-tags it; it never
+#      runs `docker build`. A rebuild from the same source can still differ
+#      (base image moved, dependency re-resolved), and then the artifact in
+#      production is not the artifact anyone approved.
+#
+#   2. The production environment is restricted to `main` by a deployment branch
+#      policy, so a tag pushed onto a feature branch cannot reach it even if
+#      someone modifies this file.
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag to deploy (e.g. v1.2.0)'
+        required: true
+        type: string
+      change_ticket:
+        description: 'CAB change reference (CR-PAY-### or PAY-###)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Pre-flight. Everything that can be checked WITHOUT a human is checked before
+  # a human is asked for anything — an approver should never be the one to
+  # discover that the tag is on the wrong branch.
+  # ---------------------------------------------------------------------------
+  verify-release:
+    name: Verify release candidate
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      image: ${{ steps.resolve.outputs.image }}
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release coordinates
+        id: resolve
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          IMAGE="${REGISTRY}/$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')"
+          SHA=$(git rev-list -n 1 "${VERSION}")
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "image=${IMAGE}"     >> "$GITHUB_OUTPUT"
+          echo "sha=${SHA}"         >> "$GITHUB_OUTPUT"
+          echo "Releasing ${VERSION} (commit ${SHA})"
+
+      # A tag is just a label and can be placed on any commit. Production
+      # releases must come from main, so this is verified rather than assumed.
+      - name: Assert the tag is an ancestor of main
+        run: |
+          set -euo pipefail
+          # checkout used fetch-depth: 0, so history is complete; this only
+          # ensures the remote-tracking ref for main is present.
+          git fetch --quiet origin main
+          if git merge-base --is-ancestor "${{ steps.resolve.outputs.sha }}" origin/main; then
+            echo "Commit is on main."
+          else
+            echo "::error title=Tag is not on main::${{ steps.resolve.outputs.version }} points at a commit that is not an ancestor of main. Production releases must come through a release PR (Gate 4)."
+            exit 1
+          fi
+
+      - name: Assert the release image exists
+        run: |
+          set -euo pipefail
+          echo "Expecting: ${{ steps.resolve.outputs.image }}:sha-${{ steps.resolve.outputs.sha }}"
+          echo ""
+          echo "=== SIMULATED REGISTRY LOOKUP ==="
+          echo "A real implementation queries the registry and fails if the digest"
+          echo "is absent, e.g.:"
+          echo "  docker manifest inspect \${IMAGE}:sha-\${SHA}"
+          echo ""
+          echo "This is what enforces 'promote, never rebuild': if CD never"
+          echo "published this commit, there is nothing to promote and the"
+          echo "release stops here rather than silently building something new."
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      # The tagged commit is re-tested rather than trusted. CI passed on this
+      # commit when it was on development, but the release tag is what production
+      # is cut from, and a green check from three weeks ago is not evidence about
+      # the tree being released today.
+      - name: Re-test the release commit
+        run: mvn -B -ntp -Pquality verify
+
+      - name: Release readiness summary
+        run: |
+          {
+            echo "### Release candidate ${{ steps.resolve.outputs.version }}"
+            echo ""
+            echo "| Check | Result |"
+            echo "| --- | --- |"
+            echo "| Tag is on main | PASS |"
+            echo "| Artifact exists | PASS (simulated) |"
+            echo "| Tests and coverage gate | PASS |"
+            echo ""
+            echo "Awaiting **Gate 5** — production approval."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # GATE 5 — PRODUCTION. Approvers: Delivery Manager (@shubham.mujumdar8),
+  # Compliance (@shubham.mujumdar7), SRE (@shubham.mujumdar9).
+  #
+  # Configured in repository settings with:
+  #   - required reviewers from all three teams
+  #   - a wait timer, so an approval cannot be reflexively clicked the instant
+  #     the notification arrives
+  #   - "prevent self-review", so whoever pushed the tag cannot approve their
+  #     own release. This is the segregation-of-duties control an auditor will
+  #     ask about, and it cannot be expressed in this file — only in settings.
+  # ---------------------------------------------------------------------------
+  deploy-production:
+    name: Deploy to production
+    runs-on: ubuntu-latest
+    needs: verify-release
+    environment:
+      name: production       # ← required reviewers + wait timer. Job suspends here.
+      url: https://payments.cognizantfs.example
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Record approval
+        run: |
+          {
+            echo "### Gate 5 passed — production deployment authorised"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Version | ${{ needs.verify-release.outputs.version }} |"
+            echo "| Commit | ${{ needs.verify-release.outputs.sha }} |"
+            echo "| Triggered by | @${{ github.actor }} |"
+            echo "| Change reference | ${{ inputs.change_ticket || 'from tag' }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Promote the approved image
+        run: |
+          set -euo pipefail
+          echo "=== SIMULATED PROMOTION ==="
+          echo "Re-tagging the existing digest — NOT rebuilding:"
+          echo "  ${{ needs.verify-release.outputs.image }}:sha-${{ needs.verify-release.outputs.sha }}"
+          echo "    → ${{ needs.verify-release.outputs.image }}:${{ needs.verify-release.outputs.version }}"
+          echo "    → ${{ needs.verify-release.outputs.image }}:latest"
+          echo ""
+          echo "Real implementation:"
+          echo "  docker buildx imagetools create -t \${IMAGE}:\${VERSION} \${IMAGE}:sha-\${SHA}"
+
+      - name: Deploy
+        run: |
+          set -euo pipefail
+          echo "=== SIMULATED DEPLOY — production ==="
+          echo "Strategy: rolling update, 25% surge, 0 unavailable"
+          echo ""
+          echo "  [1/4] Draining connections from the previous revision"
+          echo "  [2/4] Rolling replica set to ${{ needs.verify-release.outputs.version }}"
+          echo "  [3/4] Waiting for readiness"
+          echo "  [4/4] Previous revision retained for rollback"
+
+      - name: Post-deployment verification
+        id: verify
+        run: |
+          set -euo pipefail
+          echo "=== SIMULATED PRODUCTION VERIFICATION ==="
+          echo "  [PASS] Service responding"
+          echo "  [PASS] Error rate within threshold"
+          echo "  [PASS] Payment creation succeeds end to end"
+          echo ""
+          echo "A real implementation asserts against live SLOs and fails this"
+          echo "step on breach, which triggers the rollback job below."
+
+      # An automatic rollback is the only thing that makes an automated
+      # production deploy defensible: the failure path must not depend on
+      # someone being awake to notice.
+      - name: Roll back on verification failure
+        if: failure() && steps.verify.outcome == 'failure'
+        run: |
+          echo "::error title=Production verification failed::Rolling back."
+          echo "=== SIMULATED ROLLBACK ==="
+          echo "  kubectl rollout undo deployment/payment-processing -n payments-prod"
+          echo "Raise a DEF-PAY-### and take it to Defect Triage (daily, 09:30 IST)."
+          exit 1
+
+  # ---------------------------------------------------------------------------
+  # Announce. Runs whatever the outcome, so a failed release is as visible as a
+  # successful one.
+  # ---------------------------------------------------------------------------
+  notify:
+    name: Notify stakeholders
+    runs-on: ubuntu-latest
+    needs: [verify-release, deploy-production]
+    if: always()
+    steps:
+      - name: Report outcome
+        run: |
+          set -euo pipefail
+          RESULT="${{ needs.deploy-production.result }}"
+          {
+            echo "### Release ${{ needs.verify-release.outputs.version }}: ${RESULT}"
+            echo ""
+            if [ "$RESULT" = "success" ]; then
+              echo "Deployed to production. Update the release calendar in the PAY space."
+            else
+              echo "Release did not complete (${RESULT}). The previous revision is still serving."
+              echo "Notify the Delivery Manager and raise a DEF-PAY-### if this was a failure rather than a rejected approval."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

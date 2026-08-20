@@ -1,0 +1,70 @@
+name: Change request
+description: Request a change to a baselined requirement (becomes a CR-PAY-### record)
+title: "[CR] "
+labels: ["change-request", "needs-cab"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Once a requirement is baselined, changing its statement, priority or
+        acceptance criteria requires CAB approval and forces re-execution of
+        every linked test case. CAB meets fortnightly, Thursday 11:00 IST.
+
+        If the requirement is **not** yet baselined, you do not need this form —
+        take it to Backlog Refinement instead.
+
+  - type: input
+    id: requirement
+    attributes:
+      label: Requirement to change
+      placeholder: FR-PAY-045
+    validations:
+      required: true
+
+  - type: dropdown
+    id: approval_route
+    attributes:
+      label: Approval route
+      description: Determined by the identifier prefix — see the PAY space index.
+      options:
+        - BR-PAY-### — Change Request + Sponsor approval
+        - FR-PAY-### — Change Request + Design Authority approval
+        - NFR-PAY-### — Change Request + Architecture approval
+        - BRULE-### — Design Authority approval
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current statement
+      description: Copy the requirement exactly as baselined.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed statement
+      description: Use RFC 2119 obligation verbs — shall / should / may / shall not.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact assessment
+      value: |
+        - Test cases requiring re-execution:
+        - Downstream requirements affected:
+        - Release impact:
+        - Compliance / regulatory impact:
+    validations:
+      required: true

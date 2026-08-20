@@ -52,7 +52,7 @@ MODELS = {
 #: missing forever.
 DEMO_PACKAGES = [
     "fastapi", "uvicorn", "pydantic", "dotenv", "httpx", "numpy",
-    "bs4", "lxml", "chromadb", "anthropic",
+    "bs4", "lxml", "chromadb", "anthropic", "mcp",
 ]
 
 #: Imported by the spine. Kept separate from the demo's because the two services

@@ -145,6 +145,68 @@ put a well-formed query at +4.06 where this one sits at +2.97. Calibrate per
 corpus; never hard-code a number from someone else's. Second, what is reliable
 is **ranking and the margin**, not the absolute value.
 
+## MCP
+
+The retrieval pipeline and the Confluence write are also exposed as MCP tools,
+so any MCP client -- Claude Code, Claude Desktop, an IDE -- can use them
+directly.
+
+```bash
+python -m code2doc.mcp_server                    # stdio
+python -m code2doc.mcp_server --http --port 8100 # streamable HTTP
+```
+
+| Tool | Writes? | What it does |
+|---|---|---|
+| `search_documentation` | no | Vector recall over the corpus, then cross-encoder rerank. The same two-stage search the pipeline runs. |
+| `plan_confluence_edit` | no | Fetches the live page, locates the text, returns the minimal fragments that would change. |
+| `publish_confluence_edit` | **yes** | Writes the edit and creates a new page version. |
+
+Claude Desktop / Claude Code config:
+
+```json
+{
+  "mcpServers": {
+    "code2doc": {
+      "command": "python",
+      "args": ["-m", "code2doc.mcp_server"],
+      "cwd": "<path to>/dashboard/demo"
+    }
+  }
+}
+```
+
+### It is a facade, not a second implementation
+
+Each tool calls the same function the HTTP route calls -- `Retriever.search`
+and `publish_proposal`. There is no parallel copy of the pipeline to drift, and
+the results are identical rather than merely similar: the same query through
+`POST /impact` and through `search_documentation` returns the same chunk ids and
+the same scores to four decimal places.
+
+Nothing in the pipeline imports this module. `code2doc serve` behaves exactly as
+it did before the module existed, and `mcp` not being installed does not stop
+the service starting.
+
+### What is deliberately not exposed
+
+**GitHub.** There is nothing to wrap. The spine's connector issues only GET
+requests and the single write in this repository is the Confluence PUT. A
+GitHub write tool would not be exposing an existing capability, it would be
+granting a new one to a system whose stated design is that it only reads.
+
+**Query generation.** `analyze.py` is still a pure function of the diff, and
+the queries it produces are handed *to* this server rather than chosen by an
+agent exploring the corpus. That is what keeps a bad answer attributable to
+retrieval or to drafting rather than to "the AI" -- the property the five-stage
+split exists to protect.
+
+**Unattended publishing.** `publish_confluence_edit` is annotated
+`destructiveHint: true` and `readOnlyHint: false`, so a well-behaved client
+prompts before calling it. That annotation is a hint, not an enforcement
+boundary: the human gate is the point, and it lives with whoever runs the
+client.
+
 ## Design notes
 
 **The vector store is Chroma**, persisted to `demo/data`, holding vectors, chunk

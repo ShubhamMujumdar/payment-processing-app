@@ -16,3 +16,7 @@ beautifulsoup4>=4.12
 lxml>=5.0
 chromadb>=1.5
 anthropic>=0.69
+
+# The MCP facade (code2doc.mcp_server). Optional at runtime: nothing in the
+# pipeline imports it, so the service runs without it installed.
+mcp>=2.0

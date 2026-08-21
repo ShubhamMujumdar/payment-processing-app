@@ -4,6 +4,7 @@ import AppHeader from "./AppHeader";
 import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
 import CommitToast from "../components/code2doc/CommitToast";
+import ChatWidget from "../components/chat/ChatWidget";
 
 /**
  * Console chrome. Content is edge-to-edge with no page padding - tables own
@@ -26,6 +27,7 @@ const LayoutContent: React.FC = () => {
       </div>
       {/* Outside the content column: it must find you on any page. */}
       <CommitToast />
+      <ChatWidget />
     </div>
   );
 };

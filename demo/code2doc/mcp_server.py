@@ -27,13 +27,17 @@ its own path through the corpus.
 from __future__ import annotations
 
 import argparse
+import os
 from typing import Any
 
+import httpx
 from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 
 from .config import config
 from .retrieve import Retriever
+
+SPINE_URL = os.getenv("SPINE_URL", "http://127.0.0.1:8077")
 
 server = MCPServer(
     name="code2doc",
@@ -58,6 +62,19 @@ server = MCPServer(
 #: several seconds and ~3.6GB, so doing it at import would make every client
 #: that merely lists the tools pay for it.
 _retriever: Retriever | None = None
+
+
+def use_retriever(existing: Retriever) -> None:
+    """Share an already-loaded Retriever instead of building a second one.
+
+    The API process loads the embedder and the cross-encoder at startup -- 3.6GB
+    against a 6GB card. When this module is imported in that process rather than
+    run as its own, a second copy would not fit, so the host injects the one it
+    already has. Standalone use is unaffected: nothing calls this and the lazy
+    path below builds its own.
+    """
+    global _retriever
+    _retriever = existing
 
 
 def retriever() -> Retriever:
@@ -107,6 +124,104 @@ def search_documentation(
         min_rerank_score=min_rerank_score,
     )
     return response.to_dict()
+
+
+def _spine(path: str, **params: Any) -> Any:
+    """The spine's read API. A separate service, and it may simply be down.
+
+    Returned as a result rather than raised: a caller mid-conversation can say
+    which half of the system is unavailable, where an exception just breaks.
+    """
+    try:
+        response = httpx.get(f"{SPINE_URL}{path}", params=params, timeout=15.0)
+        response.raise_for_status()
+        return response.json()
+    except Exception as exc:
+        return {"error": f"Delivery graph unreachable at {SPINE_URL} ({exc.__class__.__name__})"}
+
+
+@server.tool(
+    title="Search the delivery graph",
+    annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=False),
+)
+def search_delivery_graph(query: str, limit: int = 12) -> dict[str, Any]:
+    """Find people, requirements, defects, commits, packets and code in the delivery record.
+
+    Search by identifier -- `FR-PAY-012`, `DEF-PAY-201`, `PaymentRequestDTO` --
+    or by free text. Returns nodes with their type, caption, properties, and a
+    `source_url` that resolves to the node in the spine's read API, which is what
+    to cite when you use one.
+
+    Long requirement statements are truncated. Use graph_overview first if you
+    do not know what kinds of node exist.
+    """
+    data = _spine("/graph/search", q=query, limit=limit)
+    if "error" in data:
+        return data
+    nodes = []
+    for node in data.get("nodes", []):
+        props = {k: v for k, v in (node.get("properties") or {}).items() if v not in (None, "", [])}
+        for key, value in list(props.items()):
+            if isinstance(value, str) and len(value) > 400:
+                props[key] = value[:400] + "..."
+        nodes.append({
+            "id": node.get("id"),
+            "type": node.get("type"),
+            "caption": node.get("caption"),
+            "subtitle": node.get("subtitle"),
+            "properties": props,
+            "source_url": f"{SPINE_URL}/graph/node?id={node.get('id')}",
+        })
+    return {"query": query, "nodes": nodes}
+
+
+@server.tool(
+    title="Delivery graph overview",
+    annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=False),
+)
+def graph_overview() -> dict[str, Any]:
+    """Every node type in the delivery graph with its count.
+
+    Cheap, and the right first call when a question is about scale or about
+    what kinds of thing the record holds.
+    """
+    data = _spine("/graph/schema")
+    return data if "error" in data else {"types": data.get("types", []), "source_url": f"{SPINE_URL}/graph/schema"}
+
+
+@server.tool(
+    title="Recent watched commits",
+    annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=False),
+)
+def recent_commits(limit: int = 6) -> dict[str, Any]:
+    """Commits the documentation pipeline has analysed, newest first.
+
+    This is the git activity the system is watching: each entry carries the sha,
+    branch, author, commit subject, its GitHub `source_url`, how many
+    documentation sections were weighed, how many edits were proposed, and how
+    many were actually published. Cite the GitHub url when referring to a commit.
+    """
+    from .config import config as _config  # noqa: PLC0415
+    from .runs import RunStore  # noqa: PLC0415
+
+    store = RunStore(_config().runs_db)
+    out = []
+    for run in store.list(limit=limit):
+        proposals = run.get("proposals") or []
+        message = (run.get("message") or "").strip().splitlines()
+        out.append({
+            "sha": (run.get("sha") or "")[:8],
+            "branch": run.get("branch"),
+            "subject": message[0] if message else "",
+            "author": run.get("author"),
+            "committed_at": run.get("committed_at"),
+            "status": run.get("status"),
+            "sections_considered": len(proposals),
+            "edits_proposed": sum(1 for p in proposals if p.get("needs_change")),
+            "published": sum(1 for p in proposals if p.get("published")),
+            "source_url": run.get("url"),
+        })
+    return {"runs": out}
 
 
 @server.tool(

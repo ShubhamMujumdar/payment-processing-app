@@ -55,7 +55,8 @@ flowchart TB
         D --> CAPI
     end
 
-    MCP["MCP server<br/>search - plan - publish"]
+    MCP["MCP server<br/>5 read tools + 1 gated write"]
+    CHAT["assistant<br/>agentic loop over MCP"]
     WEB["dashboard - port 5173"]
 
     GH --> CONN
@@ -68,6 +69,8 @@ flowchart TB
     CAPI --> WEB
     MCP -.->|same functions| R
     MCP -.->|same functions| P
+    CHAT -->|list_tools / call_tool| MCP
+    CHAT --> WEB
 ```
 
 **Read everywhere, write in one place.** Every arrow into the system is a GET.

@@ -25,6 +25,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from .config import config
+from .chat import ChatStore, _sse, converse, new_session_id
 from .retrieve import DEFAULT_CANDIDATES, DEFAULT_TOP_K, Retriever
 from .runs import RunStore
 
@@ -49,6 +50,15 @@ async def lifespan(app: FastAPI):
     except Exception as exc:  # surfaced by /health rather than killing the process
         _state["error"] = str(exc)
         print(f"startup failed: {exc}")
+
+    # The chat drives the MCP server's tools in this process. Hand it the
+    # retriever we just loaded rather than letting it build a second one -- same
+    # reason the watcher runs here: two copies of the models do not fit.
+    _state["chat"] = ChatStore(cfg.runs_db)
+    if _state["retriever"] is not None:
+        from .mcp_server import use_retriever
+
+        use_retriever(_state["retriever"])
 
     # The watcher runs in this process rather than beside it, so the models are
     # loaded once instead of twice -- two copies would be ~5GB on a 6GB card.
@@ -340,3 +350,55 @@ def impact(request: ImpactRequest) -> dict[str, Any]:
         min_rerank_score=request.min_rerank_score,
     )
     return response.to_dict()
+
+
+# --- chat ------------------------------------------------------------------
+class ChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=8000)
+    session_id: str | None = None
+
+
+def _chat() -> ChatStore:
+    store = _state.get("chat")
+    if store is None:
+        raise HTTPException(status_code=503, detail="Chat store not ready.")
+    return store
+
+
+@app.post("/chat")
+async def chat(request: ChatRequest) -> StreamingResponse:
+    """Stream one assistant turn as server-sent events.
+
+    Events are `token` (text as it arrives), `tool` (a tool call, so the UI can
+    show what is being looked up rather than a spinner), `done`, and `error`.
+    """
+    session_id = request.session_id or new_session_id()
+    stream = converse(_chat(), session_id, request.message)
+
+    async def body():
+        yield _sse("session", {"session_id": session_id})
+        async for chunk in stream:
+            yield chunk
+
+    return StreamingResponse(
+        body(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no", "Connection": "keep-alive"},
+    )
+
+
+@app.get("/chat/{session_id}/history")
+def chat_history(session_id: str) -> dict[str, Any]:
+    """Replay a session. Tool-call turns are dropped: they are how the answer
+    was reached, not the conversation, and the UI renders the conversation."""
+    turns = [
+        {"role": t["role"], "text": t["content"], "at": t["at"]}
+        for t in _chat().history(session_id)
+        if isinstance(t["content"], str)
+    ]
+    return {"session_id": session_id, "messages": turns}
+
+
+@app.delete("/chat/{session_id}")
+def chat_clear(session_id: str) -> dict[str, Any]:
+    return {"session_id": session_id, "deleted": _chat().clear(session_id)}

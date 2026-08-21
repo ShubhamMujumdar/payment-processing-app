@@ -176,6 +176,35 @@ Claude Desktop / Claude Code config:
 }
 ```
 
+### The assistant uses these tools
+
+`POST /chat` is an agentic loop whose tool registry *is* this MCP server. It
+calls `server.list_tools()` and `server.call_tool()` in-process -- same registry,
+same dispatch, same annotations -- so a tool added here appears in the chat
+window with no change to `chat.py`.
+
+In-process rather than over a socket for one reason: a second process would load
+a second copy of a 3.6GB model onto a 6GB card. The API hands the server its
+already-loaded `Retriever` via `use_retriever()`. The same `server` object is
+still exposable over stdio or HTTP to Claude Desktop.
+
+**Destructive tools are excluded by annotation, not by name.**
+`publish_confluence_edit` carries `destructiveHint: true`, so it never reaches
+the chat loop -- a chat window that can quietly edit a page other people are
+reading is not a feature. Add a destructive tool tomorrow and it is excluded the
+day it is written rather than the day somebody remembers this file exists.
+
+| Endpoint | What it does |
+|---|---|
+| `POST /chat` | One turn, streamed as SSE: `session`, `token`, `tool`, `done`, `error` |
+| `GET /chat/{session}/history` | Replay a conversation |
+| `DELETE /chat/{session}` | Clear it |
+
+Transcripts live in `runs.sqlite`, so a conversation survives a restart and
+"clear" means cleared. The `tool` events exist so the UI can name the lookup in
+progress -- a cross-encoder pass is several seconds, and an unlabelled spinner
+for that long reads as a hang.
+
 ### It is a facade, not a second implementation
 
 Each tool calls the same function the HTTP route calls -- `Retriever.search`

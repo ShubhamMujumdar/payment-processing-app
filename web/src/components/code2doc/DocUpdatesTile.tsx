@@ -11,8 +11,12 @@ export default function DocUpdatesTile({ now }: { now: Date }) {
       <h2 className="mb-2 flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-gray-500">
         Documentation updates
         <span className="tnum font-mono text-gray-600">{DOC_UPDATE_FIXTURES.length}</span>
-        <span className="ml-auto inline-flex items-center gap-1 font-normal normal-case text-[10px] text-state-pass/80">
-          ✉ ops team notified
+        <span
+          className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-state-warn/25 bg-state-warn/[0.08] px-2.5 py-1 font-mono text-[10px] normal-case text-state-warn"
+          title="These notifications are seeded. No email is sent — there is no mail transport in this build — and the publishes shown are illustrative, not drawn from the run history."
+        >
+          <span className="size-1.5 rounded-full bg-state-warn" />
+          seeded · no mail sent
         </span>
       </h2>
 
@@ -44,8 +48,11 @@ export default function DocUpdatesTile({ now }: { now: Date }) {
               </p>
 
               <div className="mt-2 flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 rounded border border-state-pass/20 bg-state-pass/5 px-2 py-0.5 text-[11px] text-state-pass">
-                  ✉ Email sent · {ago(update.emailSentAt, now)}
+                <span
+                  className="inline-flex items-center gap-1.5 rounded border border-state-warn/20 bg-state-warn/5 px-2 py-0.5 text-[11px] text-state-warn"
+                  title="Seeded — no mail transport exists in this build"
+                >
+                  ✉ Email (seeded) · {ago(update.emailSentAt, now)}
                 </span>
                 <span className="text-[11px] text-gray-600">
                   {update.emailRecipients.join(" · ")}

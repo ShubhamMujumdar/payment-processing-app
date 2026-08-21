@@ -154,10 +154,10 @@ export default function DeveloperView() {
       <PageMeta title="My actions · Cognizant SDLC Spine" description="What is waiting on you." />
 
       {!emailToastDismissed && latestDocUpdate && (
-        <div className="flex items-center gap-3 border-b border-state-pass/20 bg-state-pass/[0.05] px-6 py-2.5">
-          <span className="text-state-pass">✉</span>
+        <div className="flex items-center gap-3 border-b border-state-warn/20 bg-state-warn/[0.05] px-6 py-2.5">
+          <span className="text-state-warn">✉</span>
           <span className="text-[12px] text-gray-300">
-            <span className="font-medium text-state-pass">Email sent</span>
+            <span className="font-medium text-state-warn">Email sent (seeded)</span>
             {" — "}
             <span className="font-mono text-[11px]">{latestDocUpdate.pageTitle}</span>
             {" was updated and ops team was notified "}

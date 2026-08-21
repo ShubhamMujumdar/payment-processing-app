@@ -245,7 +245,7 @@ export default function KnowledgeGraph() {
                 <button
                   key={r.id}
                   onClick={() => addFromSearch(r)}
-                  className="flex w-full items-center gap-2 border-b border-white/[0.04] px-3 py-1.5 text-left hover:bg-white/[0.05]"
+                  className="flex w-full items-center gap-2 border-b border-black/[0.05] px-3 py-1.5 text-left hover:bg-black/[0.06]"
                 >
                   <span
                     className="size-2 shrink-0 rounded-full"

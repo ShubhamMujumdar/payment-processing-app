@@ -120,8 +120,8 @@ export default function Traceability() {
                 <button
                   key={r.reqId}
                   onClick={() => setSelected(r.reqId)}
-                  className={`relative flex w-full flex-col gap-1 border-b border-white/[0.04] px-3 py-2 text-left transition-colors ${
-                    active ? "bg-cgz-blue/[0.14]" : "hover:bg-white/[0.03]"
+                  className={`relative flex w-full flex-col gap-1 border-b border-black/[0.05] px-3 py-2 text-left transition-colors ${
+                    active ? "bg-cgz-blue/[0.14]" : "hover:bg-black/[0.04]"
                   }`}
                 >
                   {active && <span className="absolute inset-y-0 left-0 w-[2px] bg-cgz-cyan" />}
@@ -299,7 +299,7 @@ function Panel({
         <span className="tnum font-mono text-[11px] text-gray-300">{count}</span>
         {subtitle && <span className="ml-auto font-mono text-[10px] text-gray-600">{subtitle}</span>}
       </header>
-      <div className="divide-y divide-white/[0.04]">
+      <div className="divide-y divide-black/[0.05]">
         {count === 0 ? <p className="px-3 py-2.5 text-[11px] text-gray-600">{empty}</p> : children}
       </div>
     </section>
@@ -311,7 +311,7 @@ function Row({ children, onClick }: { children: React.ReactNode; onClick?: () =>
     <div className="flex items-center gap-2 px-3 py-1.5">{children}</div>
   );
   return onClick ? (
-    <button onClick={onClick} className="block w-full text-left hover:bg-white/[0.04]">
+    <button onClick={onClick} className="block w-full text-left hover:bg-black/[0.05]">
       {content}
     </button>
   ) : (

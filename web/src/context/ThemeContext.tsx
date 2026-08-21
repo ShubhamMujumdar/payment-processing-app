@@ -3,7 +3,7 @@
 import type React from "react";
 import { createContext, useContext, useEffect } from "react";
 
-type Theme = "dark";
+type Theme = "light";
 
 type ThemeContextType = {
   theme: Theme;
@@ -13,7 +13,7 @@ type ThemeContextType = {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /**
- * The dashboard is dark-only by design, not by default.
+ * The dashboard is light-only by design, not by default.
  *
  * The Cognizant palette is navy-anchored and the data ramps were contrast-tuned
  * against near-black surfaces; the same colours on white fail legibility. Rather
@@ -25,12 +25,12 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   useEffect(() => {
-    document.documentElement.classList.add("dark");
-    document.documentElement.style.colorScheme = "dark";
+    document.documentElement.classList.remove("dark");
+    document.documentElement.style.colorScheme = "light";
   }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme: "dark", toggleTheme: () => {} }}>
+    <ThemeContext.Provider value={{ theme: "light", toggleTheme: () => {} }}>
       {children}
     </ThemeContext.Provider>
   );

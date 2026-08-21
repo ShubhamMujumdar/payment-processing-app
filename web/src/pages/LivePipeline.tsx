@@ -208,7 +208,7 @@ export default function LivePipeline() {
     <>
       <PageMeta title="Live pipeline · Cognizant SDLC Spine" description="A commit, and the documentation it just made stale." />
 
-      <div className="flex items-center justify-between gap-4 border-b border-white/5 px-6 py-4">
+      <div className="flex items-center justify-between gap-4 border-b border-black/[0.07] px-6 py-4">
         <div>
           <h1 className="text-[19px] font-medium text-gray-100">Live pipeline</h1>
           <p className="mt-0.5 text-[12px] text-gray-500">
@@ -240,7 +240,7 @@ export default function LivePipeline() {
                   className={`w-full rounded border px-3 py-2 text-left transition-colors ${
                     r.run_id === selected
                       ? "border-brand-700/60 bg-brand-950/40"
-                      : "border-white/5 bg-white/[0.02] hover:bg-white/[0.04]"
+                      : "border-black/[0.07] bg-black/[0.025] hover:bg-black/[0.05]"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ export default function LivePipeline() {
               </li>
             ))}
             {runs.length === 0 && !error && (
-              <li className="rounded border border-white/5 bg-white/[0.02] px-3 py-6 text-center text-[12px] text-gray-600">
+              <li className="rounded border border-black/[0.07] bg-black/[0.025] px-3 py-6 text-center text-[12px] text-gray-600">
                 Nothing yet. Push a commit.
               </li>
             )}
@@ -265,7 +265,7 @@ export default function LivePipeline() {
           {run ? (
             <>
               {/* the commit */}
-              <div className="rounded border border-white/[0.07] bg-ink-900 px-4 py-3">
+              <div className="rounded border border-black/[0.09] bg-ink-900 px-4 py-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Ident>{run.sha.slice(0, 8)}</Ident>
                   <span className="text-[13.5px] text-gray-100">{run.message.split("\n")[0]}</span>
@@ -278,7 +278,7 @@ export default function LivePipeline() {
                   </a>
                 </p>
                 {run.analysis && (
-                  <p className="mt-2 border-t border-white/5 pt-2 text-[12.5px] text-gray-400">
+                  <p className="mt-2 border-t border-black/[0.07] pt-2 text-[12.5px] text-gray-400">
                     {run.analysis.summary}
                   </p>
                 )}
@@ -290,7 +290,7 @@ export default function LivePipeline() {
                 className={`mt-3 rounded border px-4 py-3 ${
                   proposals.length
                     ? "border-brand-700/50 bg-brand-950/30"
-                    : "border-white/[0.07] bg-white/[0.02]"
+                    : "border-black/[0.09] bg-black/[0.025]"
                 }`}
               >
                 <p className="text-[14px] text-gray-100">{headline(run, proposals.length)}</p>
@@ -298,7 +298,7 @@ export default function LivePipeline() {
               </div>
 
               {/* the two tracks */}
-              <div className="mt-5 rounded border border-white/[0.07] bg-ink-950/60 px-5 py-4">
+              <div className="mt-5 rounded border border-black/[0.09] bg-ink-950/60 px-5 py-4">
                 <Track title="Code · GitHub" accent="blue" stages={ciStages(run, workflows, ciLoaded)} />
 
                 <CurlArrow active={docRunning} />
@@ -316,7 +316,7 @@ export default function LivePipeline() {
                     }
                   />
                   {run.analysis?.queries?.length ? (
-                    <div className="mt-3 border-t border-white/5 pt-2">
+                    <div className="mt-3 border-t border-black/[0.07] pt-2">
                       <p className="text-[10.5px] uppercase tracking-wider text-gray-600">Asked Confluence</p>
                       <ul className="mt-1 space-y-0.5">
                         {run.analysis.queries.map((q) => (
@@ -331,7 +331,7 @@ export default function LivePipeline() {
               </div>
 
               {/* what actually happened, with each step's real output */}
-              <div className="mt-6 rounded border border-white/[0.07] bg-ink-900/40 px-5 py-5">
+              <div className="mt-6 rounded border border-black/[0.09] bg-ink-900/40 px-5 py-5">
                 <Explain run={run} />
               </div>
 
@@ -357,12 +357,12 @@ export default function LivePipeline() {
 
               {/* the diff */}
               {run.diff && (
-                <details className="mt-4 rounded border border-white/5 bg-white/[0.02]" open>
+                <details className="mt-4 rounded border border-black/[0.07] bg-black/[0.025]" open>
                   <summary className="cursor-pointer px-4 py-2 text-[11.5px] text-gray-500">
                     Diff · {run.files?.filter((f) => !f.skipped).length ?? 0} files
                     {run.files?.some((f) => f.skipped) ? ` (${run.files.filter((f) => f.skipped).length} filtered as noise)` : ""}
                   </summary>
-                  <pre className="max-h-72 overflow-auto border-t border-white/5 px-4 py-3 font-mono text-[11px] leading-[1.5]">
+                  <pre className="max-h-72 overflow-auto border-t border-black/[0.07] px-4 py-3 font-mono text-[11px] leading-[1.5]">
                     {run.diff.split("\n").map((line, i) => (
                       <div
                         key={i}
@@ -390,7 +390,7 @@ export default function LivePipeline() {
               )}
             </>
           ) : (
-            <div className="rounded border border-white/5 bg-white/[0.02] px-5 py-16 text-center">
+            <div className="rounded border border-black/[0.07] bg-black/[0.025] px-5 py-16 text-center">
               <p className="text-[13px] text-gray-400">Waiting for a commit.</p>
               <p className="mt-1 text-[12px] text-gray-600">
                 Push to <Ident dim>{watching ?? "the watched branch"}</Ident> and it appears here.
@@ -461,7 +461,7 @@ function ProposalCard({
 
       <p className="mt-2 text-[12px] text-gray-400">{proposal.rationale}</p>
 
-      <div className="mt-2 overflow-x-auto rounded border border-white/5 bg-ink-950 px-3 py-2 font-mono text-[11px] leading-[1.6]">
+      <div className="mt-2 overflow-x-auto rounded border border-black/[0.07] bg-ink-950 px-3 py-2 font-mono text-[11px] leading-[1.6]">
         {proposal.existing_text.split("\n").map((line, i) => (
           <div key={`e${i}`} className="text-state-fail">− {line}</div>
         ))}
@@ -477,7 +477,7 @@ function ProposalCard({
       </p>
 
       {/* approve */}
-      <div className="mt-3 border-t border-white/5 pt-3">
+      <div className="mt-3 border-t border-black/[0.07] pt-3">
         {proposal.published || plan?.published ? (
           <p className="text-[12px] text-state-pass">
             ✓ Published to Confluence
@@ -492,7 +492,7 @@ function ProposalCard({
               <button
                 onClick={() => act(true)}
                 disabled={busy}
-                className="rounded border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] text-gray-300 hover:bg-white/[0.07] disabled:opacity-50"
+                className="rounded border border-black/[0.10] bg-black/[0.05] px-3 py-1.5 text-[12px] text-gray-300 hover:bg-black/[0.09] disabled:opacity-50"
               >
                 {busy && !plan ? "Checking…" : "Check against the live page"}
               </button>

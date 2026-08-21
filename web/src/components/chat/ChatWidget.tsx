@@ -179,7 +179,7 @@ export default function ChatWidget() {
         {greeted && (
           <button
             onClick={() => { setOpen(true); setGreeted(false); }}
-            className="mb-1 max-w-[220px] rounded-lg rounded-br-sm border border-white/10 bg-ink-900 px-3.5 py-2.5 text-left text-[12.5px] text-gray-300 shadow-xl transition hover:border-cgz-cyan/40"
+            className="mb-1 max-w-[220px] rounded-lg rounded-br-sm border border-black/[0.10] bg-ink-900 px-3.5 py-2.5 text-left text-[12.5px] text-gray-300 shadow-xl transition hover:border-accent/40"
           >
             <span className="block font-medium text-gray-100">How may I help you?</span>
             <span className="mt-0.5 block text-[11.5px] text-gray-500">
@@ -190,7 +190,7 @@ export default function ChatWidget() {
         <button
           onClick={() => setOpen(true)}
           aria-label="Open assistant"
-          className="grid h-12 w-12 place-items-center rounded-full bg-cgz-cyan text-ink-950 shadow-lg shadow-cgz-cyan/20 transition hover:scale-105 active:scale-95"
+          className="grid h-12 w-12 place-items-center rounded-full bg-accent text-white shadow-lg shadow-accent/20 transition hover:scale-105 active:scale-95"
         >
           <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-4-.9L3 21l1.9-4.6A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4Z" />
@@ -201,8 +201,8 @@ export default function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-[9999] flex h-[min(620px,calc(100vh-2.5rem))] w-[min(400px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-xl border border-white/10 bg-ink-950 shadow-2xl">
-      <header className="flex items-center gap-2 border-b border-white/5 bg-white/[0.02] px-4 py-3">
+    <div className="fixed bottom-5 right-5 z-[9999] flex h-[min(620px,calc(100vh-2.5rem))] w-[min(400px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-xl border border-black/[0.10] bg-ink-950 shadow-2xl">
+      <header className="flex items-center gap-2 border-b border-black/[0.07] bg-black/[0.025] px-4 py-3">
         <span className="h-1.5 w-1.5 rounded-full bg-state-pass" />
         <div className="min-w-0 flex-1">
           <p className="text-[12.5px] font-medium text-gray-200">Assistant</p>
@@ -232,7 +232,7 @@ export default function ChatWidget() {
             <div className="mt-3 space-y-1.5">
               {SUGGESTIONS.map((s) => (
                 <button key={s} onClick={() => send(s)}
-                  className="block w-full rounded border border-white/5 bg-white/[0.02] px-3 py-2 text-left text-[11.5px] text-gray-400 transition hover:border-cgz-cyan/30 hover:text-gray-200">
+                  className="block w-full rounded border border-black/[0.07] bg-black/[0.025] px-3 py-2 text-left text-[11.5px] text-gray-400 transition hover:border-accent/30 hover:text-gray-200">
                   {s}
                 </button>
               ))}
@@ -243,7 +243,7 @@ export default function ChatWidget() {
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "flex justify-end" : ""}>
             {m.role === "user" ? (
-              <p className="max-w-[85%] rounded-lg rounded-br-sm bg-cgz-cyan/10 px-3 py-2 text-[12.5px] text-gray-200">
+              <p className="max-w-[85%] rounded-lg rounded-br-sm bg-accent/[0.09] px-3 py-2 text-[12.5px] text-gray-200">
                 {m.text}
               </p>
             ) : (
@@ -258,7 +258,7 @@ export default function ChatWidget() {
                     components={{
                       a: ({ ...props }) => (
                         <a {...props} target="_blank" rel="noreferrer"
-                           className="text-cgz-cyan underline decoration-cgz-cyan/30 hover:decoration-cgz-cyan" />
+                           className="text-accent underline decoration-accent/30 hover:decoration-accent" />
                       ),
                     }}
                   >
@@ -274,8 +274,8 @@ export default function ChatWidget() {
         ))}
 
         {activeTool && (
-          <p className="flex items-center gap-2 text-[11px] text-cgz-cyan/80">
-            <span className="h-1 w-1 animate-ping rounded-full bg-cgz-cyan" />
+          <p className="flex items-center gap-2 text-[11px] text-accent/80">
+            <span className="h-1 w-1 animate-ping rounded-full bg-accent" />
             {activeTool}…
           </p>
         )}
@@ -287,7 +287,7 @@ export default function ChatWidget() {
         )}
       </div>
 
-      <div className="border-t border-white/5 px-3 py-2.5">
+      <div className="border-t border-black/[0.07] px-3 py-2.5">
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}
@@ -308,7 +308,7 @@ export default function ChatWidget() {
             onClick={() => send(input)}
             disabled={busy || !input.trim()}
             aria-label="Send"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded bg-cgz-cyan text-ink-950 transition disabled:opacity-25"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded bg-accent text-white transition disabled:opacity-25"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M13 6l6 6-6 6" />

@@ -36,7 +36,7 @@ function Step({
   return (
     <div className="relative pl-11">
       {/* the spine connecting steps */}
-      <span className="absolute left-[13px] top-7 bottom-0 w-px bg-white/[0.07]" />
+      <span className="absolute left-[13px] top-7 bottom-0 w-px bg-black/[0.09]" />
       <span className="absolute left-0 top-0 flex h-[26px] w-[26px] items-center justify-center rounded-full border border-brand-700 bg-brand-950 text-[12px] font-medium text-brand-300">
         {index}
       </span>
@@ -113,7 +113,7 @@ export default function Explain({ run }: { run: Run }) {
           </p>
         ))}
         {lines.length > 0 && (
-          <div className="mt-2 overflow-x-auto rounded border border-white/5 bg-ink-950 px-3 py-2 font-mono text-[11px] leading-[1.6]">
+          <div className="mt-2 overflow-x-auto rounded border border-black/[0.07] bg-ink-950 px-3 py-2 font-mono text-[11px] leading-[1.6]">
             {lines.map((l, i) => (
               <div key={i} className={l.sign === "+" ? "text-state-pass" : "text-state-fail"}>
                 {l.sign} {l.text.trim()}
@@ -136,7 +136,7 @@ export default function Explain({ run }: { run: Run }) {
         badge={run.analysis?.change_kind}
       >
         {run.analysis ? (
-          <p className="rounded border border-white/5 bg-white/[0.02] px-3 py-2 text-[12.5px] text-gray-300">
+          <p className="rounded border border-black/[0.07] bg-black/[0.025] px-3 py-2 text-[12.5px] text-gray-300">
             “{run.analysis.summary}”
           </p>
         ) : (
@@ -153,7 +153,7 @@ export default function Explain({ run }: { run: Run }) {
       >
         <ul className="space-y-1">
           {(run.analysis?.queries ?? []).map((q) => (
-            <li key={q.topic} className="rounded border border-white/5 bg-white/[0.02] px-3 py-1.5">
+            <li key={q.topic} className="rounded border border-black/[0.07] bg-black/[0.025] px-3 py-1.5">
               <p className="text-[12px] text-gray-300">“{q.topic}”</p>
               <p className="mt-0.5 text-[11px] text-gray-600">{q.rationale}</p>
             </li>
@@ -174,7 +174,7 @@ export default function Explain({ run }: { run: Run }) {
               <span className="w-4 shrink-0 text-right font-mono text-[11px] text-gray-600">
                 {i + 1}
               </span>
-              <span className="h-1.5 w-28 shrink-0 overflow-hidden rounded-full bg-white/[0.06]">
+              <span className="h-1.5 w-28 shrink-0 overflow-hidden rounded-full bg-black/[0.07]">
                 <span
                   className={`block h-full rounded-full ${p.needs_change ? "bg-brand-500" : "bg-ink-500"}`}
                   style={{ width: `${width(p.rerank_score)}%` }}
@@ -201,7 +201,7 @@ export default function Explain({ run }: { run: Run }) {
             <li
               key={`${p.page_id}-${p.line_start}`}
               className={`rounded border px-3 py-2 ${
-                p.needs_change ? "border-brand-800/60 bg-brand-950/25" : "border-white/5 bg-white/[0.02]"
+                p.needs_change ? "border-brand-800/60 bg-brand-950/25" : "border-black/[0.07] bg-black/[0.025]"
               }`}
             >
               <div className="flex flex-wrap items-center gap-2">
@@ -218,7 +218,7 @@ export default function Explain({ run }: { run: Run }) {
           ))}
         </ul>
         {run.status === "no-impact" && (
-          <p className="mt-2 rounded border border-white/5 bg-white/[0.02] px-3 py-2 text-[12px] text-gray-400">
+          <p className="mt-2 rounded border border-black/[0.07] bg-black/[0.025] px-3 py-2 text-[12px] text-gray-400">
             Nothing in the documentation is made untrue by this change.
           </p>
         )}

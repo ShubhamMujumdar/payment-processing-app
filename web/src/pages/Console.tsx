@@ -181,7 +181,7 @@ export default function Console() {
       width: "110px",
       render: (r) => (
         <div className="flex items-center gap-2">
-          <span className="h-1 w-12 overflow-hidden rounded-full bg-white/[0.07]">
+          <span className="h-1 w-12 overflow-hidden rounded-full bg-black/[0.09]">
             <span
               className="block h-full rounded-full"
               style={{
@@ -493,7 +493,7 @@ export default function Console() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`relative whitespace-nowrap px-3 py-2.5 text-[12.5px] transition-colors focus:outline-none focus-visible:bg-white/[0.04] ${
+              className={`relative whitespace-nowrap px-3 py-2.5 text-[12.5px] transition-colors focus:outline-none focus-visible:bg-black/[0.05] ${
                 active ? "text-gray-100" : "text-gray-500 hover:text-gray-300"
               }`}
               aria-current={active ? "page" : undefined}
@@ -547,7 +547,7 @@ export default function Console() {
               setRelease("all");
               setAssignee("all");
             }}
-            className="h-7 rounded-[3px] px-2 text-[12px] text-gray-500 hover:bg-white/[0.04] hover:text-gray-300"
+            className="h-7 rounded-[3px] px-2 text-[12px] text-gray-500 hover:bg-black/[0.05] hover:text-gray-300"
           >
             Clear
           </button>

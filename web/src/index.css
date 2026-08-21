@@ -81,18 +81,22 @@ layer(base);
   --color-blue-light-900: #0b4a6f;
   --color-blue-light-950: #062c41;
 
-  --color-gray-25: #fcfcfd;
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f2f4f7;
-  --color-gray-200: #e4e7ec;
-  --color-gray-300: #d0d5dd;
-  --color-gray-400: #98a2b3;
+  /* Inverted for the light console. The scale is read by role, not by
+     lightness: 100-300 is prominent text, 400-600 is secondary and muted,
+     700-950 are the pale surfaces. Flipping the values here rather than
+     rewriting ~400 class names is what kept the theme change reviewable. */
+  --color-gray-25: #0c111d;
+  --color-gray-50: #101828;
+  --color-gray-100: #101828;
+  --color-gray-200: #1d2939;
+  --color-gray-300: #344054;
+  --color-gray-400: #475467;
   --color-gray-500: #667085;
-  --color-gray-600: #475467;
-  --color-gray-700: #344054;
-  --color-gray-800: #1d2939;
-  --color-gray-900: #101828;
-  --color-gray-950: #0c111d;
+  --color-gray-600: #8993a4;
+  --color-gray-700: #d0d5dd;
+  --color-gray-800: #e4e7ec;
+  --color-gray-900: #f2f4f7;
+  --color-gray-950: #f9fafb;
   --color-gray-dark: #1a2231;
 
   --color-orange-25: #fffaf5;
@@ -193,14 +197,14 @@ layer(base);
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentColor);
+    border-color: var(--color-gray-800, currentColor);
   }
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
   body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50;
+    @apply relative font-normal font-outfit z-1 bg-ink-975;
   }
 }
 
@@ -832,17 +836,29 @@ span.flatpickr-weekday,
   --color-cgz-teal: #1e728c;
   --color-cgz-cyan: #36c0cf;
 
-  /* Surfaces: near-black carrying a navy cast, so the brand reads even where
-     no brand-coloured element is present. */
-  --color-ink-975: #03040a;
-  --color-ink-950: #05060f;
-  --color-ink-900: #080a16;
-  --color-ink-850: #0b0e1d;
-  --color-ink-800: #0f1428;
-  --color-ink-750: #141a33;
-  --color-ink-700: #1a2140;
-  --color-ink-600: #232c52;
-  --color-ink-500: #2f3a68;
+  /* Surfaces. The console is light: a grey field with white panes sitting on
+     it, matching the product design. The scale keeps its old names and its old
+     meaning -- 975 is the page, 900 is a raised pane, 500 is the heaviest rule
+     -- so every `bg-ink-900` in the tree still means "a pane" and did not have
+     to be rewritten when the theme inverted.
+
+     The navy did not disappear; it moved to the navigation rail, which is the
+     one place the brand should carry. */
+  --color-ink-975: #f3f5f9;
+  --color-ink-950: #ffffff;
+  --color-ink-900: #ffffff;
+  --color-ink-850: #fbfcfe;
+  --color-ink-800: #f3f5f9;
+  --color-ink-750: #edf0f6;
+  --color-ink-700: #e3e8f0;
+  --color-ink-600: #d3d9e4;
+  --color-ink-500: #b4bccb;
+
+  /* The navigation rail, and the accent that lives on it. */
+  --color-nav-top: #1a35a8;
+  --color-nav-bottom: #0b1a63;
+  --color-accent: #2b4fd7;
+  --color-accent-soft: #eef2ff;
 
   /* The stage ramp. Sixteen steps, monotonic in lightness and hue rotation. */
   --color-stage-1: #2a3178;
@@ -870,7 +886,7 @@ span.flatpickr-weekday,
 
 @layer base {
   html {
-    color-scheme: dark;
+    color-scheme: light;
   }
   body {
     @apply bg-ink-975 text-gray-300 font-sans antialiased;
@@ -881,8 +897,8 @@ span.flatpickr-weekday,
     font-variant-numeric: tabular-nums;
   }
   ::selection {
-    background: var(--color-cgz-cyan);
-    color: var(--color-ink-975);
+    background: var(--color-accent);
+    color: #ffffff;
   }
   /* Scrollbars in a dense tool are chrome, not furniture. */
   * {
@@ -894,7 +910,7 @@ span.flatpickr-weekday,
 /* Console surfaces are square-ish and hairline-bordered. Rounded cards read as
    marketing; a tool reads as panes. */
 @utility pane {
-  @apply border border-white/[0.07] bg-ink-900;
+  @apply border border-black/[0.07] bg-ink-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)];
 }
 
 @utility hairline {

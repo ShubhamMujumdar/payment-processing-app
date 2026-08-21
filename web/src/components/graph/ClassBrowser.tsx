@@ -49,7 +49,7 @@ export default function ClassBrowser({
       key={t.type}
       onClick={() => onLoadClass(t.type)}
       disabled={busy !== null}
-      className={`group flex w-full items-center gap-2 rounded-[3px] py-1 text-left transition-colors hover:bg-white/[0.05] disabled:opacity-40 ${
+      className={`group flex w-full items-center gap-2 rounded-[3px] py-1 text-left transition-colors hover:bg-black/[0.06] disabled:opacity-40 ${
         indent ? "pl-5 pr-2" : "px-2"
       }`}
       title={`Show all ${t.count} ${typeLabel(t.type)} nodes`}
@@ -98,7 +98,7 @@ export default function ClassBrowser({
                 <button
                   onClick={() => onLoadClass("Code")}
                   disabled={busy !== null}
-                  className="group flex w-full items-center gap-2 rounded-[3px] px-2 py-1 text-left hover:bg-white/[0.05] disabled:opacity-40"
+                  className="group flex w-full items-center gap-2 rounded-[3px] px-2 py-1 text-left hover:bg-black/[0.06] disabled:opacity-40"
                   title={`Show all ${codeTotal} code nodes of every kind`}
                 >
                   <span

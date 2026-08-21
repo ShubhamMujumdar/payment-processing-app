@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import PageMeta from "../components/common/PageMeta";
-import { Ident, Lozenge, PersonChip } from "../components/console/primitives";
+import { Ident, Lozenge } from "../components/console/primitives";
 import { getConsole } from "../api/client";
-import type { ConsoleData, Person } from "../api/types";
+import type { ConsoleData } from "../api/types";
 import { ago, duration } from "../lib/format";
 import DocUpdatesTile from "../components/code2doc/DocUpdatesTile";
 import { DOC_UPDATE_FIXTURES } from "../api/docUpdateFixtures";
@@ -41,14 +41,6 @@ const KIND_LABEL: Record<ActionKind, string> = {
   doc: "Documentation",
 };
 
-const KIND_TONE: Record<ActionKind, "brand" | "warn" | "idle"> = {
-  review: "brand",
-  defect: "warn",
-  custody: "brand",
-  unverified: "warn",
-  doc: "brand",
-};
-
 export default function DeveloperView() {
   const [data, setData] = useState<ConsoleData | null>(null);
   const [me, setMe] = useState<string>("");
@@ -63,9 +55,6 @@ export default function DeveloperView() {
       setMe(d.people.some((p) => p.personId === "p5") ? "p5" : d.people[0]?.personId ?? "");
     });
   }, []);
-
-  const person = (id?: string | null): Person | undefined =>
-    data?.people.find((p) => p.personId === id);
 
   const actions = useMemo<Action[]>(() => {
     if (!data || !me) return [];
@@ -173,7 +162,7 @@ export default function DeveloperView() {
         </div>
       )}
 
-      <div className="border-b border-white/5 px-6 py-5">
+      <div className="border-b border-black/[0.07] px-6 py-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-[19px] font-medium text-gray-100">My actions</h1>
@@ -190,7 +179,7 @@ export default function DeveloperView() {
             <select
               value={me}
               onChange={(e) => setMe(e.target.value)}
-              className="rounded border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] text-gray-200 outline-none focus:border-cgz-cyan/40"
+              className="rounded border border-black/[0.10] bg-black/[0.04] px-2 py-1.5 text-[12px] text-gray-200 outline-none focus:border-cgz-cyan/40"
             >
               {data.people.map((p) => (
                 <option key={p.personId} value={p.personId} className="bg-[#0b1020]">
@@ -204,7 +193,7 @@ export default function DeveloperView() {
 
       <div className="px-6 py-5">
         {actions.length === 0 ? (
-          <div className="rounded border border-white/5 bg-white/[0.02] px-5 py-10 text-center">
+          <div className="rounded border border-black/[0.07] bg-black/[0.025] px-5 py-10 text-center">
             <p className="text-[13px] text-gray-400">Your queue is clear.</p>
             <p className="mt-1 text-[12px] text-gray-600">
               The whole portfolio is on the{" "}
@@ -228,8 +217,8 @@ export default function DeveloperView() {
                     {grouped[kind].map((action) => (
                       <li
                         key={`${action.kind}-${action.id}`}
-                        className={`rounded border bg-white/[0.02] px-4 py-3 transition-colors hover:bg-white/[0.04] ${
-                          action.urgent ? "border-state-fail/30" : "border-white/5"
+                        className={`rounded border bg-black/[0.025] px-4 py-3 transition-colors hover:bg-black/[0.05] ${
+                          action.urgent ? "border-state-fail/30" : "border-black/[0.07]"
                         }`}
                       >
                         <div className="flex flex-wrap items-center gap-2">

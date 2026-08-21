@@ -8,11 +8,11 @@ import { duration, stageColor, stageIndex } from "../../lib/format";
 type Tone = "neutral" | "pass" | "warn" | "fail" | "idle" | "brand";
 
 const TONE: Record<Tone, string> = {
-  neutral: "bg-white/[0.05] text-gray-400",
+  neutral: "bg-black/[0.06] text-gray-400",
   pass: "bg-state-pass/12 text-state-pass",
   warn: "bg-state-warn/12 text-state-warn",
   fail: "bg-state-fail/12 text-state-fail",
-  idle: "bg-white/[0.04] text-state-idle",
+  idle: "bg-black/[0.05] text-state-idle",
   brand: "bg-cgz-cyan/12 text-cgz-cyan",
 };
 
@@ -184,9 +184,9 @@ export function DataTable<T>({
               <tr
                 key={key}
                 onClick={() => onRowClick?.(row)}
-                className={`border-b border-white/[0.04] transition-colors ${
+                className={`border-b border-black/[0.05] transition-colors ${
                   onRowClick ? "cursor-pointer" : ""
-                } ${selected ? "bg-cgz-blue/[0.12]" : "hover:bg-white/[0.03]"}`}
+                } ${selected ? "bg-cgz-blue/[0.12]" : "hover:bg-black/[0.04]"}`}
               >
                 {columns.map((c) => (
                   <td

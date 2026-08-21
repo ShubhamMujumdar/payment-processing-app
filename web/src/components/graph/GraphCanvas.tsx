@@ -323,7 +323,7 @@ export default function GraphCanvas({
         className="pointer-events-none absolute inset-0 opacity-[0.35]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(60,102,206,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(60,102,206,0.10) 1px, transparent 1px)",
+            "linear-gradient(rgba(60,102,206,0.09) 1px, transparent 1px), linear-gradient(90deg, rgba(60,102,206,0.09) 1px, transparent 1px)",
           backgroundSize: `${28 * view.k}px ${28 * view.k}px`,
           backgroundPosition: `${view.x}px ${view.y}px`,
         }}
@@ -351,7 +351,7 @@ export default function GraphCanvas({
             markerHeight="6"
             orient="auto-start-reverse"
           >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(150,170,215,0.55)" />
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(71,84,103,0.55)" />
           </marker>
           <marker
             id="arrow-active"
@@ -403,7 +403,7 @@ export default function GraphCanvas({
                     id={`edge-${i}`}
                     d={path}
                     fill="none"
-                    stroke={active ? "var(--color-cgz-cyan)" : "rgba(150,170,215,0.34)"}
+                    stroke={active ? "var(--color-accent)" : "rgba(71,84,103,0.30)"}
                     strokeWidth={active ? 1.6 : 1.1}
                     markerEnd={active ? "url(#arrow-active)" : "url(#arrow)"}
                   />
@@ -420,7 +420,7 @@ export default function GraphCanvas({
                       <text
                         textAnchor="middle"
                         dy={-3}
-                        fill={active ? "var(--color-cgz-cyan)" : "rgba(150,170,215,0.78)"}
+                        fill={active ? "var(--color-accent)" : "rgba(71,84,103,0.72)"}
                         fontSize={8.5}
                         fontFamily="var(--font-mono)"
                         letterSpacing="0.04em"
@@ -493,13 +493,13 @@ export default function GraphCanvas({
                     <circle r={2} cx={r - 3} cy={-r + 3} fill={color} />
                   )}
                   {pinned && (
-                    <circle r={2.5} cx={-r + 3} cy={-r + 3} fill="rgba(255,255,255,0.5)" />
+                    <circle r={2.5} cx={-r + 3} cy={-r + 3} fill="rgba(255,255,255,0.35)" />
                   )}
                   <text
                     textAnchor="middle"
                     dy={r + 12}
                     fontSize={10}
-                    fill={isSelected ? "#eaf2ff" : "rgba(214,224,245,0.82)"}
+                    fill={isSelected ? "#0b1a63" : "rgba(52,64,84,0.88)"}
                     fontFamily="var(--font-mono)"
                     className="pointer-events-none"
                   >

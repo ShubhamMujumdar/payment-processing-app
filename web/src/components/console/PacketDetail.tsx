@@ -56,7 +56,7 @@ export default function PacketDetail({
           </div>
           <button
             onClick={onClose}
-            className="rounded-[3px] p-1 text-gray-500 hover:bg-white/[0.05] hover:text-gray-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-cgz-cyan"
+            className="rounded-[3px] p-1 text-gray-500 hover:bg-black/[0.06] hover:text-gray-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-cgz-cyan"
             aria-label="Close"
           >
             <svg viewBox="0 0 16 16" className="size-4" fill="none">

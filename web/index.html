@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" class="dark" style="color-scheme: dark">
+<html lang="en" style="color-scheme: light">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SDLC Spine — Payments Platform</title>
-    <!-- Painted before React mounts so there is no white flash on load. -->
+    <!-- Painted before React mounts so the first frame is not the wrong colour.
+         Note this rule is UNLAYERED and therefore beats Tailwind's `@layer base`,
+         so it has to track the palette rather than merely approximate it. -->
     <style>
       html,
       body {
-        background: #04050d;
+        background: #f3f5f9;
       }
     </style>
   </head>

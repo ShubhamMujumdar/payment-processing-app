@@ -140,7 +140,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                     return (
                       <div
                         key={value}
-                        className="group flex items-center justify-center rounded-full border-[0.7px] border-transparent bg-gray-100 py-1 pl-2.5 pr-2 text-sm text-gray-800 hover:border-gray-200 dark:bg-gray-800 dark:text-white/90 dark:hover:border-gray-800"
+                        className="group flex items-center justify-center rounded-full border-[0.7px] border-transparent bg-gray-100 py-1 pl-2.5 pr-2 text-sm text-gray-800 hover:border-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-800"
                       >
                         <span className="flex-initial max-w-full">{text}</span>
                         <button
@@ -231,7 +231,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
                     aria-selected={isSelected}
                   >
                     <div className="relative flex w-full items-center p-2 pl-2">
-                      <div className="mx-2 leading-6 text-gray-800 dark:text-white/90">
+                      <div className="mx-2 leading-6 text-gray-800 dark:text-gray-100">
                         {option.text}
                       </div>
                     </div>

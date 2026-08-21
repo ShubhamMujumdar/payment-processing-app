@@ -28,7 +28,7 @@ export default function DocUpdatesTile({ now }: { now: Date }) {
           return (
             <li
               key={update.runId}
-              className="rounded border border-white/5 bg-white/[0.02] px-4 py-3"
+              className="rounded border border-black/[0.07] bg-black/[0.025] px-4 py-3"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-[11px] text-gray-400">{update.shortSha}</span>
@@ -66,7 +66,7 @@ export default function DocUpdatesTile({ now }: { now: Date }) {
               </div>
 
               {isExpanded && (
-                <div className="mt-3 rounded border border-white/[0.06] bg-black/20 p-3">
+                <div className="mt-3 rounded border border-black/[0.07] bg-black/20 p-3">
                   <div className="space-y-0.5 font-mono text-[11px]">
                     <p>
                       <span className="text-gray-600">From: </span>

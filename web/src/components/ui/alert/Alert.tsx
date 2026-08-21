@@ -121,7 +121,7 @@ const Alert: React.FC<AlertProps> = ({
         </div>
 
         <div>
-          <h4 className="mb-1 text-sm font-semibold text-gray-800 dark:text-white/90">
+          <h4 className="mb-1 text-sm font-semibold text-gray-800 dark:text-gray-100">
             {title}
           </h4>
 

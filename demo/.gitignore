@@ -8,13 +8,22 @@ data/runs.sqlite
 data/runs.sqlite-shm
 data/runs.sqlite-wal
 
+# Chroma's HNSW segment directory, named by collection uuid. Derived, not
+# source: Chroma rebuilds it from chroma.sqlite3 on first query, and it is
+# rewritten on every read, so committing it produces a permanently dirty tree
+# and binary churn in unrelated commits. Verified regenerating from sqlite
+# alone -- 43 chunks, identical scores.
+data/*/
+
 # Model weights, if setup puts them here. 3.6GB.
 models/
 
 # NOTE: docs/ and data/ ARE committed on purpose.
 #   docs/  the Confluence corpus as Markdown — 83KB, and the thing that makes
 #          the retrieval reviewable without an Atlassian account
-#   data/  the Chroma index — 1MB, so the demo runs without credentials
+#   data/  the Chroma index — chroma.sqlite3 and index-meta.json only, so the
+#          demo runs without credentials. The uuid segment directory beside
+#          them is derived and ignored.
 # Both are reproducible with `ingest` + `index`; they are committed so that
 # someone without access to the space can still run this.
 

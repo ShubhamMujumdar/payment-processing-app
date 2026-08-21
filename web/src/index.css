@@ -85,18 +85,18 @@ layer(base);
      lightness: 100-300 is prominent text, 400-600 is secondary and muted,
      700-950 are the pale surfaces. Flipping the values here rather than
      rewriting ~400 class names is what kept the theme change reviewable. */
-  --color-gray-25: #0c111d;
-  --color-gray-50: #101828;
-  --color-gray-100: #101828;
-  --color-gray-200: #1d2939;
-  --color-gray-300: #344054;
-  --color-gray-400: #475467;
-  --color-gray-500: #667085;
-  --color-gray-600: #8993a4;
-  --color-gray-700: #d0d5dd;
-  --color-gray-800: #e4e7ec;
-  --color-gray-900: #f2f4f7;
-  --color-gray-950: #f9fafb;
+  --color-gray-25: #0f172a;
+  --color-gray-50: #0f172a;
+  --color-gray-100: #0f172a;
+  --color-gray-200: #1e293b;
+  --color-gray-300: #334155;
+  --color-gray-400: #64748b;
+  --color-gray-500: #64748b;
+  --color-gray-600: #8a93ac;
+  --color-gray-700: #cbd5e1;
+  --color-gray-800: #e5e7eb;
+  --color-gray-900: #f1f5f9;
+  --color-gray-950: #f8fafc;
   --color-gray-dark: #1a2231;
 
   --color-orange-25: #fffaf5;
@@ -844,21 +844,22 @@ span.flatpickr-weekday,
 
      The navy did not disappear; it moved to the navigation rail, which is the
      one place the brand should carry. */
-  --color-ink-975: #f3f5f9;
+  --color-ink-975: #f8fafc;
   --color-ink-950: #ffffff;
   --color-ink-900: #ffffff;
-  --color-ink-850: #fbfcfe;
-  --color-ink-800: #f3f5f9;
-  --color-ink-750: #edf0f6;
-  --color-ink-700: #e3e8f0;
-  --color-ink-600: #d3d9e4;
-  --color-ink-500: #b4bccb;
+  --color-ink-850: #fbfcfd;
+  --color-ink-800: #f8fafc;
+  --color-ink-750: #f1f5f9;
+  --color-ink-700: #e5e7eb;
+  --color-ink-600: #cbd5e1;
+  --color-ink-500: #94a3b8;
 
-  /* The navigation rail, and the accent that lives on it. */
-  --color-nav-top: #1a35a8;
-  --color-nav-bottom: #0b1a63;
-  --color-accent: #2b4fd7;
-  --color-accent-soft: #eef2ff;
+  /* The navigation rail and the accent, read from the design file rather than
+     matched by eye: #1434cb is the brand blue, #0a1f5f the rail. */
+  --color-nav-top: #1434cb;
+  --color-nav-bottom: #0a1f5f;
+  --color-accent: #1434cb;
+  --color-accent-soft: #eef1fb;
 
   /* The stage ramp. Sixteen steps, monotonic in lightness and hue rotation. */
   --color-stage-1: #2a3178;
@@ -878,10 +879,10 @@ span.flatpickr-weekday,
   --color-stage-15: #27a0ab;
   --color-stage-16: #1e728c;
 
-  --color-state-pass: #37b98a;
-  --color-state-warn: #d99b3f;
-  --color-state-fail: #d9615c;
-  --color-state-idle: #5d6a8c;
+  --color-state-pass: #00a870;
+  --color-state-warn: #946200;
+  --color-state-fail: #d14343;
+  --color-state-idle: #8a93ac;
 }
 
 @layer base {
@@ -907,14 +908,16 @@ span.flatpickr-weekday,
   }
 }
 
-/* Console surfaces are square-ish and hairline-bordered. Rounded cards read as
-   marketing; a tool reads as panes. */
+/* Cards, not panes. The design uses a 10px radius, a flat 1px #e5e7eb rule and
+   a barely-there shadow -- so the old "square-ish, hairline" rule no longer
+   describes it, and the utilities below were updated to match rather than left
+   saying one thing and doing another. */
 @utility pane {
-  @apply border border-black/[0.07] bg-ink-900 shadow-[0_1px_2px_rgba(16,24,40,0.04)];
+  @apply border border-ink-700 bg-ink-900 shadow-[0_1px_2px_rgba(15,23,42,0.04)];
 }
 
 @utility hairline {
-  @apply border-white/[0.07];
+  @apply border-ink-700;
 }
 
 @utility lozenge {

@@ -59,7 +59,7 @@ export default function DocUpdatesTile({ now }: { now: Date }) {
                 </span>
                 <button
                   onClick={() => setExpandedEmail(isExpanded ? null : update.runId)}
-                  className="ml-auto text-[11px] text-brand-cyan/70 hover:text-brand-cyan"
+                  className="ml-auto text-[11px] text-cgz-cyan/70 hover:text-cgz-cyan"
                 >
                   {isExpanded ? "hide email ↑" : "view email ↓"}
                 </button>

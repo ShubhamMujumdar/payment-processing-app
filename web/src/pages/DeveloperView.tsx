@@ -190,7 +190,7 @@ export default function DeveloperView() {
             <select
               value={me}
               onChange={(e) => setMe(e.target.value)}
-              className="rounded border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] text-gray-200 outline-none focus:border-brand-cyan/40"
+              className="rounded border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[12px] text-gray-200 outline-none focus:border-cgz-cyan/40"
             >
               {data.people.map((p) => (
                 <option key={p.personId} value={p.personId} className="bg-[#0b1020]">
@@ -208,7 +208,7 @@ export default function DeveloperView() {
             <p className="text-[13px] text-gray-400">Your queue is clear.</p>
             <p className="mt-1 text-[12px] text-gray-600">
               The whole portfolio is on the{" "}
-              <Link to="/delivery" className="text-brand-cyan hover:underline">
+              <Link to="/delivery" className="text-cgz-cyan hover:underline">
                 delivery console
               </Link>
               .
@@ -264,7 +264,7 @@ export default function DeveloperView() {
 
         <p className="mt-8 text-[11.5px] text-gray-600">
           Derived from the same event log as the{" "}
-          <Link to="/delivery" className="text-brand-cyan hover:underline">
+          <Link to="/delivery" className="text-cgz-cyan hover:underline">
             delivery console
           </Link>
           . Nothing here is entered by hand — an item leaves this list when the event that

@@ -83,7 +83,7 @@ export default function CommitToast() {
     <div className="fixed bottom-5 right-5 z-[100] w-[340px] animate-[slideIn_.25s_ease-out]">
       <div
         className={`rounded-lg border bg-ink-900/95 shadow-2xl backdrop-blur ${
-          failed ? "border-state-fail/40" : hasEdits ? "border-brand-600/60" : "border-black/[0.10]"
+          failed ? "border-state-fail/40" : hasEdits ? "border-accent/40" : "border-black/[0.10]"
         }`}
       >
         <div className="flex items-start gap-3 px-4 py-3">
@@ -99,7 +99,7 @@ export default function CommitToast() {
           </span>
 
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] uppercase tracking-wider text-brand-400">
+            <p className="text-[11px] uppercase tracking-wider text-accent">
               Commit {toast.sha}
             </p>
             <p className="mt-0.5 truncate text-[12.5px] text-gray-200">{toast.message}</p>
@@ -124,7 +124,7 @@ export default function CommitToast() {
             setDismissed(toast.runId);
             navigate("/live");
           }}
-          className="w-full rounded-b-lg border-t border-black/[0.09] bg-black/[0.025] px-4 py-2 text-left text-[12px] text-brand-400 hover:bg-black/[0.06]"
+          className="w-full rounded-b-lg border-t border-black/[0.09] bg-black/[0.025] px-4 py-2 text-left text-[12px] text-accent hover:bg-black/[0.06]"
         >
           Open live pipeline →
         </button>

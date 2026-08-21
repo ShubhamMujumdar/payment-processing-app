@@ -23,14 +23,14 @@ export const NODE_WIDTH = 114;
 const DOT: Record<StageState, string> = {
   pending: "border-ink-500 bg-ink-900",
   active: "border-brand-400 bg-brand-500",
-  done: "border-brand-700 bg-brand-800",
+  done: "border-accent/40 bg-accent/70",
   failed: "border-state-fail bg-state-fail/30",
   skipped: "border-ink-600 bg-ink-850",
 };
 
 const LABEL: Record<StageState, string> = {
   pending: "text-gray-600",
-  active: "text-brand-300",
+  active: "text-accent",
   done: "text-gray-300",
   failed: "text-state-fail",
   skipped: "text-gray-600",
@@ -47,7 +47,7 @@ export function Track({
   title?: string;
   trailing?: ReactNode;
 }) {
-  const line = accent === "cyan" ? "bg-brand-800/60" : "bg-cgz-blue/40";
+  const line = accent === "cyan" ? "bg-accent/70" : "bg-cgz-blue/40";
   return (
     <div>
       {title && (
@@ -122,7 +122,7 @@ export function CurlArrow({ active, height = 34 }: { active: boolean; height?: n
       <path
         d={`M ${x} 0 C ${x} ${height * 0.55}, ${x + 14} ${height - 6}, ${x + 44} ${height - 6}`}
         fill="none"
-        stroke="var(--color-brand-600)"
+        stroke="var(--color-accent)"
         strokeWidth="1.5"
         strokeLinecap="round"
         markerEnd="url(#c2d-arrow)"

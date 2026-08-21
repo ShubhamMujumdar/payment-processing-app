@@ -37,14 +37,14 @@ function Step({
     <div className="relative pl-11">
       {/* the spine connecting steps */}
       <span className="absolute left-[13px] top-7 bottom-0 w-px bg-black/[0.09]" />
-      <span className="absolute left-0 top-0 flex h-[26px] w-[26px] items-center justify-center rounded-full border border-brand-700 bg-brand-950 text-[12px] font-medium text-brand-300">
+      <span className="absolute left-0 top-0 flex h-[26px] w-[26px] items-center justify-center rounded-full border border-accent/40 bg-accent-soft text-[12px] font-medium text-accent">
         {index}
       </span>
 
       <div className="pb-6">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 className="text-[13.5px] font-medium text-gray-100">{title}</h3>
-          {badge && <span className="text-[11.5px] text-brand-400">{badge}</span>}
+          {badge && <span className="text-[11.5px] text-accent">{badge}</span>}
           {seconds != null && (
             <span className="tnum ml-auto font-mono text-[11px] text-gray-600">{seconds}s</span>
           )}
@@ -201,11 +201,11 @@ export default function Explain({ run }: { run: Run }) {
             <li
               key={`${p.page_id}-${p.line_start}`}
               className={`rounded border px-3 py-2 ${
-                p.needs_change ? "border-brand-800/60 bg-brand-950/25" : "border-black/[0.07] bg-black/[0.025]"
+                p.needs_change ? "border-accent/40 bg-accent-soft" : "border-black/[0.07] bg-black/[0.025]"
               }`}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className={p.needs_change ? "text-brand-400" : "text-gray-600"}>
+                <span className={p.needs_change ? "text-accent" : "text-gray-600"}>
                   {p.needs_change ? "✎" : "✓"}
                 </span>
                 <span className="text-[12px] text-gray-300">{p.heading_path}</span>

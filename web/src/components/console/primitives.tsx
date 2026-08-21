@@ -63,7 +63,7 @@ export function PersonChip({
       <span
         className={`flex size-5 shrink-0 items-center justify-center rounded-full font-mono text-[9px] ${
           person.resolved
-            ? "bg-cgz-blue/25 text-brand-200"
+            ? "bg-cgz-blue/25 text-accent"
             : "border border-dashed border-state-warn/50 text-state-warn"
         }`}
       >

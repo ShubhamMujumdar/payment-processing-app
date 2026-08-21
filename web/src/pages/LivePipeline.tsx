@@ -206,11 +206,11 @@ export default function LivePipeline() {
 
   return (
     <>
-      <PageMeta title="Live pipeline · Cognizant SDLC Spine" description="A commit, and the documentation it just made stale." />
+      <PageMeta title="Code Review · Live pipeline" description="A commit, and the documentation it just made stale." />
 
       <div className="flex items-center justify-between gap-4 border-b border-black/[0.07] px-6 py-4">
         <div>
-          <h1 className="text-[19px] font-medium text-gray-100">Live pipeline</h1>
+          <h1 className="text-[19px] font-semibold text-gray-100">Code Review</h1>
           <p className="mt-0.5 text-[12px] text-gray-500">
             {watching ? <>Watching <Ident dim>{watching}</Ident></> : "Not watching a branch"}
           </p>
@@ -239,7 +239,7 @@ export default function LivePipeline() {
                   onClick={() => setSelected(r.run_id)}
                   className={`w-full rounded border px-3 py-2 text-left transition-colors ${
                     r.run_id === selected
-                      ? "border-brand-700/60 bg-brand-950/40"
+                      ? "border-accent/40 bg-accent-soft"
                       : "border-black/[0.07] bg-black/[0.025] hover:bg-black/[0.05]"
                   }`}
                 >
@@ -289,7 +289,7 @@ export default function LivePipeline() {
               <div
                 className={`mt-3 rounded border px-4 py-3 ${
                   proposals.length
-                    ? "border-brand-700/50 bg-brand-950/30"
+                    ? "border-accent/40 bg-accent-soft"
                     : "border-black/[0.09] bg-black/[0.025]"
                 }`}
               >
@@ -303,13 +303,13 @@ export default function LivePipeline() {
 
                 <CurlArrow active={docRunning} />
 
-                <div className="ml-[52px] rounded border border-brand-900/50 bg-brand-950/20 px-4 py-3">
+                <div className="ml-[52px] rounded border border-accent/40 bg-accent-soft px-4 py-3">
                   <Track
                     title="Documentation · code2doc"
                     stages={docStages(run)}
                     trailing={
                       docRunning ? (
-                        <span className="text-[10.5px] text-brand-400">working…</span>
+                        <span className="text-[10.5px] text-accent">working…</span>
                       ) : run.status === "no-impact" ? (
                         <span className="text-[10.5px] text-gray-500">no impact</span>
                       ) : null
@@ -372,7 +372,7 @@ export default function LivePipeline() {
                             : line.startsWith("-") && !line.startsWith("---")
                               ? "text-state-fail"
                               : line.startsWith("@@")
-                                ? "text-brand-400"
+                                ? "text-accent"
                                 : "text-gray-500"
                         }
                       >
@@ -443,7 +443,7 @@ function ProposalCard({
   };
 
   return (
-    <div className="rounded border border-brand-900/50 bg-ink-900 px-4 py-3">
+    <div className="rounded border border-accent/40 bg-ink-900 px-4 py-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[12.5px] text-gray-200">{proposal.page_title}</span>
         <span className="text-gray-600">›</span>
@@ -500,7 +500,7 @@ function ProposalCard({
                 onClick={() => act(false)}
                 disabled={busy || !plan?.ok}
                 title={plan?.ok ? "Writes a new version of the Confluence page" : "Check the page first"}
-                className="rounded border border-brand-600 bg-brand-800/40 px-3 py-1.5 text-[12px] text-brand-200 hover:bg-brand-700/40 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded border border-accent/40 bg-accent/70 px-3 py-1.5 text-[12px] text-accent hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Approve &amp; publish
               </button>

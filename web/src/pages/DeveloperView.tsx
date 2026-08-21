@@ -5,6 +5,8 @@ import { Ident, Lozenge, PersonChip } from "../components/console/primitives";
 import { getConsole } from "../api/client";
 import type { ConsoleData, Person } from "../api/types";
 import { ago, duration } from "../lib/format";
+import DocUpdatesTile from "../components/code2doc/DocUpdatesTile";
+import { DOC_UPDATE_FIXTURES } from "../api/docUpdateFixtures";
 
 /**
  * The landing page: what one engineer has to act on, not what the programme
@@ -50,6 +52,7 @@ const KIND_TONE: Record<ActionKind, "brand" | "warn" | "idle"> = {
 export default function DeveloperView() {
   const [data, setData] = useState<ConsoleData | null>(null);
   const [me, setMe] = useState<string>("");
+  const [emailToastDismissed, setEmailToastDismissed] = useState(false);
   const now = useMemo(() => new Date(), [data]);
 
   useEffect(() => {
@@ -140,6 +143,7 @@ export default function DeveloperView() {
   if (!data) return <div className="p-6 text-[12px] text-gray-600">Loading…</div>;
 
   const urgent = actions.filter((a) => a.urgent).length;
+  const latestDocUpdate = DOC_UPDATE_FIXTURES[0];
   const grouped = actions.reduce<Record<string, Action[]>>((acc, action) => {
     (acc[action.kind] ??= []).push(action);
     return acc;
@@ -148,6 +152,26 @@ export default function DeveloperView() {
   return (
     <>
       <PageMeta title="My actions · Cognizant SDLC Spine" description="What is waiting on you." />
+
+      {!emailToastDismissed && latestDocUpdate && (
+        <div className="flex items-center gap-3 border-b border-state-pass/20 bg-state-pass/[0.05] px-6 py-2.5">
+          <span className="text-state-pass">✉</span>
+          <span className="text-[12px] text-gray-300">
+            <span className="font-medium text-state-pass">Email sent</span>
+            {" — "}
+            <span className="font-mono text-[11px]">{latestDocUpdate.pageTitle}</span>
+            {" was updated and ops team was notified "}
+            <span className="text-gray-500">({ago(latestDocUpdate.emailSentAt, now)})</span>
+          </span>
+          <button
+            onClick={() => setEmailToastDismissed(true)}
+            className="ml-auto text-gray-600 hover:text-gray-400"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <div className="border-b border-white/5 px-6 py-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -233,6 +257,10 @@ export default function DeveloperView() {
               ))}
           </div>
         )}
+
+        <div className="mt-8">
+          <DocUpdatesTile now={now} />
+        </div>
 
         <p className="mt-8 text-[11.5px] text-gray-600">
           Derived from the same event log as the{" "}

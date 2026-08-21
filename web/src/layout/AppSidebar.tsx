@@ -23,6 +23,18 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
+  { label: "Portfolio", path: "/portfolio", ready: true, icon: "M3 6h14v9H3zM3 9h14" },
+  { label: "Strategy", path: "/strategy", ready: true, icon: "M3 14l4-5 3 3 4-6 3 3" },
+  { label: "Analytics", path: "/analytics", ready: true, icon: "M4 16V9m4 7V5m4 11v-5m4 5V7" },
+];
+
+const WORKSPACE_NAV: NavItem[] = [
+  { label: "Initiatives", path: "/initiatives", ready: true, icon: "M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4zM11 11h5v5h-5z" },
+  { label: "Risk Register", path: "/risk", ready: true, icon: "M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm0-9v4m0 2v.01" },
+];
+
+/** The part of this build that is real. */
+const DELIVERY_NAV: NavItem[] = [
   { label: "My Tasks", path: "/", ready: true, icon: "M4 10.5 8 14l8-8" },
   { label: "Project Health", path: "/delivery", ready: true, icon: "M3 6h14M3 10h14M3 14h9" },
   { label: "Code Review", path: "/live", ready: true, icon: "M3 10h3l2-5 3 10 2-5h4" },
@@ -116,6 +128,10 @@ export default function AppSidebar() {
 
       <nav className="flex-1 overflow-y-auto px-2">
         <ul className="space-y-0.5">{NAV.map(render)}</ul>
+        {open && <p className="px-3 pb-1 pt-4 font-mono text-[10px] font-bold uppercase tracking-wider text-white/40">Workspace</p>}
+        <ul className={`space-y-0.5 ${open ? "" : "mt-4"}`}>{WORKSPACE_NAV.map(render)}</ul>
+        {open && <p className="px-3 pb-1 pt-4 font-mono text-[10px] font-bold uppercase tracking-wider text-white/40">Delivery · live</p>}
+        <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-white/10 pt-4"}`}>{DELIVERY_NAV.map(render)}</ul>
       </nav>
 
       <div className="shrink-0 border-t border-white/10 px-2 py-2">

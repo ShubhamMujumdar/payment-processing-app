@@ -7,6 +7,9 @@ import LivePipeline from "./pages/LivePipeline";
 import Traceability from "./pages/Traceability";
 import KnowledgeGraph from "./pages/KnowledgeGraph";
 import NotBuilt from "./pages/NotBuilt";
+import Portfolio from "./pages/Portfolio";
+import Strategy from "./pages/Strategy";
+import { Analytics, Initiatives, RiskRegister } from "./pages/ExecStubs";
 import NotFound from "./pages/OtherPage/NotFound";
 
 export default function App() {
@@ -20,6 +23,11 @@ export default function App() {
           <Route path="/live" element={<LivePipeline />} />
           <Route path="/traceability" element={<Traceability />} />
           <Route path="/graph" element={<KnowledgeGraph />} />
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/strategy" element={<Strategy />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/initiatives" element={<Initiatives />} />
+          <Route path="/risk" element={<RiskRegister />} />
           <Route
             path="/settings"
             element={<NotBuilt title="Settings" blurb="Workspace, connectors and notification preferences." />}

@@ -99,11 +99,11 @@ export default function Traceability() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Filter requirements"
-              className="h-7 flex-1 rounded-[3px] border hairline bg-ink-950 px-2.5 text-[12px] text-gray-200 placeholder:text-gray-600 focus:border-cgz-cyan/50 focus:outline-none"
+              className="h-7 flex-1 rounded-md border hairline bg-ink-950 px-2.5 text-[12px] text-gray-200 placeholder:text-gray-600 focus:border-cgz-cyan/50 focus:outline-none"
             />
             <button
               onClick={() => setOnlyProblems((v) => !v)}
-              className={`h-7 whitespace-nowrap rounded-[3px] border px-2 text-[11px] transition-colors ${
+              className={`h-7 whitespace-nowrap rounded-md border px-2 text-[11px] transition-colors ${
                 onlyProblems
                   ? "border-state-warn/40 bg-state-warn/10 text-state-warn"
                   : "hairline text-gray-500 hover:text-gray-300"
@@ -172,7 +172,7 @@ export default function Traceability() {
               </div>
 
               {!liveGraph ? (
-                <div className="rounded-[3px] border border-state-warn/25 bg-state-warn/[0.06] p-4">
+                <div className="rounded-md border border-state-warn/25 bg-state-warn/[0.06] p-4">
                   <p className="text-[12px] text-state-warn">
                     Closure needs the graph. Start the spine and set{" "}
                     <code className="font-mono">VITE_SPINE_MODE=live</code> to traverse requirement →
@@ -293,7 +293,7 @@ function Panel({
   children?: React.ReactNode;
 }) {
   return (
-    <section className={`pane rounded-[3px] ${tone === "fail" ? "border-state-fail/25" : ""}`}>
+    <section className={`pane rounded-md ${tone === "fail" ? "border-state-fail/25" : ""}`}>
       <header className="flex items-baseline gap-2 border-b hairline px-3 py-2">
         <h3 className="font-mono text-[10px] uppercase tracking-[0.12em] text-gray-500">{title}</h3>
         <span className="tnum font-mono text-[11px] text-gray-300">{count}</span>

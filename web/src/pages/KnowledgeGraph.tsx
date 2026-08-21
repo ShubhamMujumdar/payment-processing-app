@@ -206,7 +206,7 @@ export default function KnowledgeGraph() {
   if (!schema) {
     return (
       <div className="p-6">
-        <div className="max-w-xl rounded-[3px] border border-state-warn/25 bg-state-warn/[0.06] p-4">
+        <div className="max-w-xl rounded-md border border-state-warn/25 bg-state-warn/[0.06] p-4">
           <p className="text-[12px] text-state-warn">
             The graph explorer reads the live store, so it needs the spine running.
           </p>
@@ -237,10 +237,10 @@ export default function KnowledgeGraph() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search any node — FR-PAY-044, RefundServiceImpl, DEF-001"
-            className="h-7 w-[340px] rounded-[3px] border hairline bg-ink-950 px-2.5 text-[12px] text-gray-200 placeholder:text-gray-600 focus:border-cgz-cyan/50 focus:outline-none"
+            className="h-7 w-[340px] rounded-md border hairline bg-ink-950 px-2.5 text-[12px] text-gray-200 placeholder:text-gray-600 focus:border-cgz-cyan/50 focus:outline-none"
           />
           {results.length > 0 && (
-            <div className="absolute right-0 top-8 z-50 max-h-[380px] w-[420px] overflow-y-auto rounded-[3px] border hairline bg-ink-900 shadow-2xl">
+            <div className="absolute right-0 top-8 z-50 max-h-[380px] w-[420px] overflow-y-auto rounded-md border hairline bg-ink-900 shadow-2xl">
               {results.map((r) => (
                 <button
                   key={r.id}
@@ -263,7 +263,7 @@ export default function KnowledgeGraph() {
 
         <button
           onClick={clear}
-          className="h-7 rounded-[3px] border hairline px-2 font-mono text-[10px] text-gray-500 hover:text-gray-200"
+          className="h-7 rounded-md border hairline px-2 font-mono text-[10px] text-gray-500 hover:text-gray-200"
         >
           clear canvas
         </button>
@@ -327,13 +327,13 @@ export default function KnowledgeGraph() {
               <div className="flex gap-1.5 border-b hairline px-3 py-2">
                 <button
                   onClick={() => expand(detail.id)}
-                  className="rounded-[3px] border border-cgz-cyan/30 bg-cgz-cyan/[0.08] px-2 py-1 font-mono text-[10px] text-cgz-cyan hover:bg-cgz-cyan/[0.14]"
+                  className="rounded-md border border-cgz-cyan/30 bg-cgz-cyan/[0.08] px-2 py-1 font-mono text-[10px] text-cgz-cyan hover:bg-cgz-cyan/[0.14]"
                 >
                   expand
                 </button>
                 <button
                   onClick={removeSelected}
-                  className="rounded-[3px] border hairline px-2 py-1 font-mono text-[10px] text-gray-500 hover:text-gray-200"
+                  className="rounded-md border hairline px-2 py-1 font-mono text-[10px] text-gray-500 hover:text-gray-200"
                 >
                   hide
                 </button>

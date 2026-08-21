@@ -36,7 +36,7 @@ export function StageChip({ stageId, stages }: { stageId: StageId; stages: Stage
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
       <span
-        className="size-2 shrink-0 rounded-[2px]"
+        className="size-2 shrink-0 rounded-sm"
         style={{ background: stageColor(stageId) }}
         aria-hidden="true"
       />
@@ -99,7 +99,7 @@ export function FlowBar({ packet, stages }: { packet: WorkPacket; stages: Stage[
               outline: span.isOverdue ? "1px solid var(--color-state-fail)" : undefined,
               outlineOffset: "-1px",
             }}
-            className="first:rounded-l-[2px] last:rounded-r-[2px]"
+            className="first:rounded-l-sm last:rounded-r-sm"
             title={`${stage?.label}: ${duration(span.calendarAdjustedSeconds)}`}
           />
         );
@@ -117,7 +117,7 @@ export function ProgressRail({ stageId }: { stageId: StageId }) {
       {Array.from({ length: 16 }, (_, i) => (
         <span
           key={i}
-          className="h-2.5 w-[3px] rounded-[1px]"
+          className="h-2.5 w-[3px] rounded-sm"
           style={{
             background: i <= idx ? stageColor(stageId) : "rgba(255,255,255,0.07)",
             opacity: i <= idx ? 0.35 + (i / 16) * 0.65 : 1,

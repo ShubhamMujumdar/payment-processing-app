@@ -516,18 +516,18 @@ export default function GraphCanvas({
       <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
         <button
           onClick={releaseAll}
-          className="rounded-[3px] border hairline bg-ink-900/90 px-2 py-1 font-mono text-[10px] text-gray-400 hover:text-gray-100"
+          className="rounded-md border hairline bg-ink-900/90 px-2 py-1 font-mono text-[10px] text-gray-400 hover:text-gray-100"
           title="Release every pinned node back into the layout"
         >
           unpin all
         </button>
         <button
           onClick={fit}
-          className="rounded-[3px] border hairline bg-ink-900/90 px-2 py-1 font-mono text-[10px] text-gray-400 hover:text-gray-100"
+          className="rounded-md border hairline bg-ink-900/90 px-2 py-1 font-mono text-[10px] text-gray-400 hover:text-gray-100"
         >
           reset view
         </button>
-        <span className="tnum rounded-[3px] border hairline bg-ink-900/90 px-2 py-1 font-mono text-[10px] text-gray-500">
+        <span className="tnum rounded-md border hairline bg-ink-900/90 px-2 py-1 font-mono text-[10px] text-gray-500">
           {Math.round(view.k * 100)}%
         </span>
       </div>

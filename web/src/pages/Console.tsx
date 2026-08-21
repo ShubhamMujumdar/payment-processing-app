@@ -514,13 +514,13 @@ export default function Console() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter by text, key or requirement"
-          className="h-7 w-64 rounded-[3px] border hairline bg-ink-950 px-2.5 text-[12px] text-gray-200 placeholder:text-gray-600 focus:border-cgz-cyan/50 focus:outline-none"
+          className="h-7 w-64 rounded-md border hairline bg-ink-950 px-2.5 text-[12px] text-gray-200 placeholder:text-gray-600 focus:border-cgz-cyan/50 focus:outline-none"
         />
 
         <select
           value={release}
           onChange={(e) => setRelease(e.target.value)}
-          className="h-7 rounded-[3px] border hairline bg-ink-950 px-2 text-[12px] text-gray-300 focus:border-cgz-cyan/50 focus:outline-none"
+          className="h-7 rounded-md border hairline bg-ink-950 px-2 text-[12px] text-gray-300 focus:border-cgz-cyan/50 focus:outline-none"
         >
           <option value="all">All releases</option>
           <option value="R2">R2</option>
@@ -530,7 +530,7 @@ export default function Console() {
         <select
           value={assignee}
           onChange={(e) => setAssignee(e.target.value)}
-          className="h-7 rounded-[3px] border hairline bg-ink-950 px-2 text-[12px] text-gray-300 focus:border-cgz-cyan/50 focus:outline-none"
+          className="h-7 rounded-md border hairline bg-ink-950 px-2 text-[12px] text-gray-300 focus:border-cgz-cyan/50 focus:outline-none"
         >
           <option value="all">Anyone</option>
           {data.people.map((p) => (
@@ -547,7 +547,7 @@ export default function Console() {
               setRelease("all");
               setAssignee("all");
             }}
-            className="h-7 rounded-[3px] px-2 text-[12px] text-gray-500 hover:bg-black/[0.05] hover:text-gray-300"
+            className="h-7 rounded-md px-2 text-[12px] text-gray-500 hover:bg-black/[0.05] hover:text-gray-300"
           >
             Clear
           </button>

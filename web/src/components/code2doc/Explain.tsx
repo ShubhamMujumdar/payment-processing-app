@@ -113,7 +113,7 @@ export default function Explain({ run }: { run: Run }) {
           </p>
         ))}
         {lines.length > 0 && (
-          <div className="mt-2 overflow-x-auto rounded border border-black/[0.07] bg-ink-950 px-3 py-2 font-mono text-[11px] leading-[1.6]">
+          <div className="mt-2 overflow-x-auto rounded-[10px] border border-black/[0.07] bg-ink-950 px-3 py-2 font-mono text-[11px] leading-[1.6]">
             {lines.map((l, i) => (
               <div key={i} className={l.sign === "+" ? "text-state-pass" : "text-state-fail"}>
                 {l.sign} {l.text.trim()}
@@ -136,7 +136,7 @@ export default function Explain({ run }: { run: Run }) {
         badge={run.analysis?.change_kind}
       >
         {run.analysis ? (
-          <p className="rounded border border-black/[0.07] bg-black/[0.025] px-3 py-2 text-[12.5px] text-gray-300">
+          <p className="rounded-[10px] border border-black/[0.07] bg-black/[0.025] px-3 py-2 text-[12.5px] text-gray-300">
             “{run.analysis.summary}”
           </p>
         ) : (
@@ -153,7 +153,7 @@ export default function Explain({ run }: { run: Run }) {
       >
         <ul className="space-y-1">
           {(run.analysis?.queries ?? []).map((q) => (
-            <li key={q.topic} className="rounded border border-black/[0.07] bg-black/[0.025] px-3 py-1.5">
+            <li key={q.topic} className="rounded-[10px] border border-black/[0.07] bg-black/[0.025] px-3 py-1.5">
               <p className="text-[12px] text-gray-300">“{q.topic}”</p>
               <p className="mt-0.5 text-[11px] text-gray-600">{q.rationale}</p>
             </li>
@@ -200,7 +200,7 @@ export default function Explain({ run }: { run: Run }) {
           {proposals.map((p) => (
             <li
               key={`${p.page_id}-${p.line_start}`}
-              className={`rounded border px-3 py-2 ${
+              className={`rounded-[10px] border px-3 py-2 ${
                 p.needs_change ? "border-accent/40 bg-accent-soft" : "border-black/[0.07] bg-black/[0.025]"
               }`}
             >
@@ -218,7 +218,7 @@ export default function Explain({ run }: { run: Run }) {
           ))}
         </ul>
         {run.status === "no-impact" && (
-          <p className="mt-2 rounded border border-black/[0.07] bg-black/[0.025] px-3 py-2 text-[12px] text-gray-400">
+          <p className="mt-2 rounded-[10px] border border-black/[0.07] bg-black/[0.025] px-3 py-2 text-[12px] text-gray-400">
             Nothing in the documentation is made untrue by this change.
           </p>
         )}

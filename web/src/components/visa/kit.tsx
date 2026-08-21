@@ -83,7 +83,7 @@ export function StatCard({
     <Card className={`relative overflow-hidden pl-6 pr-5 py-5 before:absolute before:inset-y-0 before:left-0 before:w-[4px] ${EDGE[tone]}`}>
       <div className="flex items-start justify-between gap-3">
         <p className="text-[14px] font-medium text-gray-300">{label}</p>
-        {icon && <span className={`grid size-7 shrink-0 place-items-center rounded-lg ${PILL[tone]}`}>{icon}</span>}
+        {icon && <span className={`grid size-7 shrink-0 place-items-center rounded-[10px] ${PILL[tone]}`}>{icon}</span>}
       </div>
       <p className="mt-2 flex items-baseline gap-2">
         <span className="text-[32px] font-bold leading-none tracking-[-0.02em] text-gray-100">{value}</span>
@@ -164,7 +164,7 @@ export function PageHead({
 
 /** Buttons in the design that have nothing behind them in this build. */
 export function MockButton({ children, variant = "ghost" }: { children: ReactNode; variant?: "solid" | "ghost" }) {
-  const base = "inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-semibold";
+  const base = "inline-flex cursor-not-allowed items-center gap-1.5 rounded-[10px] px-3.5 py-2 text-[13px] font-semibold";
   return (
     <button type="button" title="Not built yet — this control is part of the design, not this build"
       className={variant === "solid"
@@ -179,7 +179,7 @@ export function MockButton({ children, variant = "ghost" }: { children: ReactNod
  *  chips so "seeded" means one thing everywhere in this app. */
 export function MockBanner({ what }: { what: string }) {
   return (
-    <div className="mx-6 mt-4 flex items-center gap-2 rounded-lg border border-state-warn/25 bg-[#fff6e5] px-3.5 py-2.5">
+    <div className="mx-6 mt-4 flex items-center gap-2 rounded-[10px] border border-state-warn/25 bg-[#fff6e5] px-3.5 py-2.5">
       <span className="size-1.5 shrink-0 rounded-full bg-state-warn" />
       <p className="text-[12.5px] text-state-warn">
         <span className="font-semibold">Seeded page.</span> {what} Nothing here is read from the

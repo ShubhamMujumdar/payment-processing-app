@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import { BRAND } from "../brand";
+import { useOrigin } from "../api/origin";
 
 /**
  * The navigation rail.
@@ -50,6 +51,7 @@ const FOOTER_NAV: NavItem[] = [
 export default function AppSidebar() {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const { pathname } = useLocation();
+  const origin = useOrigin();
   const open = isExpanded || isHovered || isMobileOpen;
 
   const render = (item: NavItem) => {
@@ -66,7 +68,7 @@ export default function AppSidebar() {
       </>
     );
 
-    const shared = `relative flex items-center gap-2.5 rounded-md px-3 py-2 ${open ? "" : "justify-center px-0"}`;
+    const shared = `relative flex items-center gap-2.5 rounded-[10px] px-3 py-2 ${open ? "" : "justify-center px-0"}`;
 
     return (
       <li key={item.label}>
@@ -119,7 +121,7 @@ export default function AppSidebar() {
         <button
           type="button"
           title="Not built yet"
-          className={`flex cursor-not-allowed items-center justify-center gap-1.5 rounded-md bg-accent py-2 text-[12px] font-medium text-white/90 shadow-sm ${open ? "w-full" : "w-9"}`}
+          className={`flex cursor-not-allowed items-center justify-center gap-1.5 rounded-[10px] bg-accent py-2 text-[12px] font-medium text-white/90 shadow-sm ${open ? "w-full" : "w-9"}`}
         >
           <span className="text-[13px] leading-none">+</span>
           {open && <span>New Insight</span>}
@@ -141,6 +143,12 @@ export default function AppSidebar() {
             <span className="text-state-pass">●</span> github · ci · confluence
             <br />
             <span className="text-white/30">○</span> jira · zephyr seeded
+            <br />
+            <span title="Whether the delivery graph is being read live or served from fixtures">
+              {origin === "live" && <><span className="text-state-pass">●</span> graph live</>}
+              {origin === "fixtures" && <><span className="text-state-warn">●</span> graph seeded</>}
+              {origin === "fixtures-fallback" && <><span className="text-state-fail">●</span> spine unreachable</>}
+            </span>
           </div>
         )}
       </div>

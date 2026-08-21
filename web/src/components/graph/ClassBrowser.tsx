@@ -49,7 +49,7 @@ export default function ClassBrowser({
       key={t.type}
       onClick={() => onLoadClass(t.type)}
       disabled={busy !== null}
-      className={`group flex w-full items-center gap-2 rounded-[3px] py-1 text-left transition-colors hover:bg-black/[0.06] disabled:opacity-40 ${
+      className={`group flex w-full items-center gap-2 rounded-md py-1 text-left transition-colors hover:bg-black/[0.06] disabled:opacity-40 ${
         indent ? "pl-5 pr-2" : "px-2"
       }`}
       title={`Show all ${t.count} ${typeLabel(t.type)} nodes`}
@@ -98,7 +98,7 @@ export default function ClassBrowser({
                 <button
                   onClick={() => onLoadClass("Code")}
                   disabled={busy !== null}
-                  className="group flex w-full items-center gap-2 rounded-[3px] px-2 py-1 text-left hover:bg-black/[0.06] disabled:opacity-40"
+                  className="group flex w-full items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-black/[0.06] disabled:opacity-40"
                   title={`Show all ${codeTotal} code nodes of every kind`}
                 >
                   <span
@@ -129,7 +129,7 @@ export default function ClassBrowser({
                   key={q.id}
                   onClick={() => onRunQuery(q)}
                   disabled={busy !== null}
-                  className="w-full rounded-[3px] border hairline px-2 py-1.5 text-left transition-colors hover:border-cgz-cyan/40 hover:bg-cgz-cyan/[0.06] disabled:opacity-40"
+                  className="w-full rounded-md border hairline px-2 py-1.5 text-left transition-colors hover:border-cgz-cyan/40 hover:bg-cgz-cyan/[0.06] disabled:opacity-40"
                 >
                   <p className="text-[12px] text-gray-200">{q.label}</p>
                   <p className="mt-0.5 text-[10px] leading-snug text-gray-600">{q.description}</p>
@@ -150,13 +150,13 @@ export default function ClassBrowser({
                 rows={5}
                 spellCheck={false}
                 placeholder={"MATCH (m:CodeMethod)\nWHERE m.name = 'initiateRefund'\nRETURN m"}
-                className="w-full resize-y rounded-[3px] border hairline bg-ink-950 p-2 font-mono text-[11px] leading-relaxed text-gray-200 placeholder:text-gray-700 focus:border-cgz-cyan/50 focus:outline-none"
+                className="w-full resize-y rounded-md border hairline bg-ink-950 p-2 font-mono text-[11px] leading-relaxed text-gray-200 placeholder:text-gray-700 focus:border-cgz-cyan/50 focus:outline-none"
               />
               <div className="mt-1.5 flex items-center gap-2">
                 <button
                   onClick={() => onRunCypher(cypher)}
                   disabled={busy !== null || !cypher.trim()}
-                  className="rounded-[3px] border border-cgz-cyan/30 bg-cgz-cyan/[0.08] px-2 py-1 font-mono text-[10px] text-cgz-cyan hover:bg-cgz-cyan/[0.14] disabled:opacity-40"
+                  className="rounded-md border border-cgz-cyan/30 bg-cgz-cyan/[0.08] px-2 py-1 font-mono text-[10px] text-cgz-cyan hover:bg-cgz-cyan/[0.14] disabled:opacity-40"
                 >
                   run
                 </button>
@@ -164,7 +164,7 @@ export default function ClassBrowser({
               </div>
 
               {queryError && (
-                <p className="mt-2 break-words rounded-[3px] border border-state-fail/30 bg-state-fail/[0.07] p-2 font-mono text-[10px] leading-relaxed text-state-fail">
+                <p className="mt-2 break-words rounded-md border border-state-fail/30 bg-state-fail/[0.07] p-2 font-mono text-[10px] leading-relaxed text-state-fail">
                   {queryError}
                 </p>
               )}

@@ -19,7 +19,7 @@ export default function NotBuilt({ title, blurb }: { title: string; blurb: strin
       </div>
 
       <div className="px-6 py-10">
-        <div className="pane mx-auto max-w-md rounded-lg px-6 py-8 text-center">
+        <div className="pane mx-auto max-w-md rounded-[10px] px-6 py-8 text-center">
           <div className="mx-auto grid size-9 place-items-center rounded-full bg-ink-800 text-gray-500">
             <svg viewBox="0 0 20 20" fill="none" className="size-4" aria-hidden="true">
               <path d="M10 3.5 16.5 6v4c0 3.5-2.6 5.9-6.5 7-3.9-1.1-6.5-3.5-6.5-7V6L10 3.5Z"

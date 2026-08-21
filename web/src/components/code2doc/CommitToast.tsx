@@ -82,7 +82,7 @@ export default function CommitToast() {
   return (
     <div className="fixed bottom-5 right-5 z-[100] w-[340px] animate-[slideIn_.25s_ease-out]">
       <div
-        className={`rounded-lg border bg-ink-900/95 shadow-2xl backdrop-blur ${
+        className={`rounded-[10px] border bg-ink-900/95 shadow-2xl backdrop-blur ${
           failed ? "border-state-fail/40" : hasEdits ? "border-accent/40" : "border-black/[0.10]"
         }`}
       >
@@ -112,7 +112,7 @@ export default function CommitToast() {
 
           <button
             onClick={() => setDismissed(toast.runId)}
-            className="-mr-1 -mt-1 shrink-0 rounded p-1 text-gray-600 hover:text-gray-300"
+            className="-mr-1 -mt-1 shrink-0 rounded-[10px] p-1 text-gray-600 hover:text-gray-300"
             aria-label="Dismiss"
           >
             ✕

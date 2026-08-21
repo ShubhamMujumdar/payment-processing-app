@@ -47,7 +47,7 @@ export default function PacketDetail({
             <div className="mb-1 flex items-center gap-2">
               <Ident>{packet.issueKey ?? packet.packetId}</Ident>
               {packet.requirementIds.map((r) => (
-                <span key={r} className="rounded-[3px] border hairline px-1.5 py-px font-mono text-[10px] text-gray-500">
+                <span key={r} className="rounded-md border hairline px-1.5 py-px font-mono text-[10px] text-gray-500">
                   {r}
                 </span>
               ))}
@@ -56,7 +56,7 @@ export default function PacketDetail({
           </div>
           <button
             onClick={onClose}
-            className="rounded-[3px] p-1 text-gray-500 hover:bg-black/[0.06] hover:text-gray-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-cgz-cyan"
+            className="rounded-md p-1 text-gray-500 hover:bg-black/[0.06] hover:text-gray-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-cgz-cyan"
             aria-label="Close"
           >
             <svg viewBox="0 0 16 16" className="size-4" fill="none">
@@ -100,7 +100,7 @@ export default function PacketDetail({
                     />
                   )}
                   <span
-                    className="absolute left-0 top-[3px] size-[11px] rounded-[2px]"
+                    className="absolute left-0 top-[3px] size-[11px] rounded-sm"
                     style={{
                       background: stageColor(span.stageId),
                       opacity: span.isOpen ? 1 : 0.7,

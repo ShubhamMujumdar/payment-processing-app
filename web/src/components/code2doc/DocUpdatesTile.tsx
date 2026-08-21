@@ -28,7 +28,7 @@ export default function DocUpdatesTile({ now }: { now: Date }) {
           return (
             <li
               key={update.runId}
-              className="rounded border border-black/[0.07] bg-black/[0.025] px-4 py-3"
+              className="rounded-[10px] border border-black/[0.07] bg-black/[0.025] px-4 py-3"
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-[11px] text-gray-400">{update.shortSha}</span>
@@ -49,7 +49,7 @@ export default function DocUpdatesTile({ now }: { now: Date }) {
 
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <span
-                  className="inline-flex items-center gap-1.5 rounded border border-state-warn/20 bg-state-warn/5 px-2 py-0.5 text-[11px] text-state-warn"
+                  className="inline-flex items-center gap-1.5 rounded-[10px] border border-state-warn/20 bg-state-warn/5 px-2 py-0.5 text-[11px] text-state-warn"
                   title="Seeded — no mail transport exists in this build"
                 >
                   ✉ Email (seeded) · {ago(update.emailSentAt, now)}
@@ -66,7 +66,7 @@ export default function DocUpdatesTile({ now }: { now: Date }) {
               </div>
 
               {isExpanded && (
-                <div className="mt-3 rounded border border-black/[0.07] bg-black/20 p-3">
+                <div className="mt-3 rounded-[10px] border border-black/[0.07] bg-black/20 p-3">
                   <div className="space-y-0.5 font-mono text-[11px]">
                     <p>
                       <span className="text-gray-600">From: </span>

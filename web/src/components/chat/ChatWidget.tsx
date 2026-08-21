@@ -179,7 +179,7 @@ export default function ChatWidget() {
         {greeted && (
           <button
             onClick={() => { setOpen(true); setGreeted(false); }}
-            className="mb-1 max-w-[220px] rounded-lg rounded-br-sm border border-black/[0.10] bg-ink-900 px-3.5 py-2.5 text-left text-[12.5px] text-gray-300 shadow-xl transition hover:border-accent/40"
+            className="mb-1 max-w-[220px] rounded-[10px] rounded-br-sm border border-black/[0.10] bg-ink-900 px-3.5 py-2.5 text-left text-[12.5px] text-gray-300 shadow-xl transition hover:border-accent/40"
           >
             <span className="block font-medium text-gray-100">How may I help you?</span>
             <span className="mt-0.5 block text-[11.5px] text-gray-500">
@@ -211,12 +211,12 @@ export default function ChatWidget() {
           </p>
         </div>
         <button onClick={clear} disabled={busy || !messages.length}
-          className="rounded px-1.5 py-1 text-[11px] text-gray-500 transition hover:text-gray-300 disabled:opacity-30"
+          className="rounded-[10px] px-1.5 py-1 text-[11px] text-gray-500 transition hover:text-gray-300 disabled:opacity-30"
           title="Clear this conversation">
           clear
         </button>
         <button onClick={() => setOpen(false)} aria-label="Close assistant"
-          className="rounded px-1.5 py-1 text-[15px] leading-none text-gray-500 transition hover:text-gray-300">
+          className="rounded-[10px] px-1.5 py-1 text-[15px] leading-none text-gray-500 transition hover:text-gray-300">
           ×
         </button>
       </header>
@@ -232,7 +232,7 @@ export default function ChatWidget() {
             <div className="mt-3 space-y-1.5">
               {SUGGESTIONS.map((s) => (
                 <button key={s} onClick={() => send(s)}
-                  className="block w-full rounded border border-black/[0.07] bg-black/[0.025] px-3 py-2 text-left text-[11.5px] text-gray-400 transition hover:border-accent/30 hover:text-gray-200">
+                  className="block w-full rounded-[10px] border border-black/[0.07] bg-black/[0.025] px-3 py-2 text-left text-[11.5px] text-gray-400 transition hover:border-accent/30 hover:text-gray-200">
                   {s}
                 </button>
               ))}
@@ -243,7 +243,7 @@ export default function ChatWidget() {
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "flex justify-end" : ""}>
             {m.role === "user" ? (
-              <p className="max-w-[85%] rounded-lg rounded-br-sm bg-accent/[0.09] px-3 py-2 text-[12.5px] text-gray-200">
+              <p className="max-w-[85%] rounded-[10px] rounded-br-sm bg-accent/[0.09] px-3 py-2 text-[12.5px] text-gray-200">
                 {m.text}
               </p>
             ) : (
@@ -281,7 +281,7 @@ export default function ChatWidget() {
         )}
 
         {error && (
-          <p className="rounded border border-state-fail/20 bg-state-fail/5 px-3 py-2 text-[11.5px] text-state-fail">
+          <p className="rounded-[10px] border border-state-fail/20 bg-state-fail/5 px-3 py-2 text-[11.5px] text-state-fail">
             {error}
           </p>
         )}
@@ -308,7 +308,7 @@ export default function ChatWidget() {
             onClick={() => send(input)}
             disabled={busy || !input.trim()}
             aria-label="Send"
-            className="grid h-7 w-7 shrink-0 place-items-center rounded bg-accent text-white transition disabled:opacity-25"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-[10px] bg-accent text-white transition disabled:opacity-25"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14M13 6l6 6-6 6" />

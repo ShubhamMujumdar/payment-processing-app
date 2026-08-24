@@ -87,7 +87,7 @@ return function(){
 
 Hooks.before=()=>set('before',`
 ${lbl('Current State · Before the Fix')}
-${h1('The docs are wrong. Nobody knows yet.')}
+${h1('Potential Documentation Inconsistencies Detected.')}
 ${sub('<em>payment-service-technical-design</em> was last updated 3 months ago. Section 3 still says the minimum is $100.')}
 <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:10px;overflow:hidden">
 <div style="background:#0052cc;padding:8px 14px;display:flex;align-items:center;gap:10px"><span style="color:#fff;font-size:13px;font-weight:700">Confluence</span><span style="color:rgba(255,255,255,.55);font-size:11px">KnowledgeHub › payment-service-technical-design</span><span style="margin-left:auto;background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);font-size:10px;padding:2px 8px;border-radius:4px;font-family:var(--mono)">v12 · edited 3mo ago</span></div>

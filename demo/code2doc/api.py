@@ -29,7 +29,8 @@ from .chat import ChatStore, _sse, converse, new_session_id
 from .retrieve import DEFAULT_CANDIDATES, DEFAULT_TOP_K, Retriever
 from .runs import RunStore
 
-_state: dict[str, Any] = {"retriever": None, "error": None, "runs": None, "watcher": None}
+_state: dict[str, Any] = {"retriever": None, "error": None, "runs": None,
+                          "watcher": None, "watch_error": None}
 
 #: Stages the pipeline itself runs. `published` is excluded: it is a human
 #: decision taken later, not part of how long the analysis took.
@@ -62,7 +63,23 @@ async def lifespan(app: FastAPI):
 
     # The watcher runs in this process rather than beside it, so the models are
     # loaded once instead of twice -- two copies would be ~5GB on a 6GB card.
-    if os.getenv("WATCH_ON_SERVE") == "1" and _state["retriever"] and cfg.has_github:
+    # Why this is spelled out rather than folded into one `if`: when any of the
+    # three conditions failed, the watcher simply did not start -- no log line,
+    # nothing on /health -- while `serve --watch` had already printed "watching
+    # <repo>@<branch>". Someone would push a commit, see nothing happen, and
+    # have no thread to pull. A missing credential should be loud.
+    if os.getenv("WATCH_ON_SERVE") != "1":
+        _state["watch_error"] = None          # not asked to watch; not a fault
+    elif _state["retriever"] is None:
+        _state["watch_error"] = f"models did not load ({_state['error']})"
+    elif not cfg.has_github:
+        missing = "GITHUB_TOKEN" if not cfg.github_token else "GITHUB_REPO"
+        _state["watch_error"] = (
+            f"{missing} is not set, so the branch cannot be polled. "
+            "Put it in .env or demo/.env — both are gitignored, so a fresh "
+            "clone has neither."
+        )
+    else:
         from .watcher import Watcher
 
         watcher = Watcher(cfg, _state["retriever"])
@@ -72,6 +89,10 @@ async def lifespan(app: FastAPI):
             daemon=True, name="code2doc-watcher",
         ).start()
         print(f"watching {cfg.github_repo}@{watcher.branch}")
+
+    if _state["watch_error"]:
+        print(f"NOT WATCHING: {_state['watch_error']}")
+        print("  Pushing a commit will do nothing until this is fixed.")
 
     yield
 
@@ -121,6 +142,10 @@ def health() -> dict[str, Any]:
         "error": _state["error"],
         "device": cfg.resolved_device(),
         "confluence_configured": cfg.has_confluence,
+        # The most common "the demo does nothing" cause is a watcher that never
+        # started. Surface it here so one curl answers the question.
+        "watching": _state["watcher"].branch if _state["watcher"] else None,
+        "watch_error": _state["watch_error"],
     }
 
 

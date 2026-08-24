@@ -21,9 +21,15 @@ rather than trusting it.
 ```bash
 cd /c/Shubham/cognizant_projects/visa_platform/dashboard
 python scripts/run.py status
-curl -s http://127.0.0.1:8099/health     # want: models_loaded: true
+curl -s http://127.0.0.1:8099/health     # want: models_loaded true AND watching set
 curl -s http://127.0.0.1:8077/health     # want: status ok, non-empty counts
 ```
+
+**`watching` must be a branch name, not `null`.** If it is null, `watch_error`
+says why — almost always a missing `GITHUB_TOKEN`, because `.env` and
+`demo/.env` are gitignored and a fresh clone has neither. Nothing will happen
+when you push until that is fixed, and the run history will stay silent rather
+than reporting an error.
 
 If they are down, `python scripts/run.py start`, then poll `/health` until
 `models_loaded` is true. Do not proceed before it is — the pipeline will fail.

@@ -293,7 +293,11 @@ def cmd_serve(args: argparse.Namespace) -> int:
     print(f"docs           http://127.0.0.1:{cfg.api_port}/docs")
     print(f"events (SSE)   http://127.0.0.1:{cfg.api_port}/stream")
     if args.watch:
-        print(f"watching       {cfg.github_repo}@{cfg.watch_branch}")
+        # Deliberately not "watching ..." here. Whether the watcher actually
+        # starts is decided in the API's lifespan, which prints the truth once
+        # it knows. Announcing it from here printed a reassuring line even when
+        # no credential was present and nothing was ever polled.
+        print(f"watch requested  {cfg.github_repo}@{cfg.watch_branch}")
     uvicorn.run("code2doc.api:app", host="127.0.0.1", port=cfg.api_port, reload=False)
     return 0
 

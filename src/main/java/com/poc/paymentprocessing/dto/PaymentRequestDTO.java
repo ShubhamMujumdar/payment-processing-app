@@ -28,7 +28,7 @@ public class PaymentRequestDTO {
     private String payeeId;
 
     @NotNull(message = "amount is required")
-    @DecimalMin(value = "0.01", message = "amount must be greater than zero")
+    @DecimalMin(value = "50.0", message = "amount must be greater than zero")
     private BigDecimal amount;
 
     @NotBlank(message = "currency is required")

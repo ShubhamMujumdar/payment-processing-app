@@ -17,7 +17,7 @@ COPY src ./src
 RUN mvn -B -ntp clean package -DskipTests
 
 # ---------- Stage 2: runtime ----------
-FROM eclipse-temurin:17-jre-alpine AS runtime
+FROM eclipse-temurin:24-jre-alpine AS runtime
 
 # Run as a non-root user. A payments service should never hold root in its
 # container, and several CIS benchmarks fail the image outright if it does.

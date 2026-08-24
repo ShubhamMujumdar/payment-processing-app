@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Visa Workforce Management — Code2Doc</title>
+  <meta name="description" content="Code2Doc detects code changes and keeps Confluence docs in sync automatically. Zero manual steps.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+
+  <div id="app-shell">
+    <aside id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-mark">VISA</div>
+        <span class="logo-text">Workforce Management</span>
+      </div>
+      <nav id="sidebar-nav"></nav>
+      <div class="sidebar-footer">
+        <span class="dot-pass"></span>github · ci · confluence
+      </div>
+    </aside>
+
+    <div id="main-wrapper">
+      <header id="topbar">
+        <div class="topbar-search">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="m12.5 12.5 3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Search Knowledge Base…
+        </div>
+        <div class="topbar-actions">
+          <button id="btn-present" title="Presentation mode (F)">
+            <svg width="15" height="15" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 16v2m-3 0h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <div class="avatar">SM</div>
+        </div>
+      </header>
+
+      <main id="stage">
+        <div class="screen" data-id="kmdash"></div>
+        <div class="screen" data-id="hero"></div>
+        <div class="screen" data-id="before"></div>
+        <div class="screen" data-id="change"></div>
+        <div class="screen" data-id="pr"></div>
+        <div class="screen" data-id="merge"></div>
+        <div class="screen" data-id="cicd"></div>
+        <div class="screen" data-id="pipeline"></div>
+        <div class="screen" data-id="after"></div>
+        <div class="screen" data-id="chat"></div>
+        <div class="screen" data-id="impact"></div>
+      </main>
+    </div>
+  </div>
+
+  <div id="nav-controls">
+    <button id="btn-back" class="nav-btn" disabled>← Back</button>
+    <div id="chapter-label"></div>
+    <span id="screen-counter"></span>
+    <button id="btn-next" class="nav-btn nav-btn--primary">Next →</button>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="screens.js"></script>
+  <script src="animations.js"></script>
+  <script src="presenter.js"></script>
+</body>
+</html>

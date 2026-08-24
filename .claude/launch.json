@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "payment-processing-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--host"],
+      "port": 5173,
+      "url": "http://localhost:5173"
+    },
+    {
+      "name": "demo-html",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "5174", "--directory", "demo-html"],
+      "port": 5174,
+      "url": "http://localhost:5174"
+    }
+  ]
+}

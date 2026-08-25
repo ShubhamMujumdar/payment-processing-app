@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Visa Workforce Management — Code2Doc</title>
+  <title>Visa Strategic Portfolio Management — Code2Doc</title>
   <meta name="description" content="Code2Doc detects code changes and keeps Confluence docs in sync automatically. Zero manual steps.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,11 +12,45 @@
 <body>
   <div id="progress-bar"><div id="progress-fill"></div></div>
 
-  <div id="app-shell">
+  <!-- Login Overlay -->
+  <div id="login-overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo-mark" style="width:52px;height:32px;font-size:15px">VISA</div>
+        <div>
+          <div class="login-app-name">Strategic Portfolio Management</div>
+        </div>
+      </div>
+      <div class="login-field">
+        <label>Username</label>
+        <input type="text" id="li-user" placeholder="e.g. user_executive" autocomplete="off">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="li-pass" placeholder="Same as username" autocomplete="off">
+      </div>
+      <div id="login-err" class="login-error" style="display:none">Invalid username or password.</div>
+      <button id="login-submit" class="login-btn">Sign in &#8594;</button>
+      <div class="login-demo">
+        <div class="login-demo-hd">Demo Accounts</div>
+        <div class="login-demo-grid">
+          <div class="ld-item" data-u="user_executive"><code>user_executive</code><span>Executive</span></div>
+          <div class="ld-item" data-u="user_developer"><code>user_developer</code><span>Developer</span></div>
+          <div class="ld-item" data-u="user_program_manager"><code>user_program_manager</code><span>Program Manager</span></div>
+          <div class="ld-item" data-u="user_product_ops"><code>user_product_ops</code><span>Product Ops</span></div>
+          <div class="ld-item" data-u="user_km_admin"><code>user_km_admin</code><span>KM Admin</span></div>
+          <div class="ld-item" data-u="user_marketing"><code>user_marketing</code><span>Marketing</span></div>
+          <div class="ld-item" data-u="user_ai"><code>user_ai</code><span>AI</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-shell" style="display:none">
     <aside id="sidebar">
       <div class="sidebar-logo">
         <div class="logo-mark">VISA</div>
-        <span class="logo-text">Workforce Management</span>
+        <span class="logo-text">Strategic Portfolio Management</span>
       </div>
       <nav id="sidebar-nav"></nav>
       <div class="sidebar-footer">
@@ -40,7 +74,8 @@
               <path d="M10 16v2m-3 0h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
             </svg>
           </button>
-          <div class="avatar">SM</div>
+          <button id="btn-logout">Logout</button>
+          <div class="avatar" id="user-avatar">?</div>
         </div>
       </header>
 
@@ -60,7 +95,7 @@
     </div>
   </div>
 
-  <div id="nav-controls">
+  <div id="nav-controls" style="display:none">
     <button id="btn-back" class="nav-btn" disabled>← Back</button>
     <div id="chapter-label"></div>
     <span id="screen-counter"></span>

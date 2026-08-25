@@ -1,6 +1,25 @@
 (function(){
 'use strict';
 
+/* ── AUTH ── */
+const CREDENTIALS={
+  user_executive:      {role:'Executive',       persona:'Executive / Product Leadership'},
+  user_developer:      {role:'Developer',        persona:'Developer / Architect'},
+  user_program_manager:{role:'Program Manager',  persona:'Program / Project Manager'},
+  user_product_ops:    {role:'Product Ops',      persona:'Product Ops / Business Ops'},
+  user_km_admin:       {role:'KM Admin',         persona:'KM Admin / Space Admin'},
+  user_marketing:      {role:'Marketing',        persona:'Marketing / Commercialization'},
+  user_ai:             {role:'AI',               persona:'AI & Knowledge Intelligence'},
+};
+const FULL_NAV_ROLES=['Developer','Program Manager','Product Ops','KM Admin'];
+const Auth={
+  get(){return JSON.parse(sessionStorage.getItem('c2d_s')||'null');},
+  save(d){sessionStorage.setItem('c2d_s',JSON.stringify(d));},
+  clear(){sessionStorage.removeItem('c2d_s');},
+  canSeeAll(){const s=this.get();return!!(s&&FULL_NAV_ROLES.includes(s.role));},
+  initials(){const s=this.get();if(!s)return'?';return s.role.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+};
+
 const SCREENS=[
   {id:'kmdash',  title:'KM Dashboard',      chapter:'Introduction'},
   {id:'hero',    title:'Overview',          chapter:'Introduction'},
@@ -24,8 +43,11 @@ const fill=$('progress-fill'),chap=$('chapter-label'),
 
 /* ── SIDEBAR ── */
 function buildNav(){
+  nav.innerHTML='';
+  const fullNav=Auth.canSeeAll();
   const seen={};
   SCREENS.forEach((s,i)=>{
+    if(!fullNav&&s.id!=='kmdash')return;
     if(!seen[s.chapter]){
       seen[s.chapter]=1;
       const lbl=document.createElement('div');
@@ -59,6 +81,7 @@ function syncProgress(i){
 /* ── ROUTER ── */
 function go(next){
   if(next<0||next>=SCREENS.length)return;
+  if(!Auth.canSeeAll()&&SCREENS[next].id!=='kmdash')next=SCREENS.findIndex(s=>s.id==='kmdash');
   const prev=state.current;
   const fromEl=stage.querySelector('.screen.active');
   const toEl=stage.querySelector(`[data-id="${SCREENS[next].id}"]`);
@@ -129,11 +152,75 @@ function seedPlaceholders(){
 }
 
 /* ── INIT ── */
-buildNav();
 seedPlaceholders();
-go(0);
+
+function applyRoleNav(){
+  const restricted=!Auth.canSeeAll();
+  btnNext.style.display=restricted?'none':'';
+  btnBack.style.display=restricted?'none':'';
+  ctr.style.display=restricted?'none':'';
+}
+
+function startApp(){
+  const av=document.getElementById('user-avatar');
+  if(av)av.textContent=Auth.initials();
+  buildNav();
+  document.querySelectorAll('#stage .screen').forEach(s=>s.classList.remove('active','exit-left'));
+  state.current=0;
+  go(0);
+  applyRoleNav();
+}
+
+function showLoginOverlay(){
+  document.getElementById('login-overlay').style.display='flex';
+  document.getElementById('app-shell').style.display='none';
+  document.getElementById('nav-controls').style.display='none';
+}
+function hideLoginOverlay(){
+  document.getElementById('login-overlay').style.display='none';
+  document.getElementById('app-shell').style.display='flex';
+  document.getElementById('nav-controls').style.display='flex';
+}
+
+function doLogin(){
+  const u=(document.getElementById('li-user').value||'').trim();
+  const p=(document.getElementById('li-pass').value||'').trim();
+  const cred=CREDENTIALS[u];
+  const err=document.getElementById('login-err');
+  if(cred&&u===p){
+    Auth.save({username:u,role:cred.role,persona:cred.persona});
+    err.style.display='none';
+    hideLoginOverlay();
+    startApp();
+  } else {
+    err.style.display='block';
+  }
+}
+
+document.getElementById('login-submit').addEventListener('click',doLogin);
+['li-user','li-pass'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+});
+document.querySelectorAll('.ld-item').forEach(el=>{
+  el.addEventListener('click',()=>{
+    const u=el.dataset.u;
+    document.getElementById('li-user').value=u;
+    document.getElementById('li-pass').value=u;
+  });
+});
+document.getElementById('btn-logout').addEventListener('click',()=>{
+  Auth.clear();
+  document.querySelectorAll('#stage .screen').forEach(s=>s.classList.remove('active','exit-left'));
+  state.current=0;
+  showLoginOverlay();
+  document.getElementById('li-user').value='';
+  document.getElementById('li-pass').value='';
+});
+
+if(Auth.get()){hideLoginOverlay();startApp();}
 
 /* Export for other modules */
-window.App={go,Hooks,SCREENS,state};
+window.App={go,Hooks,SCREENS,state,Auth};
 
 })();

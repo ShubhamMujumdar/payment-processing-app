@@ -20,7 +20,7 @@
     <properties>
         <java.version>17</java.version>
         <jacoco.version>0.8.12</jacoco.version>
-        <spotbugs.version>4.8.6.4</spotbugs.version>
+        <spotbugs.version>4.10.4.0</spotbugs.version>
         <!--
           Coverage floor for the CI quality gate. Measured at 47.49% line coverage
           when the initial suite landed, so the floor sits just below that.

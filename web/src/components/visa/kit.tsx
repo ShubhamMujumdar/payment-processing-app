@@ -116,7 +116,7 @@ export function InsightCard({
   kicker, title, body, action, meta,
 }: { kicker: string; title: string; body: ReactNode; action?: string; meta?: string }) {
   return (
-    <div className="rounded-xl bg-gradient-to-br from-nav-top to-nav-bottom p-5 text-white shadow-sm">
+    <div className="rounded-xl bg-gradient-to-br from-accent to-nav-bottom p-5 text-white shadow-sm">
       <div className="flex items-center gap-2">
         <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[12px] font-semibold">
           <span className="text-[13px] leading-none">✦</span> {kicker}
@@ -127,8 +127,8 @@ export function InsightCard({
       <p className="mt-2 text-[13px] leading-relaxed text-white/75">{body}</p>
       {action && (
         <button type="button" title="Not built yet"
-          className="mt-4 cursor-not-allowed text-[13px] font-semibold text-white/90">
-          {action} <span aria-hidden="true">›</span>
+          className="mt-4 w-full cursor-not-allowed rounded-[10px] bg-white py-2.5 text-[13px] font-semibold text-nav-bottom">
+          {action}
         </button>
       )}
     </div>
@@ -175,17 +175,3 @@ export function MockButton({ children, variant = "ghost" }: { children: ReactNod
   );
 }
 
-/** Marks a whole page as illustrative, using the same language as the header
- *  chips so "seeded" means one thing everywhere in this app. */
-export function MockBanner({ what }: { what: string }) {
-  return (
-    <div className="mx-6 mt-4 flex items-center gap-2 rounded-[10px] border border-state-warn/25 bg-[#fff6e5] px-3.5 py-2.5">
-      <span className="size-1.5 shrink-0 rounded-full bg-state-warn" />
-      <p className="text-[12.5px] text-state-warn">
-        <span className="font-semibold">Seeded page.</span> {what} Nothing here is read from the
-        delivery record — the live screens are My Tasks, Project Health, Code Review,
-        Knowledge Base and Traceability.
-      </p>
-    </div>
-  );
-}

@@ -26,7 +26,7 @@ import {
  * from something, expand outwards, and keep only what you asked for on screen.
  */
 
-export default function KnowledgeGraph() {
+function KnowledgeGraphExplorer() {
   const [schema, setSchema] = useState<GraphSchema | null>(null);
   const [nodes, setNodes] = useState<GraphNode[]>([]);
   const [edges, setEdges] = useState<GraphEdge[]>([]);
@@ -437,4 +437,8 @@ export default function KnowledgeGraph() {
       </div>
     </>
   );
+}
+
+export default function KnowledgeGraph() {
+  return <KnowledgeGraphExplorer />;
 }

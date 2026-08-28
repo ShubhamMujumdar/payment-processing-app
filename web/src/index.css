@@ -856,7 +856,7 @@ span.flatpickr-weekday,
 
   /* The navigation rail and the accent, read from the design file rather than
      matched by eye: #1434cb is the brand blue, #0a1f5f the rail. */
-  --color-nav-top: #1434cb;
+  --color-nav-top: #ffffff;
   --color-nav-bottom: #0a1f5f;
   --color-accent: #1434cb;
   --color-accent-soft: #eef1fb;

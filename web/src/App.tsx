@@ -6,6 +6,7 @@ import Console from "./pages/Console";
 import LivePipeline from "./pages/LivePipeline";
 import Traceability from "./pages/Traceability";
 import KnowledgeGraph from "./pages/KnowledgeGraph";
+import KnowledgeManagement from "./pages/KnowledgeManagement";
 import NotBuilt from "./pages/NotBuilt";
 import Portfolio from "./pages/Portfolio";
 import Strategy from "./pages/Strategy";
@@ -20,6 +21,11 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RoleIndex() {
+  const role = localStorage.getItem("demo_role");
+  return <Navigate to={role === "user_executive" ? "/portfolio" : "/knowledge-management"} replace />;
+}
+
 export default function App() {
   return (
     <Router>
@@ -27,11 +33,13 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
-          <Route index path="/" element={<DeveloperView />} />
+          <Route index path="/" element={<RoleIndex />} />
+          <Route path="/tasks" element={<DeveloperView />} />
           <Route path="/delivery" element={<Console />} />
           <Route path="/live" element={<LivePipeline />} />
           <Route path="/traceability" element={<Traceability />} />
           <Route path="/graph" element={<KnowledgeGraph />} />
+          <Route path="/knowledge-management" element={<KnowledgeManagement />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/strategy" element={<Strategy />} />
           <Route path="/analytics" element={<Analytics />} />

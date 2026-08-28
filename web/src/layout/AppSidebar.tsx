@@ -4,19 +4,6 @@ import { useSidebar } from "../context/SidebarContext";
 import { BRAND } from "../brand";
 import { useOrigin } from "../api/origin";
 
-/**
- * The navigation rail.
- *
- * The console went light, and the navy went here. That is deliberate: on a
- * light field the rail is the one element that should carry the brand, and
- * anchoring it stops the rest of the page needing decoration to feel owned.
- *
- * Four of these routes are the demo and are real. Settings and Support are
- * declared `ready: false` and render as inert, labelled stubs rather than links
- * to a blank page -- a nav item that navigates to nothing is worse than one
- * that says it is not built.
- */
-
 interface NavItem {
   label: string;
   path: string;
@@ -24,20 +11,9 @@ interface NavItem {
   icon: string;
 }
 
-const NAV: NavItem[] = [
-  { label: "Portfolio", path: "/portfolio", ready: true, icon: "M3 6h14v9H3zM3 9h14" },
-  { label: "Strategy", path: "/strategy", ready: true, icon: "M3 14l4-5 3 3 4-6 3 3" },
-  { label: "Analytics", path: "/analytics", ready: true, icon: "M4 16V9m4 7V5m4 11v-5m4 5V7" },
-];
 
-const WORKSPACE_NAV: NavItem[] = [
-  { label: "Initiatives", path: "/initiatives", ready: true, icon: "M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4zM11 11h5v5h-5z" },
-  { label: "Risk Register", path: "/risk", ready: true, icon: "M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm0-9v4m0 2v.01" },
-];
-
-/** The part of this build that is real. */
 const DELIVERY_NAV: NavItem[] = [
-  { label: "My Tasks", path: "/", ready: true, icon: "M4 10.5 8 14l8-8" },
+  { label: "My Tasks", path: "/tasks", ready: true, icon: "M4 10.5 8 14l8-8" },
   { label: "Project Health", path: "/delivery", ready: true, icon: "M3 6h14M3 10h14M3 14h9" },
   { label: "Code Review", path: "/live", ready: true, icon: "M3 10h3l2-5 3 10 2-5h4" },
   { label: "Knowledge Base", path: "/graph", ready: true, icon: "M10 3v4m0 6v4M4.5 6.5l3 3m5 5 3 3m0-11-3 3m-5 5-3 3" },
@@ -59,7 +35,7 @@ const WFM_CHILDREN: NavItem[] = [
 
 const KNOWLEDGE_MGMT: NavItem = {
   label: "Knowledge Management",
-  path: "/graph",
+  path: "/knowledge-management",
   ready: true,
   icon: "M10 3v4m0 6v4M4.5 6.5l3 3m5 5 3 3m0-11-3 3m-5 5-3 3",
 };
@@ -81,7 +57,7 @@ export default function AppSidebar() {
         </svg>
         {open && <span className="text-[12.5px]">{item.label}</span>}
         {open && !item.ready && (
-          <span className="ml-auto font-mono text-[9px] uppercase tracking-wide text-[#64748b]">soon</span>
+          <span className="ml-auto font-mono text-[9px] uppercase tracking-wide text-white/35">soon</span>
         )}
       </>
     );
@@ -94,15 +70,16 @@ export default function AppSidebar() {
           <Link
             to={item.path}
             aria-current={active ? "page" : undefined}
-            className={`${shared} transition-colors focus:outline-none focus-visible:bg-[#334155] ${
-              active ? "bg-[#2563EB] text-[#F8FAFC]" : "text-[#CBD5E1] hover:bg-[#334155] hover:text-[#F8FAFC]"
+            className={`${shared} transition-colors focus:outline-none focus-visible:bg-white/10 ${
+              active
+                ? "bg-white text-[#0A1F5F]"
+                : "text-white/80 hover:bg-white/[0.09] hover:text-white"
             }`}
           >
-            {active && <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-r bg-[#F8FAFC]" />}
             {inner}
           </Link>
         ) : (
-          <div className={`${shared} cursor-not-allowed text-[#64748b]`} title={`${item.label} — not built yet`}>
+          <div className={`${shared} cursor-not-allowed text-white/30`} title={`${item.label} — not built yet`}>
             {inner}
           </div>
         )}
@@ -114,7 +91,7 @@ export default function AppSidebar() {
     <aside
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed left-0 top-0 z-50 flex h-screen flex-col bg-[#1E293B] transition-all duration-200 ease-out
+      className={`fixed left-0 top-0 z-50 flex h-screen flex-col bg-[#0A1F5F] transition-all duration-200 ease-out
         ${open ? "w-[218px]" : "w-[60px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
     >
@@ -122,15 +99,15 @@ export default function AppSidebar() {
         <Link to="/" aria-label={`${BRAND.name} — ${BRAND.product}`} className="block">
           {open ? (
             <>
-              <span className="block text-[20px] font-bold italic leading-none tracking-tight text-[#F8FAFC]">
+              <span className="block text-[20px] font-bold italic leading-none tracking-tight text-white">
                 {BRAND.name}
               </span>
-              <span className="mt-1 block text-[10.5px] font-medium leading-none text-[#CBD5E1]">
+              <span className="mt-1 block text-[10.5px] font-medium leading-none text-white/60">
                 {BRAND.product}
               </span>
             </>
           ) : (
-            <span className="block text-[15px] font-bold italic leading-none text-[#F8FAFC]">
+            <span className="block text-[15px] font-bold italic leading-none text-white">
               {BRAND.name.slice(0, 1)}
             </span>
           )}
@@ -139,7 +116,7 @@ export default function AppSidebar() {
         <button
           type="button"
           title="Not built yet"
-          className={`flex cursor-not-allowed items-center justify-center gap-1.5 rounded-[10px] bg-accent py-2 text-[12px] font-medium text-[#F8FAFC] shadow-sm ${open ? "w-full" : "w-9"}`}
+          className={`flex cursor-not-allowed items-center justify-center gap-1.5 rounded-[10px] bg-accent py-2 text-[12px] font-medium text-white shadow-sm ${open ? "w-full" : "w-9"}`}
         >
           <span className="text-[13px] leading-none">+</span>
           {open && <span>New Insight</span>}
@@ -154,7 +131,7 @@ export default function AppSidebar() {
               {open && (
                 <button
                   onClick={() => setWfmExpanded((v) => !v)}
-                  className="flex w-full items-center justify-between rounded-[10px] px-3 py-[7px] text-[#CBD5E1] transition-colors hover:bg-[#334155] hover:text-[#F8FAFC]"
+                  className="flex w-full items-center justify-between rounded-[10px] px-3 py-[7px] text-white/80 transition-colors hover:bg-white/[0.09] hover:text-white"
                 >
                   <span className="text-[12.5px]">Workforce Management</span>
                   <svg viewBox="0 0 20 20" fill="none" className={`size-3.5 shrink-0 transition-transform duration-150 ${wfmExpanded ? "rotate-180" : ""}`} aria-hidden="true">
@@ -173,37 +150,44 @@ export default function AppSidebar() {
               <Link
                 to={KNOWLEDGE_MGMT.path}
                 aria-current={pathname === KNOWLEDGE_MGMT.path ? "page" : undefined}
-                className={`relative flex w-full items-center rounded-[10px] px-3 py-[7px] text-[12.5px] transition-colors focus:outline-none focus-visible:bg-[#334155] ${
+                className={`relative flex w-full items-center rounded-[10px] px-3 py-[7px] text-[12.5px] transition-colors focus:outline-none focus-visible:bg-white/10 ${
                   pathname === KNOWLEDGE_MGMT.path
-                    ? "bg-[#2563EB] text-[#F8FAFC]"
-                    : "text-[#CBD5E1] hover:bg-[#334155] hover:text-[#F8FAFC]"
+                    ? "bg-white text-[#0A1F5F]"
+                    : "text-white/80 hover:bg-white/[0.09] hover:text-white"
                 }`}
               >
-                {pathname === KNOWLEDGE_MGMT.path && (
-                  <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-r bg-[#F8FAFC]" />
-                )}
                 {KNOWLEDGE_MGMT.label}
               </Link>
             )}
           </>
         ) : (
           <>
-            <ul className="space-y-0.5">{NAV.map(render)}</ul>
-            {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Workspace</p>}
-            <ul className={`space-y-0.5 ${open ? "" : "mt-4"}`}>{WORKSPACE_NAV.map(render)}</ul>
-            {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Delivery · live</p>}
-            <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-[#334155] pt-4"}`}>{DELIVERY_NAV.map(render)}</ul>
+            {open && (
+              <Link
+                to="/knowledge-management"
+                aria-current={pathname === "/knowledge-management" ? "page" : undefined}
+                className={`mb-1 flex w-full items-center rounded-[10px] px-3 py-[7px] text-[12.5px] transition-colors focus:outline-none focus-visible:bg-white/10 ${
+                  pathname === "/knowledge-management"
+                    ? "bg-white text-[#0A1F5F]"
+                    : "text-white/80 hover:bg-white/[0.09] hover:text-white"
+                }`}
+              >
+                Knowledge Management
+              </Link>
+            )}
+            {open && <p className="px-3 pb-1 pt-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white/40">Delivery</p>}
+            <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-white/10 pt-4"}`}>{DELIVERY_NAV.map(render)}</ul>
           </>
         )}
       </nav>
 
-      <div className="shrink-0 border-t border-[#334155] px-2 pb-3 pt-2">
+      <div className="shrink-0 border-t border-white/10 px-2 pb-3 pt-2">
         <ul className="space-y-0.5">{FOOTER_NAV.map(render)}</ul>
         {open && (
-          <div className="px-3 pb-2 pt-2 font-mono text-[9.5px] leading-relaxed text-[#64748b]">
+          <div className="px-3 pb-2 pt-2 font-mono text-[9.5px] leading-relaxed text-white/35">
             <span className="text-state-pass">●</span> github · ci · confluence
             <br />
-            <span className="text-[#475569]">○</span> jira · zephyr seeded
+            <span className="text-white/20">○</span> jira · zephyr seeded
             <br />
             <span title="Whether the delivery graph is being read live or served from fixtures">
               {origin === "live" && <><span className="text-state-pass">●</span> graph live</>}

@@ -1,5 +1,5 @@
 import PageMeta from "../components/common/PageMeta";
-import { Card, InsightCard, MockBanner, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
+import { Card, InsightCard, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
 
 /** Project detail for the executive persona. Static, per the design. */
 
@@ -21,8 +21,6 @@ export default function Strategy() {
   return (
     <>
       <PageMeta title="Strategy · Project Apollo" description="Detailed health and execution." />
-      <MockBanner what="It reproduces the project detail view from the design." />
-
       <PageHead
         breadcrumb={["Strategy", "Active Projects", "ID: PRJ-009A"]}
         title="Project Apollo: Detailed Health & Execution"

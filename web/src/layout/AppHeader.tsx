@@ -1,6 +1,5 @@
 import { useLocation, useNavigate } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
-import { ROLES } from "../pages/Login";
 
 /**
  * The top bar, built to the design's measurements rather than approximated:
@@ -21,25 +20,17 @@ import { ROLES } from "../pages/Login";
 /** The design titles the bar per persona; the executive frames carry no title,
  *  because the page beneath already opens with a large one. */
 const TITLES: Record<string, string> = {
-  "/": "Developer Dashboard",
+  "/tasks": "My Tasks",
   "/delivery": "Project Health",
   "/live": "Code Review",
-  "/graph": "Knowledge Base",
   "/traceability": "Traceability",
 };
-
-function useRoleInfo() {
-  const roleId = localStorage.getItem("demo_role") ?? "";
-  const role = ROLES.find((r) => r.id === roleId);
-  return { label: role?.label ?? "Guest", initials: role?.initials ?? "??" };
-}
 
 export default function AppHeader() {
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const title = TITLES[pathname];
-  const { label, initials } = useRoleInfo();
 
   function handleLogout() {
     localStorage.removeItem("demo_role");
@@ -99,10 +90,15 @@ export default function AppHeader() {
           </svg>
         </button>
 
-        <button type="button" onClick={handleLogout} aria-label={`Signed in as ${label} — click to sign out`} title={`${label} — click to sign out`}
-          className="flex cursor-pointer items-center gap-2 rounded-[10px] bg-accent-soft px-2 font-mono text-[12px] font-bold text-accent transition-opacity hover:opacity-70" style={{ height: 38 }}>
-          <span>{initials}</span>
-          <span className="hidden text-[11px] font-semibold sm:inline" style={{ fontFamily: "Inter, sans-serif" }}>{label}</span>
+        <button type="button" onClick={handleLogout} aria-label="Sign out"
+          className="flex cursor-pointer items-center gap-2 rounded-[10px] border border-ink-700 bg-ink-800 px-3 text-[12.5px] font-semibold text-gray-300 transition-colors hover:border-gray-400 hover:text-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          style={{ height: 38, fontFamily: "Inter, sans-serif" }}>
+          <svg viewBox="0 0 20 20" fill="none" className="size-[15px] shrink-0" aria-hidden="true">
+            <path d="M13 3h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            <path d="M9 13l4-3-4-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M13 10H4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+          <span className="hidden sm:inline">Sign out</span>
         </button>
       </div>
     </header>

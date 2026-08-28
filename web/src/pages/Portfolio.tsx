@@ -1,5 +1,5 @@
 import PageMeta from "../components/common/PageMeta";
-import { Card, InsightCard, MockBanner, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
+import { Card, InsightCard, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
 
 /**
  * Executive OKR alignment, reproduced from the design and fed entirely by the
@@ -41,8 +41,6 @@ export default function Portfolio() {
   return (
     <>
       <PageMeta title="Portfolio · Executive OKR Alignment" description="Portfolio-wide health, risk and momentum." />
-      <MockBanner what="It reproduces the executive portfolio view from the design." />
-
       <PageHead
         kicker="Q3 Strategic Execution"
         title="Executive OKR Alignment"

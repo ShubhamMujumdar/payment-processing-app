@@ -1,5 +1,5 @@
 import PageMeta from "../components/common/PageMeta";
-import { Card, MockBanner, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
+import { Card, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
 
 /**
  * Analytics, Initiatives and Risk Register.
@@ -16,7 +16,7 @@ export function Analytics() {
   return (
     <>
       <PageMeta title="Analytics · Portfolio" description="Delivery analytics across the portfolio." />
-      <MockBanner what="The design names this tab but does not specify it." />
+
       <PageHead kicker="Portfolio" title="Analytics"
         blurb="Throughput, cycle time and quality trends across every line of business."
         right={<MockButton>↓ Export</MockButton>} />
@@ -53,7 +53,7 @@ export function Initiatives() {
   return (
     <>
       <PageMeta title="Initiatives · Workspace" description="Active initiatives across the portfolio." />
-      <MockBanner what="The design names this tab but does not specify it." />
+
       <PageHead kicker="Workspace" title="Initiatives" blurb="Everything currently committed, and who owns it."
         right={<MockButton variant="solid">+ New Initiative</MockButton>} />
       <div className="px-6 pb-10 pt-5">
@@ -101,7 +101,7 @@ export function RiskRegister() {
   return (
     <>
       <PageMeta title="Risk Register · Workspace" description="Open risks and their owners." />
-      <MockBanner what="The design names this tab but does not specify it." />
+
       <PageHead kicker="Workspace" title="Risk Register" blurb="Open risks, their impact, and who is accountable for closing them." />
       <div className="space-y-3 px-6 pb-10 pt-5">
         {risks.map((r) => (

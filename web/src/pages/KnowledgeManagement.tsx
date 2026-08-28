@@ -215,22 +215,86 @@ function WatchlistCard({ watchlist }: { watchlist: Watch[] }) {
   );
 }
 
-/* ── default dashboard — data ─────────────────────────────────── */
+/* ── developer dashboard — data ───────────────────────────────── */
 const DEV_HEALTH = 76;
-const DEV_PRIORITY = "Priority: boost self-service rate and close missing content gaps";
+const DEV_PRIORITY = "Priority: reduce PR-to-doc lag";
 const DEV_TREND = [54, 59, 63, 67, 72, 76];
 const DEV_SIGNALS = [
+  { value: "2.8d", label: "Current doc lag" },
+  { value: "1.9k", label: "Doc chat queries" },
+  { value: "12",   label: "Pending PR updates" },
+];
+const DEV_ROW2: Kpi[] = [
+  { label: "PR-to-Doc Automation",  value: "71%",  delta: "+14%",       bar: 71, dir: "up",   def: "Merged PRs generating doc suggestions", spark: [50, 54, 58, 63, 67, 71] },
+  { label: "Documentation Lag",     value: "2.8d", delta: "Target <2d", bar: 62, dir: "down", def: "Merge to approved update",               spark: [42, 44, 50, 55, 60, 62] },
+  { label: "API Doc Completeness",  value: "84%",  delta: "+5%",        bar: 84, dir: "up",   def: "APIs with current docs",                 spark: [72, 75, 78, 80, 82, 84] },
+  { label: "CI/CD Doc Compliance",  value: "68%",  delta: "Needs lift", bar: 68, dir: "flat", def: "Releases linked to notes",               spark: [66, 67, 66, 68, 67, 68] },
+];
+const DEV_ROW3: Kpi[] = [
+  { label: "Chat with Doc Usage",      value: "1.9k", delta: "+22%",   bar: 78, dir: "up",   def: "Natural language queries",         spark: [60, 65, 68, 72, 75, 78] },
+  { label: "Reusable Asset Discovery", value: "59%",  delta: "+8%",    bar: 59, dir: "up",   def: "Component reuse via graph",        spark: [44, 47, 50, 53, 56, 59] },
+  { label: "Tech Debt Doc Score",      value: "72%",  delta: "Stable", bar: 72, dir: "flat", def: "Code-doc consistency health",      spark: [71, 72, 71, 73, 72, 72] },
+  { label: "Broken Link Rate",         value: "3.7%", delta: "−1.1%",  bar: 86, dir: "up",   def: "Broken links across pages",       spark: [78, 80, 82, 84, 85, 86] },
+];
+const DEV_WATCHLIST: Watch[] = [
+  { text: "12 merged PRs have unapproved AI doc suggestions",  status: "Warn" },
+  { text: "Checkout API docs have high chat query volume",      status: "Good" },
+  { text: "CI/CD release notes missing for 5 builds",          status: "Risk" },
+  { text: "Knowledge graph missing topology for 3 services",   status: "Warn" },
+];
+
+/* ── developer dashboard ──────────────────────────────────────── */
+function KnowledgeManagementDev() {
+  return (
+    <>
+      <PageMeta title="Knowledge Management — Developer" description="Developer KM KPI Dashboard" />
+      <div className="flex flex-col gap-4 p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[18px] font-bold text-gray-100">Knowledge Management</h1>
+            <p className="mt-0.5 text-[12px] text-gray-500">Developer KPI Dashboard · Q3 2026</p>
+          </div>
+        </div>
+
+        {/* Row 1 — Hero health card + Watchlist */}
+        <div className="grid grid-cols-4 gap-3">
+          <div className="col-span-2">
+            <HealthScoreCard health={DEV_HEALTH} priority={DEV_PRIORITY} trend={DEV_TREND}
+              signals={DEV_SIGNALS} deltaLabel="+4 pts vs last month" />
+          </div>
+          <div className="col-span-2">
+            <WatchlistCard watchlist={DEV_WATCHLIST} />
+          </div>
+        </div>
+
+        {/* Row 2 — Automation & compliance KPIs */}
+        <div className="grid grid-cols-4 gap-3">
+          {DEV_ROW2.map(k => <KpiCard key={k.label} k={k} />)}
+        </div>
+
+        {/* Row 3 — Usage & quality KPIs */}
+        <div className="grid grid-cols-4 gap-3">
+          {DEV_ROW3.map(k => <KpiCard key={k.label} k={k} />)}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ── product ops dashboard — data ─────────────────────────────── */
+const OPS_HEALTH = 76;
+const OPS_PRIORITY = "Priority: boost self-service rate and close missing content gaps";
+const OPS_TREND = [54, 59, 63, 67, 72, 76];
+const OPS_SIGNALS = [
   { value: "2.8d", label: "Avg doc lag" },
   { value: "1.9k", label: "Chat queries / mo" },
   { value: "12",   label: "Pending approvals" },
 ];
-
-const DEV_TIER1_SEC: Kpi[] = [
-  { label: "Monthly Active KM Users", value: "847",  delta: "+12% vs last month", bar: 73, dir: "up",  def: "Active users accessing KM platform this month" },
-  { label: "Productivity Saved",      value: "310h", delta: "+18% vs last qtr",   bar: 75, dir: "up",  def: "Estimated SME time saved this quarter" },
+const OPS_TIER1_SEC: Kpi[] = [
+  { label: "Monthly Active KM Users", value: "847",  delta: "+12% vs last month", bar: 73, dir: "up", def: "Active users accessing KM platform this month" },
+  { label: "Productivity Saved",      value: "310h", delta: "+18% vs last qtr",   bar: 75, dir: "up", def: "Estimated SME time saved this quarter" },
 ];
-
-const DEV_TIER2: Kpi[] = [
+const OPS_TIER2: Kpi[] = [
   { label: "Self-Service Rate",    value: "73%", delta: "+5%",      bar: 73, dir: "up",   def: "Queries resolved without escalation",    spark: [55, 58, 62, 65, 70, 73] },
   { label: "Article Engagement",   value: "62%", delta: "+8%",      bar: 62, dir: "up",   def: "Articles with meaningful read activity",  spark: [40, 44, 49, 54, 58, 62] },
   { label: "Template Adoption",    value: "54%", delta: "+11%",     bar: 54, dir: "up",   def: "Teams using approved content templates",  spark: [32, 35, 40, 44, 48, 54] },
@@ -238,7 +302,7 @@ const DEV_TIER2: Kpi[] = [
 ];
 
 interface RiskMetric { label: string; value: string; delta: string; dir: Dir; def: string; tags?: string[]; }
-const DEV_TIER3: RiskMetric[] = [
+const OPS_TIER3: RiskMetric[] = [
   {
     label: "Missing Content Signals", value: "34", delta: "Needs triage", dir: "flat",
     def: "Search misses and reader requests without matching content",
@@ -249,27 +313,24 @@ const DEV_TIER3: RiskMetric[] = [
     def: "Searches ending without a result click",
   },
 ];
-
-const DEV_WATCHLIST: Watch[] = [
+const OPS_WATCHLIST: Watch[] = [
   { text: "18 articles past SLA review window",                  status: "Risk" },
   { text: "Template adoption below target in 4 squads",          status: "Warn" },
   { text: "Self-service rate improving for onboarding content",  status: "Good" },
   { text: "34 missing content signals awaiting triage",          status: "Warn" },
 ];
-
 const BIZ_SIGNALS = [
   { value: "$2.1M", label: "Estimated cost avoided" },
   { value: "88%",   label: "Stakeholder coverage" },
   { value: "−22%",  label: "Time-to-resolution" },
 ];
-
 const PLATFORM_SIGNALS = [
   { value: "98ms",  label: "Avg search response" },
   { value: "99.8%", label: "Platform uptime" },
   { value: "3.2%",  label: "Failed search rate" },
 ];
 
-/* ── default dashboard — components ──────────────────────────── */
+/* ── product ops dashboard — components ──────────────────────── */
 function RiskMetricCard({ m }: { m: RiskMetric }) {
   return (
     <div className="pane flex flex-col gap-3 rounded-xl p-4">
@@ -308,11 +369,11 @@ function SignalsCard({ title, signals }: { title: string; signals: { value: stri
   );
 }
 
-/* ── default (product ops) dashboard ─────────────────────────── */
-function KnowledgeManagementDev() {
+/* ── product ops dashboard ────────────────────────────────────── */
+function KnowledgeManagementOps() {
   return (
     <>
-      <PageMeta title="Knowledge Management" description="KM Operations Dashboard" />
+      <PageMeta title="Knowledge Management — Product Ops" description="KM Operations Dashboard" />
       <div className="flex flex-col gap-4 p-5">
         <div className="flex items-center justify-between">
           <div>
@@ -324,27 +385,22 @@ function KnowledgeManagementDev() {
         {/* Tier 1 — Hero health score + secondary hero KPIs */}
         <div className="grid grid-cols-4 gap-3">
           <div className="col-span-2">
-            <HealthScoreCard
-              health={DEV_HEALTH}
-              priority={DEV_PRIORITY}
-              trend={DEV_TREND}
-              signals={DEV_SIGNALS}
-              deltaLabel="+4 pts vs last month"
-            />
+            <HealthScoreCard health={OPS_HEALTH} priority={OPS_PRIORITY} trend={OPS_TREND}
+              signals={OPS_SIGNALS} deltaLabel="+4 pts vs last month" />
           </div>
-          {DEV_TIER1_SEC.map(k => <KpiCard key={k.label} k={k} />)}
+          {OPS_TIER1_SEC.map(k => <KpiCard key={k.label} k={k} />)}
         </div>
 
         {/* Tier 2 — Operational KPIs with embedded sparklines */}
         <div className="grid grid-cols-4 gap-3">
-          {DEV_TIER2.map(k => <KpiCard key={k.label} k={k} />)}
+          {OPS_TIER2.map(k => <KpiCard key={k.label} k={k} />)}
         </div>
 
         {/* Tier 3 — Risk metrics + Watchlist */}
         <div className="grid grid-cols-4 gap-3">
-          {DEV_TIER3.map(m => <RiskMetricCard key={m.label} m={m} />)}
+          {OPS_TIER3.map(m => <RiskMetricCard key={m.label} m={m} />)}
           <div className="col-span-2">
-            <WatchlistCard watchlist={DEV_WATCHLIST} />
+            <WatchlistCard watchlist={OPS_WATCHLIST} />
           </div>
         </div>
 
@@ -428,6 +484,7 @@ function KnowledgeManagementPM() {
 export default function KnowledgeManagement() {
   const role = localStorage.getItem("demo_role");
   if (role === "user_program_manager") return <KnowledgeManagementPM />;
+  if (role === "user_product_ops")     return <KnowledgeManagementOps />;
   if (role !== "user_executive")       return <KnowledgeManagementDev />;
 
   return (

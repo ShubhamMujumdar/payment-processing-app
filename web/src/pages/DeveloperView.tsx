@@ -110,7 +110,7 @@ export default function DeveloperView() {
 
   return (
     <>
-      <PageMeta title={`My Tasks · ${data.packets.length} packets`} description="What is waiting on you." />
+      <PageMeta title={`${localStorage.getItem("demo_role") === "user_program_manager" ? "Tasks" : "My Tasks"} · ${data.packets.length} packets`} description="What is waiting on you." />
 
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 pb-1 pt-6">
         <p className="text-[15px] text-gray-400">

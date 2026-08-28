@@ -23,7 +23,17 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 
 function RoleIndex() {
   const role = localStorage.getItem("demo_role");
-  return <Navigate to={role === "user_executive" ? "/portfolio" : "/knowledge-management"} replace />;
+  if (role === "user_executive") return <Navigate to="/portfolio" replace />;
+  if (role === "user_product_ops") return <Navigate to="/knowledge-management" replace />;
+  return <Navigate to="/knowledge-management" replace />;
+}
+
+function BlockProductOps({ children }: { children: React.ReactNode }) {
+  const role = localStorage.getItem("demo_role");
+  if (role === "user_product_ops") {
+    return <Navigate to="/settings" replace />;
+  }
+  return <>{children}</>;
 }
 
 export default function App() {
@@ -34,11 +44,11 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route index path="/" element={<RoleIndex />} />
-          <Route path="/tasks" element={<DeveloperView />} />
-          <Route path="/delivery" element={<Console />} />
-          <Route path="/live" element={<LivePipeline />} />
-          <Route path="/traceability" element={<Traceability />} />
-          <Route path="/graph" element={<KnowledgeGraph />} />
+          <Route path="/tasks" element={<BlockProductOps><DeveloperView /></BlockProductOps>} />
+          <Route path="/delivery" element={<BlockProductOps><Console /></BlockProductOps>} />
+          <Route path="/live" element={<BlockProductOps><LivePipeline /></BlockProductOps>} />
+          <Route path="/traceability" element={<BlockProductOps><Traceability /></BlockProductOps>} />
+          <Route path="/graph" element={<BlockProductOps><KnowledgeGraph /></BlockProductOps>} />
           <Route path="/knowledge-management" element={<KnowledgeManagement />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/strategy" element={<Strategy />} />

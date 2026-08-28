@@ -45,8 +45,16 @@ export default function AppSidebar() {
   const { pathname } = useLocation();
   const origin = useOrigin();
   const open = isExpanded || isHovered || isMobileOpen;
-  const isExecutive = localStorage.getItem("demo_role") === "user_executive";
+  const role = localStorage.getItem("demo_role");
+  const isExecutive = role === "user_executive";
+  const isProductOps = role === "user_product_ops";
+  const isProgramManager = role === "user_program_manager";
   const [wfmExpanded, setWfmExpanded] = useState(true);
+
+  const PM_LABEL: Record<string, string> = { "/tasks": "Tasks", "/delivery": "Projects Health" };
+  const deliveryNav = isProgramManager
+    ? DELIVERY_NAV.map((item) => PM_LABEL[item.path] ? { ...item, label: PM_LABEL[item.path] } : item)
+    : DELIVERY_NAV;
 
   const render = (item: NavItem) => {
     const active = pathname === item.path;
@@ -152,7 +160,7 @@ export default function AppSidebar() {
               </Link>
             )}
           </>
-        ) : (
+        ) : isProductOps ? null : (
           <>
             {open && (
               <Link
@@ -168,7 +176,7 @@ export default function AppSidebar() {
               </Link>
             )}
             {open && <p className="px-3 pb-1 pt-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white/40">Delivery</p>}
-            <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-white/10 pt-4"}`}>{DELIVERY_NAV.map(render)}</ul>
+            <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-white/10 pt-4"}`}>{deliveryNav.map(render)}</ul>
           </>
         )}
       </nav>

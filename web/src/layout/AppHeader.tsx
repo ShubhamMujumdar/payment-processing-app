@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
+import { ROLES } from "../pages/Login";
 
 /**
  * The top bar, built to the design's measurements rather than approximated:
@@ -26,11 +27,21 @@ const TITLES: Record<string, string> = {
   "/traceability": "Traceability",
 };
 
+const PM_TITLES: Record<string, string> = {
+  ...TITLES,
+  "/tasks": "Tasks",
+  "/delivery": "Projects Health",
+};
+
 export default function AppHeader() {
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const title = TITLES[pathname];
+  const isProgramManager = localStorage.getItem("demo_role") === "user_program_manager";
+  const title = (isProgramManager ? PM_TITLES : TITLES)[pathname];
+
+  const demoRole = localStorage.getItem("demo_role");
+  const currentRole = ROLES.find((r) => r.id === demoRole);
 
   function handleLogout() {
     localStorage.removeItem("demo_role");
@@ -90,9 +101,13 @@ export default function AppHeader() {
           </svg>
         </button>
 
-        <button type="button" onClick={handleLogout} aria-label="Sign out"
+        <button type="button" onClick={handleLogout} aria-label={`Sign out${currentRole ? ` (${currentRole.label})` : ""}`}
           className="flex cursor-pointer items-center gap-2 rounded-[10px] border border-ink-700 bg-ink-800 px-3 text-[12.5px] font-semibold text-gray-300 transition-colors hover:border-gray-400 hover:text-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           style={{ height: 38, fontFamily: "Inter, sans-serif" }}>
+          {currentRole && (
+            <span className="hidden sm:inline text-[12px] font-medium text-gray-300">{currentRole.label}</span>
+          )}
+          <span className="hidden sm:inline text-gray-500">·</span>
           <svg viewBox="0 0 20 20" fill="none" className="size-[15px] shrink-0" aria-hidden="true">
             <path d="M13 3h3a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
             <path d="M9 13l4-3-4-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>

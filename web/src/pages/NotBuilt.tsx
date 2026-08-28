@@ -1,6 +1,9 @@
 import PageMeta from "../components/common/PageMeta";
 import { Link } from "react-router";
 
+const tasksLabel = () =>
+  localStorage.getItem("demo_role") === "user_program_manager" ? "Tasks" : "My Tasks";
+
 /**
  * A tab that exists in the design but not in this build.
  *
@@ -35,7 +38,7 @@ export default function NotBuilt({ title, blurb }: { title: string; blurb: strin
             to="/"
             className="mt-4 inline-block text-[12px] text-accent underline decoration-accent/30 hover:decoration-accent"
           >
-            Back to My Tasks
+            Back to {tasksLabel()}
           </Link>
         </div>
       </div>

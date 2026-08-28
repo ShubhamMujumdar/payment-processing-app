@@ -424,7 +424,7 @@ re-reading is safe because `event_id` is deterministic.
 
 **Repository of record:** `ShubhamMujumdar/payment-processing-app` — **public**, admin held by
 the programme. Created 15 Aug 2026 as a standalone copy of
-`vrkaushiklakkaraj/payment-processing-app`, preserving both branches at their original SHAs
+`https://github.com/ShubhamMujumdar/payment-processing-app`, preserving both branches at their original SHAs
 (`main` `e97d909`, `development` `6030b80`). The original is retained as the `upstream` remote.
 
 A standalone copy rather than a GitHub fork, for two reasons: forks have GitHub Actions

@@ -113,14 +113,6 @@ export default function AppSidebar() {
           )}
         </Link>
 
-        <button
-          type="button"
-          title="Not built yet"
-          className={`flex cursor-not-allowed items-center justify-center gap-1.5 rounded-[10px] bg-accent py-2 text-[12px] font-medium text-white shadow-sm ${open ? "w-full" : "w-9"}`}
-        >
-          <span className="text-[13px] leading-none">+</span>
-          {open && <span>New Insight</span>}
-        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2">

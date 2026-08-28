@@ -38,6 +38,7 @@ class GitHubSource:
         self._client = httpx.Client(
             base_url=API,
             timeout=timeout,
+            verify=False,  # corporate proxy re-signs TLS; skip verification for local demo
             headers={
                 "Authorization": f"Bearer {token}",
                 "Accept": "application/vnd.github+json",

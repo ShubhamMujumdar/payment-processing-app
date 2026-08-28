@@ -63,7 +63,7 @@ export default function AppSidebar() {
         </svg>
         {open && <span className="text-[12.5px]">{item.label}</span>}
         {open && !item.ready && (
-          <span className="ml-auto font-mono text-[9px] uppercase tracking-wide text-white/35">soon</span>
+          <span className="ml-auto font-mono text-[9px] uppercase tracking-wide text-[#64748b]">soon</span>
         )}
       </>
     );
@@ -76,15 +76,15 @@ export default function AppSidebar() {
           <Link
             to={item.path}
             aria-current={active ? "page" : undefined}
-            className={`${shared} transition-colors focus:outline-none focus-visible:bg-white/15 ${
-              active ? "bg-white/[0.14] text-white" : "text-white/65 hover:bg-white/[0.07] hover:text-white"
+            className={`${shared} transition-colors focus:outline-none focus-visible:bg-[#334155] ${
+              active ? "bg-[#2563EB] text-[#F8FAFC]" : "text-[#CBD5E1] hover:bg-[#334155] hover:text-[#F8FAFC]"
             }`}
           >
-            {active && <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-r bg-white" />}
+            {active && <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-r bg-[#F8FAFC]" />}
             {inner}
           </Link>
         ) : (
-          <div className={`${shared} cursor-not-allowed text-white/35`} title={`${item.label} — not built yet`}>
+          <div className={`${shared} cursor-not-allowed text-[#64748b]`} title={`${item.label} — not built yet`}>
             {inner}
           </div>
         )}
@@ -96,7 +96,7 @@ export default function AppSidebar() {
     <aside
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed left-0 top-0 z-50 flex h-screen flex-col bg-gradient-to-b from-nav-top to-nav-bottom transition-all duration-200 ease-out
+      className={`fixed left-0 top-0 z-50 flex h-screen flex-col bg-[#1E293B] transition-all duration-200 ease-out
         ${open ? "w-[218px]" : "w-[60px]"}
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
     >
@@ -104,15 +104,15 @@ export default function AppSidebar() {
         <Link to="/" aria-label={`${BRAND.name} — ${BRAND.product}`} className="block">
           {open ? (
             <>
-              <span className="block text-[20px] font-bold italic leading-none tracking-tight text-white">
+              <span className="block text-[20px] font-bold italic leading-none tracking-tight text-[#F8FAFC]">
                 {BRAND.name}
               </span>
-              <span className="mt-1 block text-[10.5px] font-medium leading-none text-white/60">
+              <span className="mt-1 block text-[10.5px] font-medium leading-none text-[#CBD5E1]">
                 {BRAND.product}
               </span>
             </>
           ) : (
-            <span className="block text-[15px] font-bold italic leading-none text-white">
+            <span className="block text-[15px] font-bold italic leading-none text-[#F8FAFC]">
               {BRAND.name.slice(0, 1)}
             </span>
           )}
@@ -121,7 +121,7 @@ export default function AppSidebar() {
         <button
           type="button"
           title="Not built yet"
-          className={`flex cursor-not-allowed items-center justify-center gap-1.5 rounded-[10px] bg-accent py-2 text-[12px] font-medium text-white/90 shadow-sm ${open ? "w-full" : "w-9"}`}
+          className={`flex cursor-not-allowed items-center justify-center gap-1.5 rounded-[10px] bg-accent py-2 text-[12px] font-medium text-[#F8FAFC] shadow-sm ${open ? "w-full" : "w-9"}`}
         >
           <span className="text-[13px] leading-none">+</span>
           {open && <span>New Insight</span>}
@@ -130,19 +130,19 @@ export default function AppSidebar() {
 
       <nav className="flex-1 overflow-y-auto px-2">
         <ul className="space-y-0.5">{NAV.map(render)}</ul>
-        {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-white/40">Workspace</p>}
+        {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Workspace</p>}
         <ul className={`space-y-0.5 ${open ? "" : "mt-4"}`}>{WORKSPACE_NAV.map(render)}</ul>
-        {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-white/40">Delivery · live</p>}
-        <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-white/10 pt-4"}`}>{DELIVERY_NAV.map(render)}</ul>
+        {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Delivery · live</p>}
+        <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-[#334155] pt-4"}`}>{DELIVERY_NAV.map(render)}</ul>
       </nav>
 
-      <div className="shrink-0 border-t border-white/10 px-2 pb-3 pt-2">
+      <div className="shrink-0 border-t border-[#334155] px-2 pb-3 pt-2">
         <ul className="space-y-0.5">{FOOTER_NAV.map(render)}</ul>
         {open && (
-          <div className="px-3 pb-2 pt-2 font-mono text-[9.5px] leading-relaxed text-white/40">
+          <div className="px-3 pb-2 pt-2 font-mono text-[9.5px] leading-relaxed text-[#64748b]">
             <span className="text-state-pass">●</span> github · ci · confluence
             <br />
-            <span className="text-white/30">○</span> jira · zephyr seeded
+            <span className="text-[#475569]">○</span> jira · zephyr seeded
             <br />
             <span title="Whether the delivery graph is being read live or served from fixtures">
               {origin === "live" && <><span className="text-state-pass">●</span> graph live</>}

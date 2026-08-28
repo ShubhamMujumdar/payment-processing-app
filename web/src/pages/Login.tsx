@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Navigate } from "react-router";
+import { BRAND } from "../brand";
 
 const ROLES = [
-  { id: "user_executive", label: "Executive", initials: "EX" },
-  { id: "user_developer", label: "Developer", initials: "DV" },
-  { id: "user_program_manager", label: "Program Manager", initials: "PM" },
-  { id: "user_product_ops", label: "Product Ops", initials: "PO" },
+  { id: "user_executive", label: "Executive", initials: "EX", defaultPath: "/portfolio" },
+  { id: "user_developer", label: "Developer", initials: "DV", defaultPath: "/" },
+  { id: "user_program_manager", label: "Program Manager", initials: "PM", defaultPath: "/delivery" },
+  { id: "user_product_ops", label: "Product Ops", initials: "PO", defaultPath: "/delivery" },
 ];
 
 export { ROLES };
@@ -14,11 +15,17 @@ export default function Login() {
   const navigate = useNavigate();
   const [roleId, setRoleId] = useState(ROLES[0].id);
 
+  const existingRole = localStorage.getItem("demo_role");
+  if (existingRole) {
+    const role = ROLES.find((r) => r.id === existingRole);
+    return <Navigate to={role?.defaultPath ?? "/"} replace />;
+  }
+
   const selected = ROLES.find((r) => r.id === roleId)!;
 
   function handleLogin() {
     localStorage.setItem("demo_role", roleId);
-    navigate("/", { replace: true });
+    navigate(selected.defaultPath, { replace: true });
   }
 
   return (
@@ -69,10 +76,10 @@ export default function Login() {
           </div>
           <div>
             <div style={{ color: "#fff", fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>
-              Payments Platform
+              {BRAND.name}
             </div>
             <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, marginTop: 3 }}>
-              Delivery Intelligence Portal
+              {BRAND.product}
             </div>
           </div>
         </div>

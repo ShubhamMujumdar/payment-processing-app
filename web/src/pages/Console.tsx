@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { BRAND } from "../brand";
 import PageMeta from "../components/common/PageMeta";
 import {
   Column,
@@ -469,11 +470,11 @@ export default function Console() {
 
   return (
     <>
-      <PageMeta title="Payments Platform — SDLC Spine" description="Delivery console" />
+      <PageMeta title={`${BRAND.name} — SDLC Spine`} description="Delivery console" />
 
       {/* Project bar */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b hairline px-4 py-2.5">
-        <span className="text-[13px] font-medium text-gray-100">Payments Platform</span>
+        <span className="text-[13px] font-medium text-gray-100">{BRAND.name}</span>
         <Ident dim>PAY</Ident>
         <span className="text-gray-800">/</span>
         <Ident dim>payment-processing-app</Ident>

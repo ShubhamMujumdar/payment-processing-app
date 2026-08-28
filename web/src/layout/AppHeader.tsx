@@ -1,4 +1,4 @@
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import { ROLES } from "../pages/Login";
 
@@ -37,11 +37,17 @@ function useRoleInfo() {
 export default function AppHeader() {
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const title = TITLES[pathname];
   const { label, initials } = useRoleInfo();
 
+  function handleLogout() {
+    localStorage.removeItem("demo_role");
+    navigate("/login", { replace: true });
+  }
+
   return (
-    <header className="sticky top-0 z-40 flex h-[76px] items-center gap-4 border-b border-ink-700 bg-white px-6">
+    <header className="sticky top-0 z-40 flex h-[76px] items-center gap-4 border-b border-ink-700 bg-nav-top px-6">
       <button
         onClick={() => {
           if (window.innerWidth >= 1024) toggleSidebar();
@@ -93,8 +99,8 @@ export default function AppHeader() {
           </svg>
         </button>
 
-        <button type="button" aria-label={`Signed in as ${label}`} title={label}
-          className="flex cursor-default items-center gap-2 rounded-[10px] bg-accent-soft px-2 font-mono text-[12px] font-bold text-accent" style={{ height: 38 }}>
+        <button type="button" onClick={handleLogout} aria-label={`Signed in as ${label} — click to sign out`} title={`${label} — click to sign out`}
+          className="flex cursor-pointer items-center gap-2 rounded-[10px] bg-accent-soft px-2 font-mono text-[12px] font-bold text-accent transition-opacity hover:opacity-70" style={{ height: 38 }}>
           <span>{initials}</span>
           <span className="hidden text-[11px] font-semibold sm:inline" style={{ fontFamily: "Inter, sans-serif" }}>{label}</span>
         </button>

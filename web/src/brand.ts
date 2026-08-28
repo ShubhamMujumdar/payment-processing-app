@@ -12,9 +12,9 @@
  */
 export const BRAND = {
   /** The wordmark at the top of the navigation rail. */
-  name: import.meta.env.VITE_BRAND_NAME ?? "Payments Platform",
+  name: import.meta.env.VITE_BRAND_NAME ?? "VISA",
   /** The line beneath it. */
-  product: import.meta.env.VITE_BRAND_PRODUCT ?? "Delivery Intelligence",
+  product: import.meta.env.VITE_BRAND_PRODUCT ?? "Strategic Program Management",
   /** The title in the top bar. */
-  portal: import.meta.env.VITE_BRAND_PORTAL ?? "Delivery Portal",
+  portal: import.meta.env.VITE_BRAND_PORTAL ?? "Strategic Program Management",
 };

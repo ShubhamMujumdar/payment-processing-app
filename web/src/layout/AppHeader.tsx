@@ -1,5 +1,6 @@
 import { useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
+import { ROLES } from "../pages/Login";
 
 /**
  * The top bar, built to the design's measurements rather than approximated:
@@ -27,10 +28,17 @@ const TITLES: Record<string, string> = {
   "/traceability": "Traceability",
 };
 
+function useRoleInfo() {
+  const roleId = localStorage.getItem("demo_role") ?? "";
+  const role = ROLES.find((r) => r.id === roleId);
+  return { label: role?.label ?? "Guest", initials: role?.initials ?? "??" };
+}
+
 export default function AppHeader() {
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
   const { pathname } = useLocation();
   const title = TITLES[pathname];
+  const { label, initials } = useRoleInfo();
 
   return (
     <header className="sticky top-0 z-40 flex h-[76px] items-center gap-4 border-b border-ink-700 bg-white px-6">
@@ -85,9 +93,10 @@ export default function AppHeader() {
           </svg>
         </button>
 
-        <button type="button" aria-label="Account" title="Not built yet"
-          className="grid size-[38px] cursor-not-allowed place-items-center rounded-[10px] bg-accent-soft font-mono text-[12px] font-bold text-accent">
-          SM
+        <button type="button" aria-label={`Signed in as ${label}`} title={label}
+          className="flex cursor-default items-center gap-2 rounded-[10px] bg-accent-soft px-2 font-mono text-[12px] font-bold text-accent" style={{ height: 38 }}>
+          <span>{initials}</span>
+          <span className="hidden text-[11px] font-semibold sm:inline" style={{ fontFamily: "Inter, sans-serif" }}>{label}</span>
         </button>
       </div>
     </header>

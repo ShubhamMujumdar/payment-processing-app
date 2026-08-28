@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import DeveloperView from "./pages/DeveloperView";
@@ -11,13 +11,22 @@ import Portfolio from "./pages/Portfolio";
 import Strategy from "./pages/Strategy";
 import { Analytics, Initiatives, RiskRegister } from "./pages/ExecStubs";
 import NotFound from "./pages/OtherPage/NotFound";
+import Login from "./pages/Login";
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  if (!localStorage.getItem("demo_role")) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
 
 export default function App() {
   return (
     <Router>
       <ScrollToTop />
       <Routes>
-        <Route element={<AppLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route index path="/" element={<DeveloperView />} />
           <Route path="/delivery" element={<Console />} />
           <Route path="/live" element={<LivePipeline />} />

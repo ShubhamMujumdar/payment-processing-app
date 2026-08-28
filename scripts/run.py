@@ -207,6 +207,32 @@ def start(watch: bool, branch: str | None) -> int:
     return 1 if pending else 0
 
 
+def _pid_on_port(port: int) -> int | None:
+    """Return the PID of whatever process is listening on *port*, or None."""
+    if WINDOWS:
+        result = subprocess.run(
+            ["netstat", "-ano"],
+            capture_output=True, text=True,
+        )
+        for line in result.stdout.splitlines():
+            if f":{port}" in line and "LISTENING" in line:
+                parts = line.split()
+                try:
+                    return int(parts[-1])
+                except (ValueError, IndexError):
+                    pass
+        return None
+    # macOS / Linux
+    result = subprocess.run(
+        ["lsof", "-ti", f"tcp:{port}"],
+        capture_output=True, text=True,
+    )
+    try:
+        return int(result.stdout.strip().splitlines()[0])
+    except (ValueError, IndexError):
+        return None
+
+
 def stop(watch: bool = False) -> int:
     stopped = 0
     for service in services(watch, None):
@@ -222,7 +248,19 @@ def stop(watch: bool = False) -> int:
             except Exception as exc:
                 print(f"  {RED}✗{RESET} {service.name:9} {exc}")
         elif port_busy(service.port):
-            print(f"  {DIM}·{RESET} {service.name:9} port :{service.port} busy but not ours — left alone")
+            stale_pid = _pid_on_port(service.port)
+            if stale_pid:
+                try:
+                    if WINDOWS:
+                        subprocess.run(["taskkill", "/PID", str(stale_pid), "/T", "/F"], capture_output=True)
+                    else:
+                        os.kill(stale_pid, signal.SIGTERM)
+                    print(f"  {GREEN}■{RESET} {service.name:9} stopped stale pid {stale_pid} on :{service.port}")
+                    stopped += 1
+                except Exception as exc:
+                    print(f"  {RED}✗{RESET} {service.name:9} could not kill stale pid {stale_pid}: {exc}")
+            else:
+                print(f"  {DIM}·{RESET} {service.name:9} port :{service.port} busy but pid unknown — left alone")
         service.pid_file.unlink(missing_ok=True)
     if not stopped:
         print(f"  {DIM}nothing was running{RESET}")

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import { BRAND } from "../brand";
@@ -48,11 +49,28 @@ const FOOTER_NAV: NavItem[] = [
   { label: "Support", path: "/support", ready: false, icon: "M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm0-3v.01M10 11c0-1.5 2-1.6 2-3a2 2 0 1 0-4 0" },
 ];
 
+const WFM_CHILDREN: NavItem[] = [
+  { label: "Portfolio", path: "/portfolio", ready: true, icon: "M3 6h14v9H3zM3 9h14" },
+  { label: "Strategy", path: "/strategy", ready: true, icon: "M3 14l4-5 3 3 4-6 3 3" },
+  { label: "Analytics", path: "/analytics", ready: true, icon: "M4 16V9m4 7V5m4 11v-5m4 5V7" },
+  { label: "Initiatives", path: "/initiatives", ready: true, icon: "M4 4h5v5H4zM11 4h5v5h-5zM4 11h5v5H4zM11 11h5v5h-5z" },
+  { label: "Risk Register", path: "/risk", ready: true, icon: "M10 17a7 7 0 1 0 0-14 7 7 0 0 0 0 14Zm0-9v4m0 2v.01" },
+];
+
+const KNOWLEDGE_MGMT: NavItem = {
+  label: "Knowledge Management",
+  path: "/graph",
+  ready: true,
+  icon: "M10 3v4m0 6v4M4.5 6.5l3 3m5 5 3 3m0-11-3 3m-5 5-3 3",
+};
+
 export default function AppSidebar() {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const { pathname } = useLocation();
   const origin = useOrigin();
   const open = isExpanded || isHovered || isMobileOpen;
+  const isExecutive = localStorage.getItem("demo_role") === "user_executive";
+  const [wfmExpanded, setWfmExpanded] = useState(true);
 
   const render = (item: NavItem) => {
     const active = pathname === item.path;
@@ -129,11 +147,54 @@ export default function AppSidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2">
-        <ul className="space-y-0.5">{NAV.map(render)}</ul>
-        {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Workspace</p>}
-        <ul className={`space-y-0.5 ${open ? "" : "mt-4"}`}>{WORKSPACE_NAV.map(render)}</ul>
-        {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Delivery · live</p>}
-        <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-[#334155] pt-4"}`}>{DELIVERY_NAV.map(render)}</ul>
+        {isExecutive ? (
+          <>
+            {/* Workforce Management collapsible group */}
+            <div className="mb-1">
+              {open && (
+                <button
+                  onClick={() => setWfmExpanded((v) => !v)}
+                  className="flex w-full items-center justify-between rounded-[10px] px-3 py-[7px] text-[#CBD5E1] transition-colors hover:bg-[#334155] hover:text-[#F8FAFC]"
+                >
+                  <span className="text-[12.5px]">Workforce Management</span>
+                  <svg viewBox="0 0 20 20" fill="none" className={`size-3.5 shrink-0 transition-transform duration-150 ${wfmExpanded ? "rotate-180" : ""}`} aria-hidden="true">
+                    <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              )}
+              {(wfmExpanded || !open) && (
+                <ul className={`space-y-0.5 ${open ? "pl-2" : ""}`}>
+                  {WFM_CHILDREN.map(render)}
+                </ul>
+              )}
+            </div>
+            {/* Knowledge Management — top-level link, no icon, same level as WFM header */}
+            {open && (
+              <Link
+                to={KNOWLEDGE_MGMT.path}
+                aria-current={pathname === KNOWLEDGE_MGMT.path ? "page" : undefined}
+                className={`relative flex w-full items-center rounded-[10px] px-3 py-[7px] text-[12.5px] transition-colors focus:outline-none focus-visible:bg-[#334155] ${
+                  pathname === KNOWLEDGE_MGMT.path
+                    ? "bg-[#2563EB] text-[#F8FAFC]"
+                    : "text-[#CBD5E1] hover:bg-[#334155] hover:text-[#F8FAFC]"
+                }`}
+              >
+                {pathname === KNOWLEDGE_MGMT.path && (
+                  <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-r bg-[#F8FAFC]" />
+                )}
+                {KNOWLEDGE_MGMT.label}
+              </Link>
+            )}
+          </>
+        ) : (
+          <>
+            <ul className="space-y-0.5">{NAV.map(render)}</ul>
+            {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Workspace</p>}
+            <ul className={`space-y-0.5 ${open ? "" : "mt-4"}`}>{WORKSPACE_NAV.map(render)}</ul>
+            {open && <p className="px-3 pb-1 pt-3 font-mono text-[10px] font-bold uppercase tracking-wider text-[#64748b]">Delivery · live</p>}
+            <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-[#334155] pt-4"}`}>{DELIVERY_NAV.map(render)}</ul>
+          </>
+        )}
       </nav>
 
       <div className="shrink-0 border-t border-[#334155] px-2 pb-3 pt-2">

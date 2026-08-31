@@ -1,29 +1,76 @@
+import { Link } from "react-router";
 import PageMeta from "../components/common/PageMeta";
 import { Card, InsightCard, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
 
 /**
- * Executive OKR alignment, reproduced from the design and fed entirely by the
- * constants below.
- *
- * This persona is outside what the system actually does -- there is no
- * portfolio, no line-of-business model and no OKR anywhere in the spine -- so
- * inventing a data source for it would be worse than admitting it. Every number
- * on this page is a literal, and the banner says so.
+ * Portfolio Intelligence Centre — all numbers are literals.
+ * Global Health Score is computed from Health, Risk and Velocity dimensions.
  */
 
 const LOBS = [
-  { name: "Consumer Banking", id: "CB-2023-Q3", alignment: 94, state: "On Track", tone: "brand", trend: [8, 10, 9, 13, 15, 14, 18] },
-  { name: "Commercial Payments", id: "CP-2023-Q3", alignment: 76, state: "At Risk", tone: "fail", trend: [18, 16, 15, 11, 9, 8, 6] },
-  { name: "Wealth Management", id: "WM-2023-Q3", alignment: 91, state: "On Track", tone: "brand", trend: [9, 11, 10, 12, 14, 13, 16] },
-  { name: "Fintech Partners", id: "FP-2023-Q3", alignment: 82, state: "Monitor", tone: "warn", trend: [12, 9, 14, 10, 15, 11, 13] },
-] as const;
+  {
+    name: "Consumer Banking",    id: "CB-2023-Q3",
+    health: 94, risks: 2, riskSeverity: "Low"    as const, velocity: 20,
+    healthState: "On Track",  riskState: "Managed",   velState: "Accelerating",
+    tone: "brand" as const,
+    healthTrend: [8,  10, 9,  13, 15, 14, 18],
+    riskTrend:   [4,  3,  3,  2,  3,  2,  2],
+    velTrend:    [10, 12, 13, 14, 16, 18, 20],
+  },
+  {
+    name: "Commercial Payments", id: "CP-2023-Q3",
+    health: 76, risks: 5, riskSeverity: "High"   as const, velocity: -8,
+    healthState: "At Risk",   riskState: "Escalate",  velState: "Declining",
+    tone: "fail" as const,
+    healthTrend: [18, 16, 15, 11, 9,  8,  6],
+    riskTrend:   [1,  2,  2,  3,  4,  5,  5],
+    velTrend:    [18, 16, 15, 11, 9,  8,  6],
+  },
+  {
+    name: "Wealth Management",   id: "WM-2023-Q3",
+    health: 91, risks: 1, riskSeverity: "Low"    as const, velocity: 18,
+    healthState: "On Track",  riskState: "Managed",   velState: "Accelerating",
+    tone: "brand" as const,
+    healthTrend: [9,  11, 10, 12, 14, 13, 16],
+    riskTrend:   [3,  2,  2,  1,  1,  1,  1],
+    velTrend:    [7,  8,  9,  10, 11, 13, 18],
+  },
+  {
+    name: "Fintech Partners",    id: "FP-2023-Q3",
+    health: 82, risks: 3, riskSeverity: "Medium" as const, velocity: 14,
+    healthState: "Monitor",   riskState: "Monitor",   velState: "Steady",
+    tone: "warn" as const,
+    healthTrend: [12, 9,  14, 10, 15, 11, 13],
+    riskTrend:   [2,  2,  3,  3,  2,  3,  3],
+    velTrend:    [4,  5,  3,  6,  4,  5,  14],
+  },
+];
 
 const ACTIONS = [
-  { title: "Approved Q4 Budget Draft", by: "By CEO · 2 hrs ago", tone: "pass" as const },
+  { title: "Approved Q4 Budget Draft",       by: "By CEO · 2 hrs ago",           tone: "pass" as const },
   { title: "Pending: Security Audit Review", by: "Assigned to CISO · Due today", tone: "warn" as const },
 ];
 
-function Spark({ points, tone }: { points: readonly number[]; tone: string }) {
+function riskTone(s: "Low" | "Medium" | "High"): "brand" | "warn" | "fail" {
+  return s === "High" ? "fail" : s === "Medium" ? "warn" : "brand";
+}
+
+function velTone(v: number): "brand" | "warn" | "fail" {
+  return v >= 10 ? "brand" : v >= 0 ? "warn" : "fail";
+}
+
+function LobName({ name, to }: { name: string; to: string }) {
+  if (name === "Consumer Banking") {
+    return (
+      <Link to={to} className="underline text-accent">
+        {name}
+      </Link>
+    );
+  }
+  return <>{name}</>;
+}
+
+function Spark({ points, tone }: { points: number[]; tone: string }) {
   const max = Math.max(...points), min = Math.min(...points);
   const span = max - min || 1;
   const d = points
@@ -37,52 +84,142 @@ function Spark({ points, tone }: { points: readonly number[]; tone: string }) {
   );
 }
 
+function cardAccent(tone: string) {
+  return tone === "fail" ? "before:bg-state-fail" : tone === "warn" ? "before:bg-state-warn" : "before:bg-accent";
+}
+
+function valueTone(tone: string) {
+  return tone === "fail" ? "text-state-fail" : tone === "warn" ? "text-state-warn" : "text-gray-100";
+}
+
 export default function Portfolio() {
+  const avgHealth       = Math.round(LOBS.reduce((s, l) => s + l.health, 0) / LOBS.length);
+  const totalRisks      = LOBS.reduce((s, l) => s + l.risks, 0);
+  const highSevRisks    = LOBS.filter(l => l.riskSeverity === "High").reduce((s, l) => s + l.risks, 0);
+  const avgVelocity     = Math.round(LOBS.reduce((s, l) => s + l.velocity, 0) / LOBS.length);
+  const posVelCount     = LOBS.filter(l => l.velocity > 0).length;
+  const riskPenalty     = LOBS.filter(l => l.riskSeverity === "High").length * 3
+                        + LOBS.filter(l => l.riskSeverity === "Medium").length * 1;
+  const velocityBonus   = avgVelocity >= 10 ? 3 : avgVelocity >= 0 ? 1 : avgVelocity >= -10 ? -2 : -5;
+  const globalHealth    = Math.min(100, Math.max(0, avgHealth - riskPenalty + velocityBonus));
+  const globalTone      = globalHealth >= 88 ? "pass" : globalHealth >= 80 ? "warn" : "fail";
+
   return (
     <>
-      <PageMeta title="Portfolio · Executive OKR Alignment" description="Portfolio-wide health, risk and momentum." />
+      <PageMeta title="Portfolio · Portfolio Intelligence Centre" description="Portfolio-wide health, risk and momentum." />
       <PageHead
         kicker="Q3 Strategic Execution"
-        title="Executive OKR Alignment"
-        blurb="Portfolio-wide view of health, risk, and momentum across every line of business."
-        right={<><MockButton>↓ Export Report</MockButton><MockButton variant="solid">+ New Initiative</MockButton></>}
+        title="Portfolio Intelligence Centre"
+        blurb="Portfolio-wide view of health, risk, and velocity across every line of business."
+        right={<MockButton>Export Report</MockButton>}
       />
 
       <div className="space-y-6 px-6 pb-10 pt-5">
         <div className="grid gap-4 md:grid-cols-3">
-          <StatCard label="Global Health Score" value="88%" tone="brand" progress={88}
-            note={<span className="font-semibold text-state-warn">Target: 90%</span>} />
-          <StatCard label="Active Risks" value="4" unit="High Impact" tone="fail"
-            note="Requires immediate executive review" />
-          <StatCard label="Aggregate Velocity" value="+12%" unit="vs Q2" tone="pass"
-            note="Sustained upward trend across 3 of 4 LOBs" />
+          <StatCard
+            label="Global Health Score"
+            value={`${globalHealth}%`}
+            tone={globalTone}
+            progress={globalHealth}
+            note={<span className="font-semibold text-gray-400">Health {avgHealth}% · Risk −{riskPenalty}pts · Velocity +{velocityBonus}pts</span>}
+          />
+          <StatCard
+            label="Active Risks"
+            value={String(totalRisks)}
+            unit={`${highSevRisks} High Severity`}
+            tone="fail"
+            note={<span className="font-semibold text-state-warn">Requires immediate executive review</span>}
+          />
+          <StatCard
+            label="Aggregate Velocity"
+            value={`${avgVelocity >= 0 ? "+" : ""}${avgVelocity}%`}
+            unit="vs Q2"
+            tone={avgVelocity >= 10 ? "pass" : avgVelocity >= 0 ? "warn" : "fail"}
+            note={`${posVelCount} of ${LOBS.length} LOBs trending positive`}
+          />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.55fr_1fr]">
-          <section>
-            <SectionTitle aside="4 active LOBs">Lines of Business Alignment</SectionTitle>
-            <div className="space-y-3">
-              {LOBS.map((l) => (
-                <Card key={l.id}
-                  className={`relative flex flex-wrap items-center gap-4 overflow-hidden py-4 pl-6 pr-5 before:absolute before:inset-y-0 before:left-0 before:w-[4px] ${
-                    l.tone === "fail" ? "before:bg-state-fail" : l.tone === "warn" ? "before:bg-state-warn" : "before:bg-accent"}`}>
-                  <div className="min-w-[168px] flex-1">
-                    <p className="text-[15px] font-bold text-gray-100">{l.name}</p>
-                    <p className="mt-0.5 font-mono text-[12px] text-gray-500">ID: {l.id}</p>
-                  </div>
-                  <div className="w-[92px]">
-                    <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-gray-500">Alignment</p>
-                    <p className={`text-[22px] font-bold leading-tight ${l.tone === "fail" ? "text-state-fail" : l.tone === "warn" ? "text-state-warn" : "text-gray-100"}`}>
-                      {l.alignment}%
-                    </p>
-                  </div>
-                  <Pill tone={l.tone} dot>{l.state}</Pill>
-                  <Spark points={l.trend} tone={l.tone} />
-                  <span className="text-gray-600" aria-hidden="true">›</span>
-                </Card>
-              ))}
-            </div>
-          </section>
+          <div className="space-y-6">
+
+            {/* ── Lines of Business Health ── */}
+            <section>
+              <SectionTitle aside={`${LOBS.length} active LOBs`}>Lines of Business Health</SectionTitle>
+              <div className="space-y-3">
+                {LOBS.map((l) => (
+                  <Card key={l.id}
+                    className={`relative flex flex-wrap items-center gap-4 overflow-hidden py-4 pl-6 pr-5 before:absolute before:inset-y-0 before:left-0 before:w-[4px] ${cardAccent(l.tone)}`}>
+                    <div className="min-w-[168px] flex-1">
+                      <p className="text-[15px] font-bold text-gray-100"><LobName name={l.name} to="/initiatives" /></p>
+                      <p className="mt-0.5 font-mono text-[12px] text-gray-500">ID: {l.id}</p>
+                    </div>
+                    <div className="w-[92px]">
+                      <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-gray-500">Health</p>
+                      <p className={`text-[22px] font-bold leading-tight ${valueTone(l.tone)}`}>{l.health}%</p>
+                    </div>
+                    <Pill tone={l.tone} dot>{l.healthState}</Pill>
+                    <Spark points={l.healthTrend} tone={l.tone} />
+                    <span className="text-gray-600" aria-hidden="true">›</span>
+                  </Card>
+                ))}
+              </div>
+            </section>
+
+            {/* ── Lines of Business Risks ── */}
+            <section>
+              <SectionTitle aside={`${totalRisks} risks tracked`}>Lines of Business Risks</SectionTitle>
+              <div className="space-y-3">
+                {LOBS.map((l) => {
+                  const tone = riskTone(l.riskSeverity);
+                  return (
+                    <Card key={l.id}
+                      className={`relative flex flex-wrap items-center gap-4 overflow-hidden py-4 pl-6 pr-5 before:absolute before:inset-y-0 before:left-0 before:w-[4px] ${cardAccent(tone)}`}>
+                      <div className="min-w-[168px] flex-1">
+                        <p className="text-[15px] font-bold text-gray-100"><LobName name={l.name} to="/risk" /></p>
+                        <p className="mt-0.5 font-mono text-[12px] text-gray-500">ID: {l.id}</p>
+                      </div>
+                      <div className="w-[92px]">
+                        <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-gray-500">Risks</p>
+                        <p className={`text-[22px] font-bold leading-tight ${valueTone(tone)}`}>{l.risks}</p>
+                      </div>
+                      <Pill tone={tone} dot>{l.riskState}</Pill>
+                      <Spark points={l.riskTrend} tone={tone} />
+                      <span className="text-gray-600" aria-hidden="true">›</span>
+                    </Card>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* ── Lines of Business Aggregate Velocity ── */}
+            <section>
+              <SectionTitle aside={`${posVelCount} of ${LOBS.length} trending positive`}>Lines of Business Aggregate Velocity</SectionTitle>
+              <div className="space-y-3">
+                {LOBS.map((l) => {
+                  const tone = velTone(l.velocity);
+                  return (
+                    <Card key={l.id}
+                      className={`relative flex flex-wrap items-center gap-4 overflow-hidden py-4 pl-6 pr-5 before:absolute before:inset-y-0 before:left-0 before:w-[4px] ${cardAccent(tone)}`}>
+                      <div className="min-w-[168px] flex-1">
+                        <p className="text-[15px] font-bold text-gray-100"><LobName name={l.name} to="/initiatives" /></p>
+                        <p className="mt-0.5 font-mono text-[12px] text-gray-500">ID: {l.id}</p>
+                      </div>
+                      <div className="w-[92px]">
+                        <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-gray-500">Velocity</p>
+                        <p className={`text-[22px] font-bold leading-tight ${valueTone(tone)}`}>
+                          {l.velocity >= 0 ? "+" : ""}{l.velocity}%
+                        </p>
+                      </div>
+                      <Pill tone={tone} dot>{l.velState}</Pill>
+                      <Spark points={l.velTrend} tone={tone} />
+                      <span className="text-gray-600" aria-hidden="true">›</span>
+                    </Card>
+                  );
+                })}
+              </div>
+            </section>
+
+          </div>
 
           <section>
             <SectionTitle>Command Intelligence</SectionTitle>

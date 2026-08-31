@@ -54,8 +54,7 @@ export function Initiatives() {
     <>
       <PageMeta title="Initiatives · Workspace" description="Active initiatives across the portfolio." />
 
-      <PageHead kicker="Workspace" title="Initiatives" blurb="Everything currently committed, and who owns it."
-        right={<MockButton variant="solid">+ New Initiative</MockButton>} />
+      <PageHead kicker="Workspace" title="Initiatives: Consumer Banking" blurb="Everything currently committed, and who owns it." />
       <div className="px-6 pb-10 pt-5">
         <Card className="overflow-hidden">
           <table className="w-full text-left">

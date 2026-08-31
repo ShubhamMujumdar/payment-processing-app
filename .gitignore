@@ -38,3 +38,5 @@ Thumbs.db
 # committed, permanently dirty, and carrying absolute local paths.
 logs/
 spine/log/
+code2doc_executive_rfp.pptx
+*.zip

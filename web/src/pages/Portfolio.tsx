@@ -3,46 +3,39 @@ import PageMeta from "../components/common/PageMeta";
 import { Card, InsightCard, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
 
 /**
- * Portfolio Intelligence Centre — all numbers are literals.
+ * Portfolio Intelligence Centre -- all numbers are literals.
  * Global Health Score is computed from Health, Risk and Velocity dimensions.
+ * OKR Alignment, Budget Envelope and Blocked Dependencies per RFP WMT-01/03/05/07/09.
  */
 
 const LOBS = [
   {
     name: "Consumer Banking",    id: "CB-2023-Q3",
     health: 94, risks: 2, riskSeverity: "Low"    as const, velocity: 20,
-    healthState: "On Track",  riskState: "Managed",   velState: "Accelerating",
-    tone: "brand" as const,
-    healthTrend: [8,  10, 9,  13, 15, 14, 18],
-    riskTrend:   [4,  3,  3,  2,  3,  2,  2],
-    velTrend:    [10, 12, 13, 14, 16, 18, 20],
+    okrAligned: 8, okrTotal: 9, budgetUsed: 3.2, budgetTotal: 5.0, blockedDeps: 1,
+    healthState: "On Track", tone: "brand" as const,
+    healthTrend: [8, 10, 9, 13, 15, 14, 18],
   },
   {
     name: "Commercial Payments", id: "CP-2023-Q3",
     health: 76, risks: 5, riskSeverity: "High"   as const, velocity: -8,
-    healthState: "At Risk",   riskState: "Escalate",  velState: "Declining",
-    tone: "fail" as const,
-    healthTrend: [18, 16, 15, 11, 9,  8,  6],
-    riskTrend:   [1,  2,  2,  3,  4,  5,  5],
-    velTrend:    [18, 16, 15, 11, 9,  8,  6],
+    okrAligned: 5, okrTotal: 9, budgetUsed: 4.8, budgetTotal: 6.0, blockedDeps: 4,
+    healthState: "At Risk",  tone: "fail" as const,
+    healthTrend: [18, 16, 15, 11, 9, 8, 6],
   },
   {
     name: "Wealth Management",   id: "WM-2023-Q3",
     health: 91, risks: 1, riskSeverity: "Low"    as const, velocity: 18,
-    healthState: "On Track",  riskState: "Managed",   velState: "Accelerating",
-    tone: "brand" as const,
-    healthTrend: [9,  11, 10, 12, 14, 13, 16],
-    riskTrend:   [3,  2,  2,  1,  1,  1,  1],
-    velTrend:    [7,  8,  9,  10, 11, 13, 18],
+    okrAligned: 7, okrTotal: 8, budgetUsed: 2.1, budgetTotal: 3.5, blockedDeps: 0,
+    healthState: "On Track", tone: "brand" as const,
+    healthTrend: [9, 11, 10, 12, 14, 13, 16],
   },
   {
     name: "Fintech Partners",    id: "FP-2023-Q3",
     health: 82, risks: 3, riskSeverity: "Medium" as const, velocity: 14,
-    healthState: "Monitor",   riskState: "Monitor",   velState: "Steady",
-    tone: "warn" as const,
-    healthTrend: [12, 9,  14, 10, 15, 11, 13],
-    riskTrend:   [2,  2,  3,  3,  2,  3,  3],
-    velTrend:    [4,  5,  3,  6,  4,  5,  14],
+    okrAligned: 6, okrTotal: 8, budgetUsed: 3.5, budgetTotal: 4.0, blockedDeps: 2,
+    healthState: "Monitor",  tone: "warn" as const,
+    healthTrend: [12, 9, 14, 10, 15, 11, 13],
   },
 ];
 
@@ -59,50 +52,56 @@ function velTone(v: number): "brand" | "warn" | "fail" {
   return v >= 10 ? "brand" : v >= 0 ? "warn" : "fail";
 }
 
-function LobName({ name, to }: { name: string; to: string }) {
-  if (name === "Consumer Banking") {
-    return (
-      <Link to={to} className="underline text-accent">
-        {name}
-      </Link>
-    );
-  }
-  return <>{name}</>;
+function okrTone(aligned: number, total: number): "brand" | "warn" | "fail" {
+  const pct = aligned / total;
+  return pct >= 0.85 ? "brand" : pct >= 0.70 ? "warn" : "fail";
+}
+
+function depTone(n: number): "brand" | "warn" | "fail" {
+  return n === 0 ? "brand" : n <= 2 ? "warn" : "fail";
+}
+
+function cc(tone: "brand" | "warn" | "fail"): string {
+  return tone === "fail" ? "text-state-fail" : tone === "warn" ? "text-state-warn" : "text-accent";
+}
+
+function TH({ children }: { children: string }) {
+  return (
+    <th className="px-3 py-2.5 text-left font-mono text-[10px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">
+      {children}
+    </th>
+  );
 }
 
 function Spark({ points, tone }: { points: number[]; tone: string }) {
   const max = Math.max(...points), min = Math.min(...points);
   const span = max - min || 1;
   const d = points
-    .map((p, i) => `${(i / (points.length - 1)) * 100},${28 - ((p - min) / span) * 24}`)
+    .map((p, i) => `${(i / (points.length - 1)) * 100},${20 - ((p - min) / span) * 16}`)
     .join(" L ");
   const stroke = tone === "fail" ? "var(--color-state-fail)" : tone === "warn" ? "var(--color-state-warn)" : "var(--color-accent)";
   return (
-    <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="h-8 w-[104px]" aria-hidden="true">
-      <path d={`M ${d}`} fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg viewBox="0 0 100 22" preserveAspectRatio="none" className="h-6 w-20" aria-hidden="true">
+      <path d={`M ${d}`} fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function cardAccent(tone: string) {
-  return tone === "fail" ? "before:bg-state-fail" : tone === "warn" ? "before:bg-state-warn" : "before:bg-accent";
-}
-
-function valueTone(tone: string) {
-  return tone === "fail" ? "text-state-fail" : tone === "warn" ? "text-state-warn" : "text-gray-100";
-}
-
 export default function Portfolio() {
-  const avgHealth       = Math.round(LOBS.reduce((s, l) => s + l.health, 0) / LOBS.length);
-  const totalRisks      = LOBS.reduce((s, l) => s + l.risks, 0);
-  const highSevRisks    = LOBS.filter(l => l.riskSeverity === "High").reduce((s, l) => s + l.risks, 0);
-  const avgVelocity     = Math.round(LOBS.reduce((s, l) => s + l.velocity, 0) / LOBS.length);
-  const posVelCount     = LOBS.filter(l => l.velocity > 0).length;
-  const riskPenalty     = LOBS.filter(l => l.riskSeverity === "High").length * 3
-                        + LOBS.filter(l => l.riskSeverity === "Medium").length * 1;
-  const velocityBonus   = avgVelocity >= 10 ? 3 : avgVelocity >= 0 ? 1 : avgVelocity >= -10 ? -2 : -5;
-  const globalHealth    = Math.min(100, Math.max(0, avgHealth - riskPenalty + velocityBonus));
-  const globalTone      = globalHealth >= 88 ? "pass" : globalHealth >= 80 ? "warn" : "fail";
+  const avgHealth        = Math.round(LOBS.reduce((s, l) => s + l.health, 0) / LOBS.length);
+  const totalRisks       = LOBS.reduce((s, l) => s + l.risks, 0);
+  const highSevRisks     = LOBS.filter(l => l.riskSeverity === "High").reduce((s, l) => s + l.risks, 0);
+  const avgVelocity      = Math.round(LOBS.reduce((s, l) => s + l.velocity, 0) / LOBS.length);
+  const posVelCount      = LOBS.filter(l => l.velocity > 0).length;
+  const riskPenalty      = LOBS.filter(l => l.riskSeverity === "High").length * 3
+                         + LOBS.filter(l => l.riskSeverity === "Medium").length * 1;
+  const velocityBonus    = avgVelocity >= 10 ? 3 : avgVelocity >= 0 ? 1 : avgVelocity >= -10 ? -2 : -5;
+  const globalHealth     = Math.min(100, Math.max(0, avgHealth - riskPenalty + velocityBonus));
+  const globalTone       = globalHealth >= 88 ? "pass" : globalHealth >= 80 ? "warn" : "fail";
+  const totalBudgetUsed  = LOBS.reduce((s, l) => s + l.budgetUsed, 0);
+  const totalBudgetAll   = LOBS.reduce((s, l) => s + l.budgetTotal, 0);
+  const budgetPct        = Math.round(totalBudgetUsed / totalBudgetAll * 100);
+  const totalBlockedDeps = LOBS.reduce((s, l) => s + l.blockedDeps, 0);
 
   return (
     <>
@@ -110,25 +109,27 @@ export default function Portfolio() {
       <PageHead
         kicker="Q3 Strategic Execution"
         title="Portfolio Intelligence Centre"
-        blurb="Portfolio-wide view of health, risk, and velocity across every line of business."
+        blurb="Health, risk, velocity and OKR alignment across all lines of business."
         right={<MockButton>Export Report</MockButton>}
       />
 
-      <div className="space-y-6 px-6 pb-10 pt-5">
-        <div className="grid gap-4 md:grid-cols-3">
+      <div className="space-y-4 px-6 pb-6 pt-4">
+
+        {/* ── 4 Stat Cards ── */}
+        <div className="grid gap-3 md:grid-cols-4">
           <StatCard
             label="Global Health Score"
             value={`${globalHealth}%`}
             tone={globalTone}
             progress={globalHealth}
-            note={<span className="font-semibold text-gray-400">Health {avgHealth}% · Risk −{riskPenalty}pts · Velocity +{velocityBonus}pts</span>}
+            note={<span className="text-gray-400">Health {avgHealth}% · Risk -{riskPenalty}pts · Vel +{velocityBonus}pts</span>}
           />
           <StatCard
             label="Active Risks"
             value={String(totalRisks)}
             unit={`${highSevRisks} High Severity`}
             tone="fail"
-            note={<span className="font-semibold text-state-warn">Requires immediate executive review</span>}
+            note={<span className="font-semibold text-state-warn">Requires executive review</span>}
           />
           <StatCard
             label="Aggregate Velocity"
@@ -137,125 +138,157 @@ export default function Portfolio() {
             tone={avgVelocity >= 10 ? "pass" : avgVelocity >= 0 ? "warn" : "fail"}
             note={`${posVelCount} of ${LOBS.length} LOBs trending positive`}
           />
+          <StatCard
+            label="Budget Envelope"
+            value={`$${totalBudgetUsed.toFixed(1)}M`}
+            unit={`of $${totalBudgetAll.toFixed(1)}M`}
+            tone={budgetPct >= 90 ? "fail" : budgetPct >= 75 ? "warn" : "pass"}
+            progress={budgetPct}
+            note={`${totalBlockedDeps} cross-functional deps blocked`}
+          />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.55fr_1fr]">
-          <div className="space-y-6">
+        {/* ── LOB Matrix Table ── */}
+        <section>
+          <SectionTitle aside={`${LOBS.length} active LOBs`}>Lines of Business Overview</SectionTitle>
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-ink-700 bg-ink-800">
+                    <th className="w-[4px] p-0" />
+                    <TH>Line of Business</TH>
+                    <TH>Health</TH>
+                    <TH>Risks</TH>
+                    <TH>Velocity</TH>
+                    <TH>OKR Align</TH>
+                    <TH>Budget</TH>
+                    <TH>Blocked Deps</TH>
+                    <TH>Status</TH>
+                    <TH>Trend</TH>
+                  </tr>
+                </thead>
+                <tbody>
+                  {LOBS.map((l) => {
+                    const rt  = riskTone(l.riskSeverity);
+                    const vt  = velTone(l.velocity);
+                    const ot  = okrTone(l.okrAligned, l.okrTotal);
+                    const dt  = depTone(l.blockedDeps);
+                    const bar = l.tone === "fail" ? "bg-state-fail" : l.tone === "warn" ? "bg-state-warn" : "bg-accent";
+                    const bpct = Math.round(l.budgetUsed / l.budgetTotal * 100);
+                    const bbar = bpct >= 90 ? "bg-state-fail" : bpct >= 75 ? "bg-state-warn" : "bg-accent";
+                    return (
+                      <tr key={l.id} className="border-b border-ink-700 last:border-0 hover:bg-white/[0.02]">
+                        {/* colour stripe */}
+                        <td className={`w-[4px] p-0 ${bar}`} />
 
-            {/* ── Lines of Business Health ── */}
-            <section>
-              <SectionTitle aside={`${LOBS.length} active LOBs`}>Lines of Business Health</SectionTitle>
-              <div className="space-y-3">
-                {LOBS.map((l) => (
-                  <Card key={l.id}
-                    className={`relative flex flex-wrap items-center gap-4 overflow-hidden py-4 pl-6 pr-5 before:absolute before:inset-y-0 before:left-0 before:w-[4px] ${cardAccent(l.tone)}`}>
-                    <div className="min-w-[168px] flex-1">
-                      <p className="text-[15px] font-bold text-gray-100"><LobName name={l.name} to="/initiatives" /></p>
-                      <p className="mt-0.5 font-mono text-[12px] text-gray-500">ID: {l.id}</p>
-                    </div>
-                    <div className="w-[92px]">
-                      <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-gray-500">Health</p>
-                      <p className={`text-[22px] font-bold leading-tight ${valueTone(l.tone)}`}>{l.health}%</p>
-                    </div>
-                    <Pill tone={l.tone} dot>{l.healthState}</Pill>
-                    <Spark points={l.healthTrend} tone={l.tone} />
-                    <span className="text-gray-600" aria-hidden="true">›</span>
-                  </Card>
-                ))}
-              </div>
-            </section>
+                        {/* LOB name */}
+                        <td className="px-3 py-2.5 min-w-[160px]">
+                          <p className="text-[13px] font-bold text-gray-100 leading-tight">
+                            {l.name === "Consumer Banking"
+                              ? <Link to="/initiatives" className="underline text-accent">{l.name}</Link>
+                              : l.name}
+                          </p>
+                          <p className="font-mono text-[10.5px] text-gray-500">{l.id}</p>
+                        </td>
 
-            {/* ── Lines of Business Risks ── */}
-            <section>
-              <SectionTitle aside={`${totalRisks} risks tracked`}>Lines of Business Risks</SectionTitle>
-              <div className="space-y-3">
-                {LOBS.map((l) => {
-                  const tone = riskTone(l.riskSeverity);
-                  return (
-                    <Card key={l.id}
-                      className={`relative flex flex-wrap items-center gap-4 overflow-hidden py-4 pl-6 pr-5 before:absolute before:inset-y-0 before:left-0 before:w-[4px] ${cardAccent(tone)}`}>
-                      <div className="min-w-[168px] flex-1">
-                        <p className="text-[15px] font-bold text-gray-100"><LobName name={l.name} to="/risk" /></p>
-                        <p className="mt-0.5 font-mono text-[12px] text-gray-500">ID: {l.id}</p>
-                      </div>
-                      <div className="w-[92px]">
-                        <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-gray-500">Risks</p>
-                        <p className={`text-[22px] font-bold leading-tight ${valueTone(tone)}`}>{l.risks}</p>
-                      </div>
-                      <Pill tone={tone} dot>{l.riskState}</Pill>
-                      <Spark points={l.riskTrend} tone={tone} />
-                      <span className="text-gray-600" aria-hidden="true">›</span>
-                    </Card>
-                  );
-                })}
-              </div>
-            </section>
+                        {/* Health */}
+                        <td className="px-3 py-2.5">
+                          <span className={`font-mono text-[14px] font-bold ${cc(l.tone)}`}>{l.health}%</span>
+                        </td>
 
-            {/* ── Lines of Business Aggregate Velocity ── */}
-            <section>
-              <SectionTitle aside={`${posVelCount} of ${LOBS.length} trending positive`}>Lines of Business Aggregate Velocity</SectionTitle>
-              <div className="space-y-3">
-                {LOBS.map((l) => {
-                  const tone = velTone(l.velocity);
-                  return (
-                    <Card key={l.id}
-                      className={`relative flex flex-wrap items-center gap-4 overflow-hidden py-4 pl-6 pr-5 before:absolute before:inset-y-0 before:left-0 before:w-[4px] ${cardAccent(tone)}`}>
-                      <div className="min-w-[168px] flex-1">
-                        <p className="text-[15px] font-bold text-gray-100"><LobName name={l.name} to="/initiatives" /></p>
-                        <p className="mt-0.5 font-mono text-[12px] text-gray-500">ID: {l.id}</p>
-                      </div>
-                      <div className="w-[92px]">
-                        <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-gray-500">Velocity</p>
-                        <p className={`text-[22px] font-bold leading-tight ${valueTone(tone)}`}>
-                          {l.velocity >= 0 ? "+" : ""}{l.velocity}%
-                        </p>
-                      </div>
-                      <Pill tone={tone} dot>{l.velState}</Pill>
-                      <Spark points={l.velTrend} tone={tone} />
-                      <span className="text-gray-600" aria-hidden="true">›</span>
-                    </Card>
-                  );
-                })}
-              </div>
-            </section>
+                        {/* Risks */}
+                        <td className="px-3 py-2.5 whitespace-nowrap">
+                          <span className={`font-mono text-[14px] font-bold ${cc(rt)}`}>{l.risks}</span>
+                          <span className={`ml-1 text-[10.5px] ${cc(rt)}`}>{l.riskSeverity}</span>
+                        </td>
 
-          </div>
+                        {/* Velocity */}
+                        <td className="px-3 py-2.5">
+                          <span className={`font-mono text-[14px] font-bold ${cc(vt)}`}>
+                            {l.velocity >= 0 ? "+" : ""}{l.velocity}%
+                          </span>
+                        </td>
 
-          <section>
-            <SectionTitle>Command Intelligence</SectionTitle>
-            <InsightCard
-              kicker="Strategic Insight" meta="Just now"
-              title="Reallocation Recommended"
-              body="Commercial Payments shows a 15% velocity dip this sprint. Models suggest shifting 3 senior engineers from Fintech Partners to mitigate Q3 delivery risk."
-              action="Execute Transfer"
-            />
-            <Card className="mt-4 px-5 py-4">
-              <p className="text-[15px] font-bold text-gray-100">Recent Executive Actions</p>
-              <ul className="mt-3 space-y-3">
+                        {/* OKR Alignment */}
+                        <td className="px-3 py-2.5 whitespace-nowrap">
+                          <span className={`font-mono text-[14px] font-bold ${cc(ot)}`}>{l.okrAligned}/{l.okrTotal}</span>
+                          <span className="ml-1 text-[10.5px] text-gray-500">aligned</span>
+                        </td>
+
+                        {/* Budget */}
+                        <td className="px-3 py-2.5 min-w-[110px]">
+                          <div className="whitespace-nowrap">
+                            <span className="font-mono text-[12.5px] font-bold text-gray-200">${l.budgetUsed.toFixed(1)}M</span>
+                            <span className="text-[10.5px] text-gray-500"> / ${l.budgetTotal.toFixed(1)}M</span>
+                          </div>
+                          <div className="mt-1 h-[3px] w-16 rounded-full bg-ink-700">
+                            <div className={`h-[3px] rounded-full ${bbar}`} style={{ width: `${bpct}%` }} />
+                          </div>
+                        </td>
+
+                        {/* Blocked Deps */}
+                        <td className="px-3 py-2.5">
+                          <span className={`font-mono text-[14px] font-bold ${cc(dt)}`}>{l.blockedDeps}</span>
+                          {l.blockedDeps > 0 && (
+                            <span className="ml-1 text-[10.5px] text-gray-500">blocked</span>
+                          )}
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-3 py-2.5">
+                          <Pill tone={l.tone} dot>{l.healthState}</Pill>
+                        </td>
+
+                        {/* Trend */}
+                        <td className="px-3 py-2.5">
+                          <Spark points={l.healthTrend} tone={l.tone} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </section>
+
+        {/* ── Command Intelligence (compact 2-col) ── */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <InsightCard
+            kicker="Strategic Insight" meta="Just now"
+            title="Reallocation Recommended"
+            body="Commercial Payments shows a 15% velocity dip this sprint. Models suggest shifting 3 senior engineers from Fintech Partners to mitigate Q3 delivery risk."
+            action="Execute Transfer"
+          />
+          <Card className="px-4 py-3 space-y-3">
+            <div>
+              <p className="text-[13.5px] font-bold text-gray-100">Recent Executive Actions</p>
+              <ul className="mt-2 space-y-2">
                 {ACTIONS.map((a) => (
-                  <li key={a.title} className="flex gap-3">
-                    <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-md text-[12px] ${
+                  <li key={a.title} className="flex gap-2.5">
+                    <span className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded text-[11px] ${
                       a.tone === "pass" ? "bg-[#e6f7ef] text-state-pass" : "bg-[#fff6e5] text-state-warn"}`}>
                       {a.tone === "pass" ? "✓" : "◷"}
                     </span>
                     <span>
-                      <span className="block text-[13.5px] font-semibold text-gray-200">{a.title}</span>
-                      <span className="block text-[12px] text-gray-500">{a.by}</span>
+                      <span className="block text-[12.5px] font-semibold text-gray-200">{a.title}</span>
+                      <span className="block text-[11px] text-gray-500">{a.by}</span>
                     </span>
                   </li>
                 ))}
               </ul>
-            </Card>
-            <Card className="mt-4 px-5 py-4">
-              <p className="text-[13px] font-bold text-gray-100">Q3 Commitment</p>
-              <div className="mt-2 flex items-baseline justify-between">
-                <span className="text-[12.5px] text-gray-500">Delivered</span>
-                <span className="font-mono text-[13px] font-bold text-accent">612 / 780 SP</span>
+            </div>
+            <div className="border-t border-ink-700 pt-2.5">
+              <div className="flex items-baseline justify-between">
+                <p className="text-[12px] font-bold text-gray-100">Q3 Commitment</p>
+                <span className="font-mono text-[12px] font-bold text-accent">612 / 780 SP</span>
               </div>
-              <Progress value={78} className="mt-2" />
-            </Card>
-          </section>
+              <Progress value={78} className="mt-1.5" />
+            </div>
+          </Card>
         </div>
+
       </div>
     </>
   );

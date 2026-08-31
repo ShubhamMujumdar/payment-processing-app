@@ -223,12 +223,16 @@ class Watcher:
 
             changed = [p for p in proposals if p["needs_change"]]
 
-            # Nothing needed editing, but the change was expected to matter. That
-            # is the shape of a documentation gap -- and also the shape of a
-            # retrieval miss, so the model is shown the near misses and allowed
-            # to say no. It usually should: a corpus that grows a page per commit
-            # is worse than one slightly out of date.
-            if not changed and analysis.doc_impact_expected:
+            # Asked whenever the change was expected to matter, not only when
+            # nothing needed editing. The stricter version never fired: the model
+            # can nearly always find some section to extend, so a genuinely new
+            # capability was absorbed as three small edits and no page was ever
+            # proposed. Adding standing orders should do both -- extend the API
+            # table AND get its own page -- so the two are not exclusive.
+            #
+            # The guard against a page-per-commit corpus is the prompt, which
+            # pushes hard toward declining, plus the near misses passed below.
+            if analysis.doc_impact_expected:
                 on_log("  nothing to edit — asking whether a page is missing")
                 self.store.emit(run_id, "considering-new-page", {
                     "candidates": [p["page_title"] for p in proposals],
@@ -258,13 +262,13 @@ class Watcher:
                         "line_start": None,
                         "line_end": None,
                     })
-                    changed = [page]
                     on_log(f"    NEW   {page.title}")
                 else:
                     on_log(f"    no new page: {page.rationale[:70]}")
                     self.store.emit(run_id, "no-new-page", {"reason": page.rationale})
 
             created = [p for p in proposals if p.get("kind") == "create" and p["needs_change"]]
+            changed = [p for p in proposals if p["needs_change"]]
             edited = [p for p in proposals if p.get("kind") == "edit" and p["needs_change"]]
             self.store.update(run_id, status="proposed", proposals_json=proposals)
             self.store.emit(run_id, "proposed", {

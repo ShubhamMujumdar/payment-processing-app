@@ -24,7 +24,7 @@ from typing import Any, Callable
 
 import httpx
 
-from .analyze import analyse_change, propose_redline
+from .analyze import analyse_change, propose_new_page, propose_redline
 from .changes import Change, from_github_commit
 from .config import Config
 from .runs import RunStore
@@ -218,12 +218,60 @@ class Watcher:
                     f"{result.page_title} > {result.heading_path[:48]}"
                 )
 
+            for p in proposals:
+                p["kind"] = "edit"
+
             changed = [p for p in proposals if p["needs_change"]]
+
+            # Nothing needed editing, but the change was expected to matter. That
+            # is the shape of a documentation gap -- and also the shape of a
+            # retrieval miss, so the model is shown the near misses and allowed
+            # to say no. It usually should: a corpus that grows a page per commit
+            # is worse than one slightly out of date.
+            if not changed and analysis.doc_impact_expected:
+                on_log("  nothing to edit — asking whether a page is missing")
+                self.store.emit(run_id, "considering-new-page", {
+                    "candidates": [p["page_title"] for p in proposals],
+                })
+                page = propose_new_page(
+                    change.diff,
+                    analysis.summary,
+                    [(f"{r.page_title} > {r.heading_path}", r.text) for r in ranked],
+                )
+                if page.needed:
+                    proposals.append({
+                        "kind": "create",
+                        "page_id": None,
+                        "page_title": page.title,
+                        "heading_path": "(new page)",
+                        "url": None,
+                        "anchor_url": None,
+                        "needs_change": True,
+                        "existing_text": "",
+                        "proposed_text": page.storage_html,
+                        "rationale": page.rationale,
+                        "code_citation": page.code_citation,
+                        "confidence": page.confidence,
+                        "published": False,
+                        "vector_score": None,
+                        "rerank_score": None,
+                        "line_start": None,
+                        "line_end": None,
+                    })
+                    changed = [page]
+                    on_log(f"    NEW   {page.title}")
+                else:
+                    on_log(f"    no new page: {page.rationale[:70]}")
+                    self.store.emit(run_id, "no-new-page", {"reason": page.rationale})
+
+            created = [p for p in proposals if p.get("kind") == "create" and p["needs_change"]]
+            edited = [p for p in proposals if p.get("kind") == "edit" and p["needs_change"]]
             self.store.update(run_id, status="proposed", proposals_json=proposals)
             self.store.emit(run_id, "proposed", {
-                "proposed": len(changed),
-                "considered": len(proposals),
-                "pages": sorted({p["page_title"] for p in changed}),
+                "proposed": len(edited) + len(created),
+                "created": len(created),
+                "considered": len([p for p in proposals if p.get("kind") == "edit"]),
+                "pages": sorted({p["page_title"] for p in edited + created}),
             })
             return run_id
 

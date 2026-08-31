@@ -25,6 +25,10 @@ curl -s http://127.0.0.1:8099/health     # want: models_loaded true AND watching
 curl -s http://127.0.0.1:8077/health     # want: status ok, non-empty counts
 ```
 
+If the spine reports empty counts, the graph is missing — `data/` is gitignored
+because it is a live database directory. `python scripts/run.py restore-graph`
+unpacks the committed snapshot and needs no credentials.
+
 **`watching` must be a branch name, not `null`.** If it is null, `watch_error`
 says why — almost always a missing `GITHUB_TOKEN`, because `.env` and
 `demo/.env` are gitignored and a fresh clone has neither. Nothing will happen

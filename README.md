@@ -123,12 +123,24 @@ fresh clone -- the documentation corpus and its index are committed -- but the
 delivery, traceability and graph views are empty until you build the graph once:
 
 ```bash
+python scripts/run.py restore-graph     # ~270KB snapshot, no credentials
+python scripts/run.py start
+```
+
+`spine/graph-snapshot.zip` is a committed archive of the graph. The graph itself
+cannot be: it is a live ArcadeDB directory of ~150 bucket files the server holds
+open, so it churns on every read and conflicts on every merge. A zip is a
+deliberate artefact instead of live state, and it costs 270KB rather than 13MB.
+
+The alternative re-derives everything from source:
+
+```bash
 python scripts/run.py start --rebuild
 ```
 
 That reads GitHub, so it needs a `GITHUB_TOKEN` with access to the subject
-repository. It takes a few minutes and you only do it once; `setup` tells you
-whether you still need to.
+repository, and takes a few minutes. Use it when the snapshot is stale; use
+`restore-graph` when you just need a working demo.
 
 ### Where things end up
 

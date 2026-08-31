@@ -3,6 +3,7 @@
     python scripts/run.py start     spine :8077 · code2doc :8099 · dashboard :5173
     python scripts/run.py stop
     python scripts/run.py status
+    python scripts/run.py restore-graph   unpack the committed graph snapshot
 
 One implementation for Windows, macOS and Linux. Process handling is the part
 that differs most between them, so it lives here once rather than three times in
@@ -40,7 +41,7 @@ ROOT = Path(__file__).resolve().parent.parent
 LOGS = ROOT / "logs"
 WINDOWS = os.name == "nt"
 
-DIM, GREEN, RED, RESET = "\033[2m", "\033[32m", "\033[31m", "\033[0m"
+DIM, GREEN, RED, YELLOW, RESET = "\033[2m", "\033[32m", "\033[31m", "\033[33m", "\033[0m"
 
 # The spine's read API. The dashboard is pointed here in live mode so the
 # graph/delivery/traceability views traverse the real record.
@@ -162,6 +163,56 @@ def rebuild() -> int:
             return 1
         lines = [l for l in (done.stdout or "").strip().splitlines() if l.strip()]
         print(f"    {DIM}{lines[-1][:90] if lines else 'done'}{RESET}")
+    return 0
+
+
+GRAPH_SNAPSHOT = ROOT / "spine" / "graph-snapshot.zip"
+
+
+def restore_graph() -> int:
+    """Unpack the committed graph snapshot into place.
+
+    The graph itself cannot be committed -- it is a live ArcadeDB directory of
+    ~150 bucket files that the server holds open, so it churns on every read and
+    conflicts on every merge. `data/` stays ignored. What is committed is a
+    ~270KB zip of it, which is a deliberate artefact rather than live state.
+
+    This exists because the alternative for a new machine is `--rebuild`, and
+    that needs a GITHUB_TOKEN with access to the subject repository. Restoring
+    needs nothing.
+    """
+    import zipfile
+
+    if not GRAPH_SNAPSHOT.exists():
+        print(f"  {RED}x{RESET} no snapshot at {GRAPH_SNAPSHOT}")
+        return 1
+    if port_busy(8077):
+        print(f"  {RED}x{RESET} the spine is running on :8077 — stop it first "
+              f"(python scripts/run.py stop), it holds the database open")
+        return 1
+
+    target = ROOT / "data" / "databases"
+    existing = target / "spine"
+    if existing.exists():
+        print(f"  {DIM}a graph is already present at {existing}{RESET}")
+        print(f"  {DIM}move or delete it first if you want to replace it{RESET}")
+        return 1
+
+    target.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(GRAPH_SNAPSHOT) as z:
+        z.extractall(target)
+    count = sum(1 for _ in existing.rglob("*") if _.is_file())
+    print(f"  {GREEN}v{RESET} restored {count} files into {existing}")
+    # The server takes <root>/databases as its root and opens everything under
+    # it, not just `spine`. A stray copy left beside it gets opened too, holds
+    # its files, and cannot then be deleted.
+    strays = [d.name for d in target.iterdir() if d.is_dir() and d.name != "spine"]
+    if strays:
+        print(f"  {YELLOW}!{RESET} other databases beside it: {', '.join(strays)}")
+        print(f"  {DIM}the server opens every database under {target}, so move")
+        print(f"  copies elsewhere or they will be opened and locked too{RESET}")
+    print(f"  {DIM}ArcadeDB will run recovery on first open -- the snapshot was")
+    print(f"  taken from a stopped-not-closed database. That is expected.{RESET}")
     return 0
 
 
@@ -304,7 +355,8 @@ def status(watch: bool = False) -> int:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=["start", "stop", "restart", "status"])
+    parser.add_argument("command",
+                        choices=["start", "stop", "restart", "status", "restore-graph"])
     parser.add_argument("--no-watch", action="store_true", help="do not watch the git branch")
     parser.add_argument("--branch", help="branch to watch (default: WATCH_BRANCH in .env)")
     parser.add_argument("--rebuild", action="store_true",
@@ -312,7 +364,8 @@ def main() -> int:
     args = parser.parse_args()
 
     watch = not args.no_watch
-
+    if args.command == "restore-graph":
+        return restore_graph()
     if args.command == "status":
         return status()
     if args.command == "stop":

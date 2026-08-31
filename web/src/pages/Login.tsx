@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useNavigate, Navigate } from "react-router";
 import { BRAND } from "../brand";
 
-// ── unchanged auth data ────────────────────────────────────────────
+// ── auth data ──────────────────────────────────────────────────────
+// Demo credentials follow the demo-html convention: the password is the
+// same as the username (which is the role id). Validation requires a
+// known role id AND username === password.
 const ROLES = [
   { id: "user_executive",       label: "Executive",       initials: "EX", defaultPath: "/portfolio" },
   { id: "user_developer",       label: "Developer",       initials: "DV", defaultPath: "/knowledge-management" },
@@ -75,6 +78,10 @@ function HeroArt() {
 export default function Login() {
   const navigate = useNavigate();
   const [roleId, setRoleId] = useState(ROLES[0].id);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
 
   // ── auth guard (unchanged) ──────────────────────────────────────
   const existingRole = localStorage.getItem("demo_role");
@@ -85,11 +92,29 @@ export default function Login() {
 
   const selected = ROLES.find((r) => r.id === roleId)!;
 
-  function handleLogin() {
-    localStorage.setItem("demo_role", roleId);
-    navigate(selected.defaultPath, { replace: true });
+  // Clicking a role card selects it AND auto-populates the username and
+  // password fields (password = username, per the demo-html convention).
+  function pickRole(id: string) {
+    setRoleId(id);
+    setUsername(id);
+    setPassword(id);
+    setError("");
   }
-  // ── end auth logic (unchanged) ─────────────────────────────────
+
+  function handleLogin() {
+    const uname = username.trim();
+    const pass = password.trim();
+    const cred = ROLES.find((r) => r.id === uname);
+    // Valid when the username is a known role id and password === username.
+    if (cred && uname === pass) {
+      setError("");
+      localStorage.setItem("demo_role", cred.id);
+      navigate(cred.defaultPath, { replace: true });
+    } else {
+      setError("Invalid username or password.");
+    }
+  }
+  // ── end auth logic ─────────────────────────────────────────────
 
   return (
     <>
@@ -283,7 +308,7 @@ export default function Login() {
                       key={r.id}
                       role="radio"
                       aria-checked={active}
-                      onClick={() => setRoleId(r.id)}
+                      onClick={() => pickRole(r.id)}
                       className={`_lg-role-card${active ? " active" : ""}`}
                     >
                       {/* Avatar */}
@@ -324,25 +349,70 @@ export default function Login() {
             <div style={{ borderTop:"1px solid #EDF0F7", margin:"20px 0" }}/>
 
             {/* Username */}
-            <div style={{ marginBottom:20 }}>
+            <div style={{ marginBottom:16 }}>
               <label htmlFor="username" style={{ display:"block", marginBottom:7,
                 fontSize:11, fontWeight:700, color:"#64748B",
                 textTransform:"uppercase", letterSpacing:"0.08em" }}>
-                Signing in as
+                Username
               </label>
               <input
                 id="username"
                 type="text"
-                readOnly
-                aria-readonly="true"
-                aria-describedby="username-hint"
-                value={selected.id}
+                autoComplete="off"
+                placeholder="e.g. user_executive"
+                value={username}
+                onChange={(e) => { setUsername(e.target.value); setError(""); }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleLogin(); }}
                 className="_lg-input"
+                style={{ fontFamily: "inherit", color: "#0A1F5F" }}
               />
-              <span id="username-hint" style={{ display:"none" }}>
-                Read-only username for the selected demo role
-              </span>
             </div>
+
+            {/* Password */}
+            <div style={{ marginBottom:16 }}>
+              <label htmlFor="password" style={{ display:"block", marginBottom:7,
+                fontSize:11, fontWeight:700, color:"#64748B",
+                textTransform:"uppercase", letterSpacing:"0.08em" }}>
+                Password
+              </label>
+              <div style={{ position:"relative" }}>
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="off"
+                  placeholder="Same as username"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleLogin(); }}
+                  className="_lg-input"
+                  style={{ fontFamily: "inherit", color: "#0A1F5F", paddingRight: 64 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  style={{
+                    position:"absolute", top:"50%", right:10, transform:"translateY(-50%)",
+                    background:"none", border:"none", cursor:"pointer",
+                    fontSize:11, fontWeight:700, color:"#1434CB",
+                    letterSpacing:"0.04em", padding:"4px 6px",
+                  }}
+                >
+                  {showPassword ? "HIDE" : "SHOW"}
+                </button>
+              </div>
+            </div>
+
+            {/* Error message */}
+            {error && (
+              <div role="alert" style={{
+                marginBottom:16, padding:"10px 12px", borderRadius:8,
+                background:"#FEF2F2", border:"1px solid #FECACA",
+                color:"#B91C1C", fontSize:12.5, fontWeight:600,
+              }}>
+                {error}
+              </div>
+            )}
 
             {/* CTA */}
             <button

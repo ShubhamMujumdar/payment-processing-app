@@ -276,9 +276,9 @@ export function Initiatives() {
       <PageMeta title="Initiatives · Strategic Portfolio" description="Cross-team initiatives and delivery progress." />
       <PageHead
         kicker="Strategic Initiatives"
-        title="Active Initiatives"
+        title="Consumer Banking: Active Initiatives:"
         blurb="Cross-functional initiatives with owners, progress and delivery status."
-        right={<MockButton variant="solid">+ New Initiative</MockButton>}
+        right={<MockButton>Export</MockButton>}
       />
 
       <div className="space-y-6 px-6 pb-10 pt-5">

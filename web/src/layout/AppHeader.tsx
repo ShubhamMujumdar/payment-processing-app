@@ -33,15 +33,24 @@ const PM_TITLES: Record<string, string> = {
   "/delivery": "Projects Health",
 };
 
+const DEV_TITLES: Record<string, string> = {
+  "/tasks": "My Tasks",
+  "/delivery": "My Project Health",
+  "/live": "My Code Review",
+  "/graph": "My Knowledgebase",
+  "/traceability": "My Traceability",
+};
+
 export default function AppHeader() {
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const isProgramManager = localStorage.getItem("demo_role") === "user_program_manager";
-  const title = (isProgramManager ? PM_TITLES : TITLES)[pathname];
+  const demoRoleHeader = localStorage.getItem("demo_role");
+  const isProgramManager = demoRoleHeader === "user_program_manager";
+  const isDeveloper = demoRoleHeader === "user_developer";
+  const title = (isProgramManager ? PM_TITLES : isDeveloper ? DEV_TITLES : TITLES)[pathname];
 
-  const demoRole = localStorage.getItem("demo_role");
-  const currentRole = ROLES.find((r) => r.id === demoRole);
+  const currentRole = ROLES.find((r) => r.id === demoRoleHeader);
 
   function handleLogout() {
     localStorage.removeItem("demo_role");

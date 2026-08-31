@@ -67,8 +67,12 @@ def config() -> Config:
         db_path=_resolve(
             os.getenv("ARCADE_DB_PATH"), DASHBOARD_ROOT / "data" / "databases" / "spine"
         ),
-        requirements_dir=REPO_ROOT / "docs" / "requirements",
-        source_dir=REPO_ROOT / "app_src",
+        requirements_dir=_resolve(
+            os.getenv("REQUIREMENTS_DIR"), REPO_ROOT / "docs" / "requirements"
+        ),
+        source_dir=_resolve(
+            os.getenv("APP_SRC_DIR"), REPO_ROOT / "app_src"
+        ),
         identity_map=DASHBOARD_ROOT / "identity_map.yaml",
         arcade_root_password=os.getenv("ARCADE_ROOT_PASSWORD") or None,
     )

@@ -49,11 +49,24 @@ export default function AppSidebar() {
   const isExecutive = role === "user_executive";
   const isProductOps = role === "user_product_ops";
   const isProgramManager = role === "user_program_manager";
+  const isDeveloper = role === "user_developer";
   const [wfmExpanded, setWfmExpanded] = useState(true);
 
-  const PM_LABEL: Record<string, string> = { "/tasks": "Tasks", "/delivery": "Projects Health" };
+  const PM_LABEL: Record<string, string> = { "/delivery": "Projects", "/tasks": "Tasks", "/graph": "Knowledgebase" };
+  const PM_NAV_ORDER = ["/delivery", "/tasks", "/live", "/graph", "/traceability"];
+  const DEV_LABEL: Record<string, string> = {
+    "/delivery": "My Project Health",
+    "/live": "My Code Review",
+    "/graph": "My Knowledgebase",
+    "/traceability": "My Traceability",
+  };
   const deliveryNav = isProgramManager
-    ? DELIVERY_NAV.map((item) => PM_LABEL[item.path] ? { ...item, label: PM_LABEL[item.path] } : item)
+    ? PM_NAV_ORDER.map((path) => {
+        const item = DELIVERY_NAV.find((i) => i.path === path)!;
+        return PM_LABEL[item.path] ? { ...item, label: PM_LABEL[item.path] } : item;
+      })
+    : isDeveloper
+    ? DELIVERY_NAV.map((item) => DEV_LABEL[item.path] ? { ...item, label: DEV_LABEL[item.path] } : item)
     : DELIVERY_NAV;
 
   const render = (item: NavItem) => {
@@ -162,7 +175,7 @@ export default function AppSidebar() {
           </>
         ) : isProductOps ? null : (
           <>
-            {open && (
+            {!isProgramManager && !isDeveloper && open && (
               <Link
                 to="/knowledge-management"
                 aria-current={pathname === "/knowledge-management" ? "page" : undefined}
@@ -175,7 +188,7 @@ export default function AppSidebar() {
                 Knowledge Management
               </Link>
             )}
-            {open && <p className="px-3 pb-1 pt-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white/40">Delivery</p>}
+            {!isProgramManager && !isDeveloper && open && <p className="px-3 pb-1 pt-1 font-mono text-[10px] font-bold uppercase tracking-wider text-white/40">Delivery</p>}
             <ul className={`space-y-0.5 ${open ? "" : "mt-4 border-t border-white/10 pt-4"}`}>{deliveryNav.map(render)}</ul>
           </>
         )}

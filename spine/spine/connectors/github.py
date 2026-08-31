@@ -52,6 +52,7 @@ class GitHubConnector:
         self._client = httpx.Client(
             base_url=API,
             timeout=timeout,
+            verify=False,
             headers={
                 "Authorization": f"Bearer {token}",
                 "Accept": "application/vnd.github+json",

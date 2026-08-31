@@ -9,7 +9,10 @@
 
 from __future__ import annotations
 
+import socket
+import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -21,6 +24,43 @@ from .core.identity import ROSTER, IdentityResolver
 from .projector.graph import Projector
 from .store.arcade import Store
 from .store.schema import code_type_for
+
+
+def _free_port(port: int) -> None:
+    """Kill whatever process holds *port* so the server can bind cleanly.
+
+    Uses a socket probe first — if binding succeeds the port is already free and
+    nothing is killed. Falls back to netstat/taskkill on Windows and lsof/kill
+    on POSIX; both are available in every environment this project targets.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            probe.bind(("127.0.0.1", port))
+            return  # port is free
+        except OSError:
+            pass
+
+    if sys.platform == "win32":
+        result = subprocess.run(["netstat", "-ano"], capture_output=True, text=True)
+        for line in result.stdout.splitlines():
+            if f":{port}" in line and "LISTENING" in line:
+                parts = line.split()
+                pid = parts[-1]
+                if pid.isdigit():
+                    print(f"spine serve: port {port} held by PID {pid} — releasing")
+                    subprocess.run(["taskkill", "/PID", pid, "/F"], capture_output=True)
+                    time.sleep(0.5)
+                    return
+    else:
+        result = subprocess.run(
+            ["lsof", "-ti", f"tcp:{port}"], capture_output=True, text=True
+        )
+        for pid in result.stdout.split():
+            if pid.strip().isdigit():
+                print(f"spine serve: port {port} held by PID {pid.strip()} — releasing")
+                subprocess.run(["kill", "-9", pid.strip()])
+        time.sleep(0.5)
 
 
 def _resolver() -> IdentityResolver:
@@ -203,6 +243,7 @@ def serve() -> int:
     import uvicorn
 
     port = int(os.getenv("SPINE_PORT", "8077"))
+    _free_port(port)
     cfg = config()
     print(f"read API      http://127.0.0.1:{port}")
     if cfg.studio_enabled:

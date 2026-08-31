@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import PageMeta from "../components/common/PageMeta";
 import { Card, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
 
@@ -276,7 +277,7 @@ export function Initiatives() {
       <PageMeta title="Initiatives · Strategic Portfolio" description="Cross-team initiatives and delivery progress." />
       <PageHead
         kicker="Strategic Initiatives"
-        title="Consumer Banking: Active Initiatives:"
+        title={<><Link to="/strategy" className="text-accent underline underline-offset-2">Consumer Banking</Link>: Active Initiatives</>}
         blurb="Cross-functional initiatives with owners, progress and delivery status."
         right={<MockButton>Export</MockButton>}
       />

@@ -118,21 +118,21 @@ export default function Portfolio() {
         {/* ── 4 Stat Cards ── */}
         <div className="grid gap-3 md:grid-cols-4">
           <StatCard
-            label="Global Health Score"
+            label={<Link to="/initiatives" className="text-accent underline underline-offset-2">Global Health Score</Link>}
             value={`${globalHealth}%`}
             tone={globalTone}
             progress={globalHealth}
             note={<span className="text-gray-400">Health {avgHealth}% · Risk -{riskPenalty}pts · Vel +{velocityBonus}pts</span>}
           />
           <StatCard
-            label="Active Risks"
+            label={<Link to="/risk" className="text-accent underline underline-offset-2">Active Risks</Link>}
             value={String(totalRisks)}
             unit={`${highSevRisks} High Severity`}
             tone="fail"
             note={<span className="font-semibold text-state-warn">Requires executive review</span>}
           />
           <StatCard
-            label="Aggregate Velocity"
+            label={<Link to="/analytics" className="text-accent underline underline-offset-2">Aggregate Velocity</Link>}
             value={`${avgVelocity >= 0 ? "+" : ""}${avgVelocity}%`}
             unit="vs Q2"
             tone={avgVelocity >= 10 ? "pass" : avgVelocity >= 0 ? "warn" : "fail"}

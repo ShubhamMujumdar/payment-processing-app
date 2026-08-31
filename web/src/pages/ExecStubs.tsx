@@ -213,7 +213,7 @@ export function Analytics() {
       <PageMeta title="Analytics · Delivery Metrics" description="Delivered story points and velocity trends." />
       <PageHead
         kicker="Delivery Analytics"
-        title="Velocity & Throughput"
+        title="Consumer Banking: Velocity & Throughput"
         blurb="Delivered story points across recent sprints, with rolling velocity and momentum."
         right={<MockButton>↓ Export</MockButton>}
       />
@@ -330,7 +330,7 @@ export function RiskRegister() {
       <PageMeta title="Risk Register · Delivery Risk" description="Open delivery and platform risks." />
       <PageHead
         kicker="Risk Register"
-        title="Open Risks"
+        title="Consumer Banking: Open Risks"
         blurb="Tracked delivery, platform and compliance risks with impact and owner."
         right={<MockButton>↓ Export</MockButton>}
       />

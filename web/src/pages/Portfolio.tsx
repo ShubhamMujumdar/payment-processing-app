@@ -117,27 +117,33 @@ export default function Portfolio() {
 
         {/* ── 4 Stat Cards ── */}
         <div className="grid gap-3 md:grid-cols-4">
-          <StatCard
-            label="Global Health Score"
-            value={`${globalHealth}%`}
-            tone={globalTone}
-            progress={globalHealth}
-            note={<span className="text-gray-400">Health {avgHealth}% · Risk -{riskPenalty}pts · Vel +{velocityBonus}pts</span>}
-          />
-          <StatCard
-            label="Active Risks"
-            value={String(totalRisks)}
-            unit={`${highSevRisks} High Severity`}
-            tone="fail"
-            note={<span className="font-semibold text-state-warn">Requires executive review</span>}
-          />
-          <StatCard
-            label="Aggregate Velocity"
-            value={`${avgVelocity >= 0 ? "+" : ""}${avgVelocity}%`}
-            unit="vs Q2"
-            tone={avgVelocity >= 10 ? "pass" : avgVelocity >= 0 ? "warn" : "fail"}
-            note={`${posVelCount} of ${LOBS.length} LOBs trending positive`}
-          />
+          <Link to="/strategy" className="block">
+            <StatCard
+              label="Global Health Score"
+              value={`${globalHealth}%`}
+              tone={globalTone}
+              progress={globalHealth}
+              note={<span className="text-gray-400">Health {avgHealth}% · Risk -{riskPenalty}pts · Vel +{velocityBonus}pts</span>}
+            />
+          </Link>
+          <Link to="/risk" className="block">
+            <StatCard
+              label="Active Risks"
+              value={String(totalRisks)}
+              unit={`${highSevRisks} High Severity`}
+              tone="fail"
+              note={<span className="font-semibold text-state-warn">Requires executive review</span>}
+            />
+          </Link>
+          <Link to="/analytics" className="block">
+            <StatCard
+              label="Aggregate Velocity"
+              value={`${avgVelocity >= 0 ? "+" : ""}${avgVelocity}%`}
+              unit="vs Q2"
+              tone={avgVelocity >= 10 ? "pass" : avgVelocity >= 0 ? "warn" : "fail"}
+              note={`${posVelCount} of ${LOBS.length} LOBs trending positive`}
+            />
+          </Link>
           <StatCard
             label="Budget Envelope"
             value={`$${totalBudgetUsed.toFixed(1)}M`}
@@ -185,9 +191,7 @@ export default function Portfolio() {
                         {/* LOB name */}
                         <td className="px-3 py-2.5 min-w-[160px]">
                           <p className="text-[13px] font-bold text-gray-100 leading-tight">
-                            {l.name === "Consumer Banking"
-                              ? <Link to="/initiatives" className="underline text-accent">{l.name}</Link>
-                              : l.name}
+                            {l.name}
                           </p>
                           <p className="font-mono text-[10.5px] text-gray-500">{l.id}</p>
                         </td>

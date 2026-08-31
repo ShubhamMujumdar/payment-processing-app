@@ -28,7 +28,15 @@ app = FastAPI(title="SDLC Spine", version="0.1.0")
 # The console runs on the Vite dev server during development.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
+    # Both spellings, because they are different origins to a browser and the
+    # dev server is reachable as either. run.py binds vite to 127.0.0.1, so a
+    # list with only `localhost` meant the graph explorer reported "the spine
+    # is not running" while the spine was answering every request -- the fetch
+    # was being discarded for want of a header.
+    allow_origins=[
+        "http://localhost:5173", "http://localhost:5174", "http://localhost:5175",
+        "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://127.0.0.1:5175",
+    ],
     allow_methods=["GET"],
     allow_headers=["*"],
 )

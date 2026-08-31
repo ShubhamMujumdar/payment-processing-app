@@ -270,7 +270,10 @@ def start(watch: bool, branch: str | None) -> int:
     for name, service in pending.items():
         print(f"  {RED}✗{RESET} {name:9} did not come up — see {service.log_file}")
     if not pending:
-        print(f"\n  Dashboard   {GREEN}http://127.0.0.1:5173{RESET}  {DIM}(live){RESET}")
+        # localhost, not 127.0.0.1: both reach the dev server, but they are
+        # distinct origins to a browser, and localhost is the spelling every
+        # CORS allow-list here starts from.
+        print(f"\n  Dashboard   {GREEN}http://localhost:5173{RESET}  {DIM}(live){RESET}")
         print(f"  Spine API   {DIM}{SPINE_URL}{RESET}")
         print(f"  code2doc    {DIM}http://127.0.0.1:8099/docs{RESET}")
         env_file = ROOT / ".env"

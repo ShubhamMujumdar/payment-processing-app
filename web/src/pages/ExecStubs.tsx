@@ -1,3 +1,4 @@
+import { useState } from "react";
 import PageMeta from "../components/common/PageMeta";
 import { Card, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
 
@@ -22,7 +23,180 @@ const SPRINT_DELIVERY = [
   { sprint: "S42", points: 80 },
 ];
 
+type ChartView = "bar" | "line";
+
+function ViewToggle({ view, onChange }: { view: ChartView; onChange: (v: ChartView) => void }) {
+  const opts: { id: ChartView; label: string; icon: string }[] = [
+    { id: "bar", label: "Bar", icon: "▉" },
+    { id: "line", label: "Line", icon: "╱" },
+  ];
+  return (
+    <div className="inline-flex rounded-lg border border-ink-700 bg-ink-800 p-0.5" role="tablist" aria-label="Chart view">
+      {opts.map((o) => {
+        const active = view === o.id;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(o.id)}
+            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12px] font-semibold transition ${
+              active ? "bg-accent text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            <span className="text-[11px]" aria-hidden="true">{o.icon}</span>
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function BarView({ scaleMax, avg, max, ticks }: { scaleMax: number; avg: number; max: number; ticks: number[] }) {
+  return (
+    <div className="mt-2 flex gap-3">
+      {/* Y axis scale */}
+      <div className="flex h-64 flex-col justify-between pb-7 pt-2 text-right text-[10px] font-medium text-gray-500">
+        {ticks.map((t) => <span key={t} className="leading-none">{t}</span>)}
+      </div>
+
+      <div className="relative flex-1">
+        {/* Horizontal gridlines */}
+        <div className="absolute inset-x-0 bottom-7 top-2 flex flex-col justify-between" aria-hidden="true">
+          {ticks.map((t) => <div key={t} className="border-t border-ink-700/60" />)}
+        </div>
+
+        {/* Average reference line */}
+        <div
+          className="pointer-events-none absolute inset-x-0 z-10 flex items-center"
+          style={{ bottom: `calc(1.75rem + ${(avg / scaleMax).toFixed(4)} * (100% - 2.25rem))` }}
+          aria-hidden="true"
+        >
+          <div className="w-full border-t border-dashed border-state-pass/70" />
+          <span className="ml-1 shrink-0 rounded bg-state-pass/15 px-1.5 py-0.5 text-[9.5px] font-bold text-state-pass">
+            Avg {avg}
+          </span>
+        </div>
+
+        {/* Bars */}
+        <div className="relative flex h-64 items-end gap-2.5 pb-7 pt-2 sm:gap-4">
+          {SPRINT_DELIVERY.map(({ sprint, points: p }, i) => {
+            const isPeak = p === max;
+            const isLatest = i === SPRINT_DELIVERY.length - 1;
+            const aboveAvg = p >= avg;
+            const stepDelta = i === 0 ? 0 : p - SPRINT_DELIVERY[i - 1].points;
+            return (
+              <div key={sprint} className="group flex h-full min-w-0 flex-1 flex-col justify-end">
+                <div className="mb-1.5 text-center">
+                  <span className={`text-[13px] font-bold ${isPeak ? "text-accent" : "text-gray-200"}`}>{p}</span>
+                  {i > 0 && (
+                    <span className={`ml-1 text-[10px] font-semibold ${stepDelta >= 0 ? "text-state-pass" : "text-state-fail"}`}>
+                      {stepDelta >= 0 ? "▲" : "▼"}{Math.abs(stepDelta)}
+                    </span>
+                  )}
+                </div>
+                <div
+                  className={`w-full rounded-t-md transition-all duration-200 group-hover:brightness-110 ${
+                    isLatest ? "ring-2 ring-accent/40" : ""
+                  }`}
+                  style={{
+                    height: `${(p / scaleMax) * 100}%`,
+                    background: aboveAvg
+                      ? "linear-gradient(180deg, #1434CB 0%, #2B44E0 100%)"
+                      : "linear-gradient(180deg, #5b7bd6 0%, #3f5bc0 100%)",
+                  }}
+                  title={`${sprint}: ${p} SP delivered${i > 0 ? ` (${stepDelta >= 0 ? "+" : ""}${stepDelta} vs prev)` : ""}`}
+                />
+                <span className={`mt-2 text-center text-[13px] ${isLatest ? "font-bold text-gray-200" : "text-gray-400"}`}>
+                  {sprint}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LineView({ scaleMax, avg, max, ticks }: { scaleMax: number; avg: number; max: number; ticks: number[] }) {
+  // SVG viewBox coordinate space.
+  const W = 700, H = 240, padL = 8, padR = 8, padT = 12, padB = 8;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const n = SPRINT_DELIVERY.length;
+  const x = (i: number) => padL + (innerW * i) / (n - 1);
+  const y = (v: number) => padT + innerH * (1 - v / scaleMax);
+
+  const linePts = SPRINT_DELIVERY.map((s, i) => `${x(i)},${y(s.points)}`).join(" ");
+  const areaPts = `${x(0)},${y(0)} ${linePts} ${x(n - 1)},${y(0)}`;
+  const avgY = y(avg);
+
+  return (
+    <div className="mt-2 flex gap-3">
+      {/* Y axis scale */}
+      <div className="flex h-64 flex-col justify-between pb-7 pt-2 text-right text-[10px] font-medium text-gray-500">
+        {ticks.map((t) => <span key={t} className="leading-none">{t}</span>)}
+      </div>
+
+      <div className="relative flex-1">
+        <div className="relative h-64 pb-7 pt-2">
+          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-full w-full overflow-visible">
+            <defs>
+              <linearGradient id="spFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#1434CB" stopOpacity="0.35" />
+                <stop offset="100%" stopColor="#1434CB" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+
+            {/* Gridlines */}
+            {ticks.map((t) => (
+              <line key={t} x1={padL} x2={W - padR} y1={y(t)} y2={y(t)} stroke="currentColor" className="text-ink-700/60" strokeWidth="1" />
+            ))}
+
+            {/* Average line */}
+            <line x1={padL} x2={W - padR} y1={avgY} y2={avgY} stroke="#22c55e" strokeOpacity="0.7" strokeWidth="1.5" strokeDasharray="5 5" />
+
+            {/* Area + trend line */}
+            <polygon points={areaPts} fill="url(#spFill)" />
+            <polyline points={linePts} fill="none" stroke="#1434CB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+
+            {/* Data points */}
+            {SPRINT_DELIVERY.map((s, i) => {
+              const isPeak = s.points === max;
+              const isLatest = i === n - 1;
+              return (
+                <g key={s.sprint}>
+                  <circle cx={x(i)} cy={y(s.points)} r={isLatest ? 6 : 4.5}
+                    fill={isPeak || isLatest ? "#F7B600" : "#2B44E0"} stroke="#ffffff" strokeWidth="1.5">
+                    <title>{`${s.sprint}: ${s.points} SP delivered`}</title>
+                  </circle>
+                  <text x={x(i)} y={y(s.points) - 12} textAnchor="middle"
+                    className={isPeak ? "fill-accent" : "fill-gray-200"} fontSize="14" fontWeight="700">
+                    {s.points}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* X labels aligned with points */}
+        <div className="flex justify-between px-1 text-[13px] text-gray-400">
+          {SPRINT_DELIVERY.map((s, i) => (
+            <span key={s.sprint} className={i === n - 1 ? "font-bold text-gray-200" : ""}>{s.sprint}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Analytics() {
+  const [view, setView] = useState<ChartView>("bar");
+
   const points = SPRINT_DELIVERY.map((s) => s.points);
   const max = Math.max(...points);
   const avg = Math.round(points.reduce((sum, p) => sum + p, 0) / points.length);
@@ -54,81 +228,31 @@ export function Analytics() {
         </div>
 
         <Card className="px-6 py-5">
-          <SectionTitle aside="Last 7 sprints">Delivered Story Points</SectionTitle>
-
-          {/* Plot area: y-axis ticks + gridlines behind the bars */}
-          <div className="mt-2 flex gap-3">
-            {/* Y axis scale */}
-            <div className="flex h-64 flex-col justify-between pb-7 pt-2 text-right text-[10px] font-medium text-gray-500">
-              {ticks.map((t) => <span key={t} className="leading-none">{t}</span>)}
-            </div>
-
-            <div className="relative flex-1">
-              {/* Horizontal gridlines */}
-              <div className="absolute inset-x-0 bottom-7 top-2 flex flex-col justify-between" aria-hidden="true">
-                {ticks.map((t) => <div key={t} className="border-t border-ink-700/60" />)}
-              </div>
-
-              {/* Average reference line */}
-              <div
-                className="pointer-events-none absolute inset-x-0 z-10 flex items-center"
-                style={{ bottom: `calc(1.75rem + ${(avg / scaleMax).toFixed(4)} * (100% - 2.25rem))` }}
-                aria-hidden="true"
-              >
-                <div className="w-full border-t border-dashed border-state-pass/70" />
-                <span className="ml-1 shrink-0 rounded bg-state-pass/15 px-1.5 py-0.5 text-[9.5px] font-bold text-state-pass">
-                  Avg {avg}
-                </span>
-              </div>
-
-              {/* Bars */}
-              <div className="relative flex h-64 items-end gap-2.5 pb-7 pt-2 sm:gap-4">
-                {SPRINT_DELIVERY.map(({ sprint, points: p }, i) => {
-                  const isPeak = p === max;
-                  const isLatest = i === SPRINT_DELIVERY.length - 1;
-                  const aboveAvg = p >= avg;
-                  const stepDelta = i === 0 ? 0 : p - SPRINT_DELIVERY[i - 1].points;
-                  return (
-                    <div key={sprint} className="group flex h-full min-w-0 flex-1 flex-col justify-end">
-                      {/* Value + per-sprint delta */}
-                      <div className="mb-1.5 text-center">
-                        <span className={`text-[13px] font-bold ${isPeak ? "text-accent" : "text-gray-200"}`}>{p}</span>
-                        {i > 0 && (
-                          <span className={`ml-1 text-[10px] font-semibold ${stepDelta >= 0 ? "text-state-pass" : "text-state-fail"}`}>
-                            {stepDelta >= 0 ? "▲" : "▼"}{Math.abs(stepDelta)}
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        className={`w-full rounded-t-md transition-all duration-200 group-hover:brightness-110 ${
-                          isLatest ? "ring-2 ring-accent/40" : ""
-                        }`}
-                        style={{
-                          height: `${(p / scaleMax) * 100}%`,
-                          background: aboveAvg
-                            ? "linear-gradient(180deg, #1434CB 0%, #2B44E0 100%)"
-                            : "linear-gradient(180deg, #5b7bd6 0%, #3f5bc0 100%)",
-                        }}
-                        title={`${sprint}: ${p} SP delivered${i > 0 ? ` (${stepDelta >= 0 ? "+" : ""}${stepDelta} vs prev)` : ""}`}
-                      />
-                      <span className={`mt-2 text-center text-[13px] ${isLatest ? "font-bold text-gray-200" : "text-gray-400"}`}>
-                        {sprint}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+            <SectionTitle aside="Last 7 sprints">Delivered Story Points</SectionTitle>
+            <ViewToggle view={view} onChange={setView} />
           </div>
+
+          {view === "bar"
+            ? <BarView scaleMax={scaleMax} avg={avg} max={max} ticks={ticks} />
+            : <LineView scaleMax={scaleMax} avg={avg} max={max} ticks={ticks} />}
 
           {/* Legend */}
           <div className="mt-1 flex flex-wrap items-center gap-4 border-t border-ink-700 pt-3 text-[11.5px] text-gray-500">
-            <span className="flex items-center gap-1.5">
-              <i className="h-2.5 w-2.5 rounded-sm" style={{ background: "#1434CB" }} /> At / above average
-            </span>
-            <span className="flex items-center gap-1.5">
-              <i className="h-2.5 w-2.5 rounded-sm" style={{ background: "#5b7bd6" }} /> Below average
-            </span>
+            {view === "bar" ? (
+              <>
+                <span className="flex items-center gap-1.5">
+                  <i className="h-2.5 w-2.5 rounded-sm" style={{ background: "#1434CB" }} /> At / above average
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <i className="h-2.5 w-2.5 rounded-sm" style={{ background: "#5b7bd6" }} /> Below average
+                </span>
+              </>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <i className="h-2.5 w-2.5 rounded-sm" style={{ background: "#1434CB" }} /> Delivered SP trend
+              </span>
+            )}
             <span className="flex items-center gap-1.5">
               <i className="h-0 w-4 border-t border-dashed border-state-pass/70" /> Average ({avg} SP)
             </span>

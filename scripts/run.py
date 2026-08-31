@@ -13,8 +13,13 @@ written to `logs/*.pid`. That is deliberately simple: no supervisor, no
 container, nothing to install. `stop` reads the pid files, and also checks the
 ports, because a process killed by hand leaves a stale pid file behind and the
 next `start` should not be blocked by it.
-"""
 
+The web/dashboard service is launched in *live* mode pointed at the spine
+(VITE_SPINE_MODE=live, VITE_SPINE_URL=http://127.0.0.1:8077) so the graph,
+delivery and traceability views traverse the real record rather than the stub
+fallback. Override either value in the environment before calling `start` if you
+need stub mode or a different spine URL.
+"""
 from __future__ import annotations
 
 import argparse
@@ -37,10 +42,20 @@ WINDOWS = os.name == "nt"
 
 DIM, GREEN, RED, RESET = "\033[2m", "\033[32m", "\033[31m", "\033[0m"
 
+# The spine's read API. The dashboard is pointed here in live mode so the
+# graph/delivery/traceability views traverse the real record.
+SPINE_PORT = 8077
+SPINE_URL = f"http://127.0.0.1:{SPINE_PORT}"
+
 
 class Service:
-    def __init__(self, name: str, port: int, cwd: Path, args: list[str], why: str):
+    def __init__(self, name: str, port: int, cwd: Path, args: list[str], why: str,
+                 env: dict[str, str] | None = None):
         self.name, self.port, self.cwd, self.args, self.why = name, port, cwd, args, why
+        # Per-service environment overrides, merged on top of the process env at
+        # launch. Used to force the dashboard into live mode without touching the
+        # committed .env files.
+        self.env = env or {}
 
     @property
     def pid_file(self) -> Path:
@@ -67,14 +82,21 @@ def services(watch: bool, branch: str | None) -> list[Service]:
     if watch:
         code2doc.append("--watch")
     return [
-        Service("spine", 8077, ROOT / "spine",
+        Service("spine", SPINE_PORT, ROOT / "spine",
                 [python_for(ROOT / "spine"), "-u", "-m", "spine.cli", "serve"],
                 "the delivery record: work packets, custody, traceability"),
         Service("code2doc", 8099, ROOT / "demo", code2doc,
                 "documentation impact: watches commits, drafts redlines"),
         Service("web", 5173, ROOT / "web",
                 ["npm", "run", "dev", "--", "--host", "127.0.0.1", "--port", "5173", "--strictPort"],
-                "the dashboard"),
+                "the dashboard",
+                env={
+                    # Force live traversal against the spine. Only set as a
+                    # default -- if the caller already exported these, respect
+                    # their choice (see merge in start()).
+                    "VITE_SPINE_MODE": "live",
+                    "VITE_SPINE_URL": SPINE_URL,
+                }),
     ]
 
 
@@ -145,10 +167,9 @@ def rebuild() -> int:
 
 def start(watch: bool, branch: str | None) -> int:
     LOGS.mkdir(exist_ok=True)
-    env = dict(os.environ)
+    base_env = dict(os.environ)
     if branch:
-        env["WATCH_BRANCH"] = branch
-
+        base_env["WATCH_BRANCH"] = branch
     for service in services(watch, branch):
         if port_busy(service.port):
             print(f"  {DIM}·{RESET} {service.name:9} already running on :{service.port}")
@@ -156,7 +177,11 @@ def start(watch: bool, branch: str | None) -> int:
         if not service.cwd.is_dir():
             print(f"  {RED}✗{RESET} {service.name:9} missing directory {service.cwd}")
             continue
-
+        # Merge per-service env on top of the process env. Values the caller
+        # already exported win, so `set VITE_SPINE_MODE=stub` still takes effect.
+        env = dict(base_env)
+        for key, value in service.env.items():
+            env.setdefault(key, value)
         with open(service.log_file, "w", encoding="utf-8") as log:
             kwargs: dict = {"cwd": service.cwd, "stdout": log, "stderr": subprocess.STDOUT, "env": env}
             if WINDOWS:
@@ -170,7 +195,6 @@ def start(watch: bool, branch: str | None) -> int:
             args = list(service.args)
             if args[0] == "npm":
                 import shutil
-
                 npm = shutil.which("npm")
                 if not npm:
                     print(f"  {RED}✗{RESET} {service.name:9} npm not on PATH")
@@ -178,7 +202,10 @@ def start(watch: bool, branch: str | None) -> int:
                 args[0] = npm
             process = subprocess.Popen(args, **kwargs)
         service.pid_file.write_text(str(process.pid))
-        print(f"  {GREEN}▸{RESET} {service.name:9} :{service.port}  {DIM}{service.why}{RESET}")
+        extra = ""
+        if service.name == "web":
+            extra = f"  {DIM}→ live @ {SPINE_URL}{RESET}"
+        print(f"  {GREEN}▸{RESET} {service.name:9} :{service.port}  {DIM}{service.why}{RESET}{extra}")
 
     print(f"\n  waiting for services{DIM}…{RESET}")
     deadline = time.time() + 90
@@ -189,13 +216,11 @@ def start(watch: bool, branch: str | None) -> int:
                 print(f"  {GREEN}✓{RESET} {name:9} http://127.0.0.1:{service.port}")
                 del pending[name]
         time.sleep(1)
-
     for name, service in pending.items():
         print(f"  {RED}✗{RESET} {name:9} did not come up — see {service.log_file}")
-
     if not pending:
-        print(f"\n  Dashboard   {GREEN}http://127.0.0.1:5173{RESET}")
-        print(f"  Spine API   {DIM}http://127.0.0.1:8077{RESET}")
+        print(f"\n  Dashboard   {GREEN}http://127.0.0.1:5173{RESET}  {DIM}(live){RESET}")
+        print(f"  Spine API   {DIM}{SPINE_URL}{RESET}")
         print(f"  code2doc    {DIM}http://127.0.0.1:8099/docs{RESET}")
         env_file = ROOT / ".env"
         if env_file.exists():
@@ -287,6 +312,7 @@ def main() -> int:
     args = parser.parse_args()
 
     watch = not args.no_watch
+
     if args.command == "status":
         return status()
     if args.command == "stop":

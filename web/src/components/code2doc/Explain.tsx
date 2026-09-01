@@ -74,6 +74,7 @@ export default function Explain({ run }: { run: Run }) {
   const timing = (kind: string) => run.timeline?.find((t) => t.kind === kind)?.seconds ?? null;
   const proposals = run.proposals ?? [];
   const edits = proposals.filter((p) => p.needs_change);
+  const creations = proposals.filter((p) => p.kind === "create" && p.needs_change);
   const lines = changedLines(run.diff);
   const files = (run.files ?? []).filter((f) => !f.skipped);
   const skipped = (run.files ?? []).filter((f) => f.skipped);
@@ -194,23 +195,39 @@ export default function Explain({ run }: { run: Run }) {
         title="Decided, section by section"
         what="Each candidate is shown to the model with the diff. Leaving a section alone is a valid answer, and it has to give a reason either way."
         seconds={timing("proposed")}
-        badge={`${edits.length} to change · ${proposals.length - edits.length} left alone`}
+        badge={
+          creations.length
+            ? `${creations.length} new page · ${edits.length - creations.length} to change`
+            : `${edits.length} to change · ${proposals.length - edits.length} left alone`
+        }
       >
         <ul className="space-y-1.5">
           {proposals.map((p) => (
             <li
-              key={`${p.page_id}-${p.line_start}`}
+              key={p.kind === "create" ? `new-${p.page_title}` : `${p.page_id}-${p.line_start}`}
               className={`rounded-[10px] border px-3 py-2 ${
-                p.needs_change ? "border-accent/40 bg-accent-soft" : "border-black/[0.07] bg-black/[0.025]"
+                p.kind === "create"
+                  ? "border-state-pass/40 bg-[#e6f7ef]"
+                  : p.needs_change
+                    ? "border-accent/40 bg-accent-soft"
+                    : "border-black/[0.07] bg-black/[0.025]"
               }`}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className={p.needs_change ? "text-accent" : "text-gray-600"}>
-                  {p.needs_change ? "✎" : "✓"}
+                <span className={
+                  p.kind === "create" ? "text-state-pass" : p.needs_change ? "text-accent" : "text-gray-600"
+                }>
+                  {p.kind === "create" ? "＋" : p.needs_change ? "✎" : "✓"}
                 </span>
-                <span className="text-[12px] text-gray-300">{p.heading_path}</span>
-                <span className="ml-auto text-[11px] text-gray-600">
-                  {p.needs_change ? "needs changing" : "already correct"}
+                <span className="text-[12px] text-gray-300">
+                  {p.kind === "create" ? p.page_title : p.heading_path}
+                </span>
+                <span className={`ml-auto text-[11px] ${
+                  p.kind === "create" ? "font-semibold text-state-pass" : "text-gray-600"
+                }`}>
+                  {p.kind === "create"
+                    ? "new page — nothing covers this"
+                    : p.needs_change ? "needs changing" : "already correct"}
                 </span>
               </div>
               <p className="mt-1 text-[11.5px] text-gray-500">{p.rationale}</p>

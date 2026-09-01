@@ -76,7 +76,7 @@ const EDGE: Record<Tone, string> = {
 export function StatCard({
   label, value, unit, tone = "brand", note, icon, progress,
 }: {
-  label: string; value: ReactNode; unit?: string; tone?: Tone;
+  label: ReactNode; value: ReactNode; unit?: string; tone?: Tone;
   note?: ReactNode; icon?: ReactNode; progress?: number;
 }) {
   return (
@@ -146,14 +146,14 @@ export function InsightCard({
 
 export function PageHead({
   kicker, title, blurb, right, breadcrumb,
-}: { kicker?: string; title: string; blurb?: string; right?: ReactNode; breadcrumb?: string[] }) {
+}: { kicker?: string; title: ReactNode; blurb?: string; right?: ReactNode; breadcrumb?: ReactNode[] }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4 px-6 pb-1 pt-6">
       <div className="min-w-0">
         {breadcrumb && (
           <p className="mb-2 text-[13px] text-gray-500">
             {breadcrumb.map((c, i) => (
-              <span key={c}>
+              <span key={i}>
                 {i > 0 && <span className="px-1.5 text-gray-600">/</span>}
                 <span className={i === breadcrumb.length - 1 ? "font-semibold text-gray-200" : ""}>{c}</span>
               </span>

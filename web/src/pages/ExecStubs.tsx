@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import PageMeta from "../components/common/PageMeta";
 import { Card, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } from "../components/visa/kit";
 
@@ -212,7 +213,7 @@ export function Analytics() {
       <PageMeta title="Analytics · Delivery Metrics" description="Delivered story points and velocity trends." />
       <PageHead
         kicker="Delivery Analytics"
-        title="Velocity & Throughput"
+        title="Consumer Banking: Velocity & Throughput"
         blurb="Delivered story points across recent sprints, with rolling velocity and momentum."
         right={<MockButton>↓ Export</MockButton>}
       />
@@ -276,9 +277,9 @@ export function Initiatives() {
       <PageMeta title="Initiatives · Strategic Portfolio" description="Cross-team initiatives and delivery progress." />
       <PageHead
         kicker="Strategic Initiatives"
-        title="Active Initiatives"
+        title={<><Link to="/strategy" className="text-accent underline underline-offset-2">Consumer Banking</Link>: Active Initiatives</>}
         blurb="Cross-functional initiatives with owners, progress and delivery status."
-        right={<MockButton variant="solid">+ New Initiative</MockButton>}
+        right={<MockButton>Export</MockButton>}
       />
 
       <div className="space-y-6 px-6 pb-10 pt-5">
@@ -329,7 +330,7 @@ export function RiskRegister() {
       <PageMeta title="Risk Register · Delivery Risk" description="Open delivery and platform risks." />
       <PageHead
         kicker="Risk Register"
-        title="Open Risks"
+        title="Consumer Banking: Open Risks"
         blurb="Tracked delivery, platform and compliance risks with impact and owner."
         right={<MockButton>↓ Export</MockButton>}
       />

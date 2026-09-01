@@ -30,6 +30,7 @@ documentation space is not.
 from __future__ import annotations
 
 import re
+from html import escape
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -43,6 +44,10 @@ class Fragment:
     old: str
     new: str
     matches: int = 0
+    #: True when `old` is a markup block rather than prose. The text-node half of
+    #: plan_edit's double check cannot see markup -- it would count zero, disagree
+    #: with the raw count and report a unique fragment as ambiguous.
+    structural: bool = False
 
     @property
     def ok(self) -> bool:
@@ -65,9 +70,20 @@ class EditPlan:
             return "The proposed text is identical to the current text."
         missing = [f for f in self.fragments if f.matches == 0]
         if missing:
+            shown = "; ".join(repr(f.old) for f in missing[:3])
+            # The indexed corpus is Markdown; the live page is storage format.
+            # A fragment still carrying a list marker was never going to match,
+            # and saying "the page changed" would send the reader hunting for a
+            # change that did not happen.
+            if any(LIST_MARKER.match(f.old) for f in missing):
+                return (
+                    "Could not place this edit: " + shown + ". The text is a list "
+                    "item, and the page stores lists as markup rather than as the "
+                    "Markdown the proposal was drafted in, so there is nothing to "
+                    "match on. Edit this section by hand."
+                )
             return (
-                "Could not find this text on the page: "
-                + "; ".join(repr(f.old) for f in missing[:3])
+                "Could not find this text on the page: " + shown
                 + ". The page has probably changed since this was drafted — "
                 "re-run ingest and index, then re-analyse the commit."
             )
@@ -123,6 +139,56 @@ def _text_nodes(soup: BeautifulSoup) -> list[NavigableString]:
     return [node for node in soup.find_all(string=True) if str(node).strip()]
 
 
+LIST_MARKER = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
+
+
+def _strip_marker(line: str) -> str:
+    """The prose of a markdown list item, without its bullet."""
+    return LIST_MARKER.sub("", line).strip()
+
+
+def list_append_fragment(storage_html: str, existing: str, proposed: str) -> Fragment | None:
+    """Handle "keep these bullets and add more", which is not a text edit.
+
+    The index holds the corpus as markdown; the page is storage format. A table
+    cell survives that round trip byte-identical, which is why cell edits have
+    always worked. A list item does not: `- Duplicate payment reference...` on
+    one side is `<li><p>Duplicate payment reference...</p></li>` on the other.
+    Matching the markdown against the page fails, and even a successful match
+    would insert a literal hyphen instead of a list item.
+
+    So this rewrites the anchor's own <li> element into itself plus the new
+    ones. Returns None when the change is not an append, leaving every other
+    case to the existing text path.
+    """
+    old_lines = [l for l in existing.strip().splitlines() if l.strip()]
+    new_lines = [l for l in proposed.strip().splitlines() if l.strip()]
+    if len(new_lines) <= len(old_lines) or not old_lines:
+        return None
+    if new_lines[: len(old_lines)] != old_lines:
+        return None                      # not a pure append
+    added = [_strip_marker(l) for l in new_lines[len(old_lines):]]
+    if not all(LIST_MARKER.match(l) for l in new_lines[len(old_lines):]):
+        return None                      # the additions are not list items
+
+    anchor = _strip_marker(old_lines[-1])
+    if not anchor:
+        return None
+
+    # The <li> that contains the anchor, taken from the raw string so the rest of
+    # the document stays byte-identical.
+    match = re.search(
+        r"<li\b[^>]*>(?:(?!</li>).)*?" + re.escape(escape(anchor)) + r"(?:(?!</li>).)*?</li>",
+        storage_html, re.S,
+    )
+    if not match:
+        return None
+
+    block = match.group(0)
+    additions = "".join(f"<li><p>{escape(text)}</p></li>" for text in added)
+    return Fragment(block, block + additions, structural=True)
+
+
 def plan_edit(storage_html: str, existing_text: str, proposed_text: str) -> EditPlan:
     """Work out exactly what would change, without changing anything.
 
@@ -133,14 +199,23 @@ def plan_edit(storage_html: str, existing_text: str, proposed_text: str) -> Edit
     counts disagree, the string also occurs inside a tag or attribute, and the
     edit is refused.
     """
-    plan = EditPlan(fragments=minimal_fragments(existing_text, proposed_text))
+    appended = list_append_fragment(storage_html, existing_text, proposed_text)
+    plan = EditPlan(
+        fragments=[appended] if appended else minimal_fragments(existing_text, proposed_text)
+    )
     if not plan.fragments:
         return plan
 
     nodes = _text_nodes(BeautifulSoup(storage_html, "html.parser"))
     for fragment in plan.fragments:
-        in_text = sum(1 for node in nodes if fragment.old in str(node))
         in_raw = storage_html.count(fragment.old)
+        if fragment.structural:
+            # Deliberately markup, so only the raw count means anything. It is
+            # still required to be unique; what is dropped is the prose check,
+            # which would count zero and condemn every structural edit.
+            fragment.matches = in_raw
+            continue
+        in_text = sum(1 for node in nodes if fragment.old in str(node))
         # Disagreement means the string also appears in markup. Reporting the
         # larger count makes the plan fail as ambiguous rather than proceed.
         fragment.matches = in_text if in_text == in_raw else max(in_text, in_raw, 2)

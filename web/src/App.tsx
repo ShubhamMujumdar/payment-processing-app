@@ -13,6 +13,10 @@ import Strategy from "./pages/Strategy";
 import { Analytics, Initiatives, RiskRegister } from "./pages/ExecStubs";
 import NotFound from "./pages/OtherPage/NotFound";
 import Login from "./pages/Login";
+import ProgramManagerHealth from "./pages/ProgramManagerHealth";
+import ProgramManagerDeliverables from "./pages/ProgramManagerDeliverables";
+import ProgramManagerKnowledgeBase from "./pages/ProgramManagerKnowledgeBase";
+import ProgramManagerTraceability from "./pages/ProgramManagerTraceability";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   if (!localStorage.getItem("demo_role")) {
@@ -24,6 +28,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 function RoleIndex() {
   const role = localStorage.getItem("demo_role");
   if (role === "user_executive") return <Navigate to="/portfolio" replace />;
+  if (role === "user_program_manager") return <Navigate to="/knowledge-management" replace />;
   if (role === "user_developer") return <Navigate to="/knowledge-management" replace />;
   if (role === "user_product_ops") return <Navigate to="/knowledge-management" replace />;
   return <Navigate to="/knowledge-management" replace />;
@@ -50,6 +55,10 @@ export default function App() {
           <Route path="/live" element={<BlockProductOps><LivePipeline /></BlockProductOps>} />
           <Route path="/traceability" element={<BlockProductOps><Traceability /></BlockProductOps>} />
           <Route path="/graph" element={<BlockProductOps><KnowledgeGraph /></BlockProductOps>} />
+          <Route path="/pm-health" element={<ProgramManagerHealth />} />
+          <Route path="/pm-deliverables" element={<ProgramManagerDeliverables />} />
+          <Route path="/pm-knowledge" element={<ProgramManagerKnowledgeBase />} />
+          <Route path="/pm-traceability" element={<ProgramManagerTraceability />} />
           <Route path="/knowledge-management" element={<KnowledgeManagement />} />
           <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/strategy" element={<Strategy />} />

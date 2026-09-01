@@ -109,7 +109,7 @@ export default function Traceability() {
                   : "hairline text-gray-500 hover:text-gray-300"
               }`}
             >
-              Problems only
+              Show gaps
             </button>
           </div>
 

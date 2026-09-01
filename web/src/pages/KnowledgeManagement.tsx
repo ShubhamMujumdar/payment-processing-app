@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import PageMeta from "../components/common/PageMeta";
 import { Card, Progress } from "../components/visa/kit";
 
@@ -325,7 +326,7 @@ function ExecutiveDashboard() {
 
 const PM_KPIS: Kpi[] = [
   { label: "Documentation Completion", value: "81%", delta: "+7%", dir: "up", progress: 81, description: "Required project artifacts completed" },
-  { label: "Open Content Requests", value: "46", delta: "9 overdue", dir: "flat", progress: 62, description: "Requests across Alpha, Bravo, Charlie, and Delta" },
+  { label: "Open Content Requests", value: "46", delta: "9 overdue", dir: "flat", progress: 62, description: "Requests across Payments, Customer Service Portal, Fraud & Risk Engine, and Merchant Onboarding" },
   { label: "Approval Cycle Time", value: "3.4d", delta: "Target 2d", dir: "down", progress: 59, description: "Average draft-to-approval duration" },
   { label: "SLA Compliance", value: "88%", delta: "+2%", dir: "up", progress: 88, description: "Reviews and approvals completed on time" },
   { label: "Action Items Captured", value: "93%", delta: "+5%", dir: "up", progress: 93, description: "Meeting actions stored with owners" },
@@ -335,16 +336,17 @@ const PM_KPIS: Kpi[] = [
 ];
 
 const PROJECTS = [
-  { name: "Alpha", status: "Good" as const, health: 91, coverage: 91, sla: 95, cycle: "2.1d" },
-  { name: "Bravo", status: "Warn" as const, health: 74, coverage: 74, sla: 71, cycle: "4.8d" },
-  { name: "Charlie", status: "Good" as const, health: 88, coverage: 88, sla: 89, cycle: "2.7d" },
-  { name: "Delta", status: "Risk" as const, health: 51, coverage: 51, sla: 42, cycle: "7.2d" },
+  { code: "PAY", name: "Payments",                status: "Good" as const, health: 91, coverage: 91, sla: 95, cycle: "2.1d" },
+  { code: "CSP", name: "Customer Service Portal", status: "Warn" as const, health: 74, coverage: 74, sla: 71, cycle: "4.8d" },
+  { code: "FRD", name: "Fraud & Risk Engine",     status: "Good" as const, health: 88, coverage: 88, sla: 89, cycle: "2.7d" },
+  { code: "MOB", name: "Merchant Onboarding",     status: "Risk" as const, health: 51, coverage: 51, sla: 42, cycle: "7.2d" },
 ];
 
 function ProgramManagerDashboard() {
+  const navigate = useNavigate();
   return (
     <DashboardShell>
-      <PageHeader scope="Program Manager · Aggregate across Alpha, Bravo, Charlie, and Delta" />
+      <PageHeader scope="Program Manager · Aggregate across Payments, Customer Service Portal, Fraud & Risk Engine, and Merchant Onboarding" />
       <KpiGrid items={PM_KPIS} />
       <MonthlyBarChart series={[
         { name: "Completion", values: [67, 70, 73, 76, 79, 81], color: "var(--color-state-pass)" },
@@ -356,17 +358,81 @@ function ProgramManagerDashboard() {
         { label: "Approval Cycle Time", value: "3.4d", detail: "Average draft-to-approval duration" },
         { label: "Action Capture", value: "93", detail: "Actions captured in the current reporting period" },
       ]} />
+
+      {/* ── Quick Navigation ─────────────────────────────────────────────── */}
       <section>
-        <SectionHeading title="Project Health" subtitle="Individual project view" />
+        <SectionHeading title="Quick Navigation" subtitle="Access key program management views" />
+        <div className="grid grid-cols-4 gap-4">
+          {([
+            { label: "Project Health",  icon: "M3 6h14M3 10h14M3 14h9",                                               path: "/pm-health",       desc: "Sprint velocity, risk flags and delivery KPIs across all projects" },
+            { label: "KnowledgeBase",   icon: "M4 5h3v3H4zM9 6h7M4 11h3v3H4zM9 12h7",                                  path: "/pm-knowledge",    desc: "Documentation, ADRs, runbooks and knowledge assets" },
+            { label: "Traceability",    icon: "M6 4v4m0 0a2 2 0 1 0 0 4m0-4h8a2 2 0 0 1 2 2v2m-2 4v-4",              path: "/pm-traceability", desc: "Link requirements, decisions and delivery artifacts" },
+            { label: "Analytics",       icon: "M4 16V9m4 7V5m4 11v-5m4 5V7",                                           path: null,               desc: "Programme-level analytics and reporting dashboards" },
+          ] as const).map(item => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => item.path && navigate(item.path)}
+              className={`text-left ${item.path ? "" : "cursor-not-allowed opacity-60"}`}
+            >
+              <Card className={`h-full p-5 transition ${item.path ? "hover:border-accent hover:ring-1 hover:ring-accent" : ""}`}>
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-ink-750 border border-ink-700">
+                    <svg viewBox="0 0 20 20" fill="none" className="size-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d={item.icon} />
+                    </svg>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-bold text-gray-100">{item.label}</p>
+                    <p className="mt-1 text-[11.5px] leading-4 text-gray-500">{item.desc}</p>
+                  </div>
+                </div>
+                {item.path
+                  ? <p className="mt-3 text-[11px] font-medium text-accent">Open {item.label} →</p>
+                  : <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-white/35">Coming soon</p>
+                }
+              </Card>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <SectionHeading title="Project Health" subtitle="Click a card to view project-specific health metrics" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {PROJECTS.map(p => <Card key={p.name} className="p-5"><div className="flex items-start justify-between"><div><p className="text-[11px] uppercase tracking-wide text-gray-500">Project</p><h3 className="mt-1 text-[18px] font-bold text-gray-100">{p.name}</h3></div><span className={`rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${STATUS_STYLE[p.status]}`}>{p.status}</span></div><p className="mt-4 text-[30px] font-bold text-gray-100">{p.health}%</p><Progress value={p.health} className="mt-2" /><div className="mt-4 grid grid-cols-3 gap-2 text-center"><div><p className="font-semibold text-gray-200">{p.coverage}%</p><p className="text-[10px] text-gray-500">Coverage</p></div><div><p className="font-semibold text-gray-200">{p.sla}%</p><p className="text-[10px] text-gray-500">SLA</p></div><div><p className="font-semibold text-gray-200">{p.cycle}</p><p className="text-[10px] text-gray-500">Cycle</p></div></div></Card>)}
+          {PROJECTS.map(p => (
+            <button
+              key={p.code}
+              type="button"
+              onClick={() => navigate("/pm-health", { state: { selectedProject: p.code } })}
+              className="text-left"
+            >
+              <Card className="h-full p-5 transition hover:border-accent hover:ring-1 hover:ring-accent">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Project · {p.code}</p>
+                    <h3 className="mt-1 text-[18px] font-bold leading-tight text-gray-100">{p.name}</h3>
+                  </div>
+                  <span className={`rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${STATUS_STYLE[p.status]}`}>{p.status}</span>
+                </div>
+                <p className="mt-4 text-[30px] font-bold text-gray-100">{p.health}%</p>
+                <Progress value={p.health} className="mt-2" />
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  <div><p className="font-semibold text-gray-200">{p.coverage}%</p><p className="text-[10px] text-gray-500">Coverage</p></div>
+                  <div><p className="font-semibold text-gray-200">{p.sla}%</p><p className="text-[10px] text-gray-500">SLA</p></div>
+                  <div><p className="font-semibold text-gray-200">{p.cycle}</p><p className="text-[10px] text-gray-500">Cycle</p></div>
+                </div>
+                <p className="mt-3 text-[11px] font-medium text-accent">View project health →</p>
+              </Card>
+            </button>
+          ))}
         </div>
       </section>
       <Watchlist items={[
-        { status: "Risk", text: "Delta release documentation and SLA compliance require escalation." },
-        { status: "Risk", text: "Bravo approval cycle remains above the programme target." },
+        { status: "Risk", text: "Merchant Onboarding release documentation and SLA compliance require escalation." },
+        { status: "Risk", text: "Customer Service Portal approval cycle remains above the programme target." },
         { status: "Warn", text: "Nine open content requests are overdue." },
-        { status: "Good", text: "Alpha is ready for the next documentation milestone." },
+        { status: "Good", text: "Payments is ready for the next documentation milestone." },
       ]} />
     </DashboardShell>
   );

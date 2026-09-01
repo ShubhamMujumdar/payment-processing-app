@@ -883,6 +883,11 @@ span.flatpickr-weekday,
   --color-state-warn: #946200;
   --color-state-fail: #d14343;
   --color-state-idle: #8a93ac;
+
+  /* Semantic surface tokens for diff viewer and proposal cards */
+  --color-surface-creation: color-mix(in srgb, var(--color-state-pass) 8%, transparent);
+  --color-diff-add-bg: color-mix(in srgb, var(--color-state-pass) 10%, transparent);
+  --color-diff-del-bg: color-mix(in srgb, var(--color-state-fail) 8%, transparent);
 }
 
 @layer base {
@@ -925,7 +930,7 @@ span.flatpickr-weekday,
 }
 
 @utility col-label {
-  @apply px-3 py-1.5 text-left font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-gray-500;
+  @apply px-3 py-2 text-left font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-300;
 }
 
 /* The commit toast slides in from the right. Motion is short and one-way:

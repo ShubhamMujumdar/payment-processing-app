@@ -162,7 +162,7 @@ export function DataTable<T>({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
+      <table className="w-full table-fixed border-collapse">
         <thead className="sticky top-0 z-10 bg-ink-850">
           <tr className="border-b hairline">
             {columns.map((c) => (

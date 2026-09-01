@@ -204,19 +204,26 @@ export default function LivePipeline() {
   const docRunning = run !== null && !["proposed", "no-impact", "failed", "published"].includes(run.status);
   const proposals = useMemo(() => (run?.proposals ?? []).filter((p) => p.needs_change), [run]);
 
+  const statusTone = (s: string): "pass" | "warn" | "fail" | "idle" | "brand" => {
+    if (s === "proposed" || s === "published") return "pass";
+    if (s === "failed") return "fail";
+    if (s === "no-impact") return "idle";
+    return "warn";
+  };
+
   return (
     <>
       <PageMeta title="Code Review · Live pipeline" description="A commit, and the documentation it just made stale." />
 
       <div className="flex items-center justify-between gap-4 border-b border-black/[0.07] px-6 py-4">
         <div>
-          <h1 className="text-[19px] font-semibold text-gray-100">Code Review</h1>
+          <h1 className="text-[20px] font-bold text-gray-100">Code Review</h1>
           <p className="mt-0.5 text-[12px] text-gray-500">
             {watching ? <>Watching <Ident dim>{watching}</Ident></> : "Not watching a branch"}
           </p>
         </div>
         <span className="flex items-center gap-2 text-[11.5px] text-gray-500">
-          <span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-state-pass" : "bg-state-idle"}`} />
+          <span className={`h-2.5 w-2.5 rounded-full ${connected ? "bg-state-pass animate-pulse" : "bg-state-idle animate-pulse"}`} />
           {connected ? "live" : "reconnecting"}
         </span>
       </div>
@@ -228,7 +235,7 @@ export default function LivePipeline() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 px-6 py-5 xl:grid-cols-[240px_1fr]">
+      <div className="mx-auto grid w-full max-w-[1320px] grid-cols-1 gap-6 px-6 py-5 xl:grid-cols-[280px_1fr]">
         {/* recent commits */}
         <aside className="order-2 xl:order-1">
           <h2 className="mb-2 text-[10.5px] font-medium uppercase tracking-[0.14em] text-gray-500">Recent commits</h2>
@@ -237,7 +244,7 @@ export default function LivePipeline() {
               <li key={r.run_id}>
                 <button
                   onClick={() => setSelected(r.run_id)}
-                  className={`w-full rounded-[10px] border px-3 py-2 text-left transition-colors ${
+                  className={`w-full rounded-[10px] border px-3 py-2.5 text-left transition-colors ${
                     r.run_id === selected
                       ? "border-accent/40 bg-accent-soft"
                       : "border-black/[0.07] bg-black/[0.025] hover:bg-black/[0.05]"
@@ -245,9 +252,9 @@ export default function LivePipeline() {
                 >
                   <div className="flex items-center gap-2">
                     <Ident dim>{r.sha.slice(0, 7)}</Ident>
-                    <span className="ml-auto text-[10.5px] text-gray-600">{r.status}</span>
+                    <span className="ml-auto"><Lozenge tone={statusTone(r.status)}>{r.status}</Lozenge></span>
                   </div>
-                  <p className="mt-1 truncate text-[12px] text-gray-300">
+                  <p className="mt-1.5 truncate text-[12px] text-gray-300">
                     {r.message.split("\n")[0]}
                   </p>
                 </button>
@@ -285,16 +292,29 @@ export default function LivePipeline() {
               </div>
 
               {/* The one sentence a person should read if they read nothing
-                  else on this page. */}
+                  else on this page. Stays sticky so the verdict is always in
+                  view while scrolling through pipeline steps. */}
               <div
-                className={`mt-3 rounded-[10px] border px-4 py-3 ${
+                className={`sticky top-0 z-10 mt-3 rounded-[10px] border px-4 py-3 ${
                   proposals.length
                     ? "border-accent/40 bg-accent-soft"
                     : "border-black/[0.09] bg-black/[0.025]"
                 }`}
               >
-                <p className="text-[14px] text-gray-100">{headline(run, proposals.length)}</p>
-                <p className="mt-1 text-[12px] text-gray-500">{subhead(run, proposals.length)}</p>
+                <div className="flex items-start gap-3">
+                  <div className="flex-1">
+                    <p className="text-[14px] font-semibold text-gray-100">{headline(run, proposals.length)}</p>
+                    <p className="mt-1 text-[12px] text-gray-500">{subhead(run, proposals.length)}</p>
+                  </div>
+                  {proposals.length > 0 && (
+                    <a
+                      href="#proposals"
+                      className="shrink-0 rounded-[6px] border border-accent/40 bg-accent/10 px-3 py-1.5 text-[11px] font-medium text-accent hover:bg-accent/20"
+                    >
+                      {proposals.length} proposal{proposals.length === 1 ? "" : "s"} ↓
+                    </a>
+                  )}
+                </div>
               </div>
 
               {/* the two tracks */}
@@ -330,15 +350,11 @@ export default function LivePipeline() {
                 </div>
               </div>
 
-              {/* what actually happened, with each step's real output */}
-              <div className="mt-6 rounded-[10px] border border-black/[0.09] bg-ink-900/40 px-5 py-5">
-                <Explain run={run} />
-              </div>
-
-              {/* proposals */}
+              {/* proposals — shown before the detailed steps so reviewers reach
+                  the approve action without scrolling past the full pipeline log */}
               {proposals.length > 0 && (
-                <div className="mt-5">
-                  <h2 className="mb-2 text-[10.5px] font-medium uppercase tracking-[0.14em] text-gray-500">
+                <div className="mt-5" id="proposals">
+                  <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">
                     Proposed documentation changes
                   </h2>
                   <div className="space-y-3">
@@ -355,28 +371,33 @@ export default function LivePipeline() {
                 </div>
               )}
 
+              {/* what actually happened, with each step's real output */}
+              <div className="mt-6 rounded-[10px] border border-black/[0.09] bg-ink-900/40 px-5 py-5">
+                <Explain run={run} />
+              </div>
+
               {/* the diff */}
               {run.diff && (
-                <details className="mt-4 rounded-[10px] border border-black/[0.07] bg-black/[0.025]" open>
-                  <summary className="cursor-pointer px-4 py-2 text-[11.5px] text-gray-500">
+                <details className="mt-4 rounded-[10px] border border-black/[0.07] bg-black/[0.025]">
+                  <summary className="cursor-pointer select-none px-4 py-2 text-[11.5px] text-gray-500">
                     Diff · {run.files?.filter((f) => !f.skipped).length ?? 0} files
                     {run.files?.some((f) => f.skipped) ? ` (${run.files.filter((f) => f.skipped).length} filtered as noise)` : ""}
                   </summary>
-                  <pre className="max-h-72 overflow-auto border-t border-black/[0.07] px-4 py-3 font-mono text-[11px] leading-[1.5]">
+                  <pre className="max-h-72 overflow-auto border-t border-black/[0.07] py-2 font-mono text-[11px] leading-[1.6]">
                     {run.diff.split("\n").map((line, i) => (
                       <div
                         key={i}
                         className={
                           line.startsWith("+") && !line.startsWith("+++")
-                            ? "text-state-pass"
+                            ? "bg-state-pass/[0.08] px-4 text-state-pass"
                             : line.startsWith("-") && !line.startsWith("---")
-                              ? "text-state-fail"
+                              ? "bg-state-fail/[0.08] px-4 text-state-fail"
                               : line.startsWith("@@")
-                                ? "text-accent"
-                                : "text-gray-500"
+                                ? "px-4 text-accent"
+                                : "px-4 text-gray-500"
                         }
                       >
-                        {line || " "}
+                        {line || " "}
                       </div>
                     ))}
                   </pre>
@@ -442,10 +463,13 @@ function ProposalCard({
     }
   };
 
+  const stripeColor =
+    proposal.confidence === "high" ? "border-l-state-pass" : proposal.confidence === "low" ? "border-l-state-warn" : "border-l-state-idle";
+
   return (
-    <div className="rounded-[10px] border border-accent/40 bg-ink-900 px-4 py-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[12.5px] text-gray-200">{proposal.page_title}</span>
+    <div className={`overflow-hidden rounded-[10px] border border-accent/40 bg-ink-900 border-l-4 ${stripeColor}`}>
+      <div className="flex flex-wrap items-center gap-2 border-b border-black/[0.06] px-4 py-3">
+        <span className="text-[13px] font-semibold text-gray-100">{proposal.page_title}</span>
         <span className="text-gray-600">›</span>
         <span className="text-[12.5px] text-gray-400">{proposal.heading_path}</span>
         <Lozenge tone={tone as "brand" | "warn" | "idle"}>{proposal.confidence}</Lozenge>
@@ -458,26 +482,27 @@ function ProposalCard({
           open in Confluence ↗
         </a>
       </div>
+      <div className="px-4 py-3">
+        <p className="text-[12px] text-gray-400">{proposal.rationale}</p>
 
-      <p className="mt-2 text-[12px] text-gray-400">{proposal.rationale}</p>
+        <div className="mt-2 overflow-x-auto rounded-[8px] border border-black/[0.07] bg-ink-950 px-0 py-1 font-mono text-[11px] leading-[1.6]">
+          {proposal.existing_text.split("\n").map((line, i) => (
+            <div key={`e${i}`} className="bg-state-fail/[0.08] px-3 text-state-fail">− {line}</div>
+          ))}
+          {proposal.proposed_text.split("\n").map((line, i) => (
+            <div key={`p${i}`} className="bg-state-pass/[0.08] px-3 text-state-pass">+ {line}</div>
+          ))}
+        </div>
 
-      <div className="mt-2 overflow-x-auto rounded-[10px] border border-black/[0.07] bg-ink-950 px-3 py-2 font-mono text-[11px] leading-[1.6]">
-        {proposal.existing_text.split("\n").map((line, i) => (
-          <div key={`e${i}`} className="text-state-fail">− {line}</div>
-        ))}
-        {proposal.proposed_text.split("\n").map((line, i) => (
-          <div key={`p${i}`} className="text-state-pass">+ {line}</div>
-        ))}
+        <p className="mt-2 text-[10.5px] text-gray-600">
+          <Ident dim>{proposal.code_citation}</Ident>
+          {" · "}lines {proposal.line_start}–{proposal.line_end}
+          {" · "}rerank {proposal.rerank_score > 0 ? "+" : ""}{proposal.rerank_score.toFixed(2)}
+        </p>
       </div>
 
-      <p className="mt-2 text-[10.5px] text-gray-600">
-        <Ident dim>{proposal.code_citation}</Ident>
-        {" · "}lines {proposal.line_start}–{proposal.line_end}
-        {" · "}rerank {proposal.rerank_score > 0 ? "+" : ""}{proposal.rerank_score.toFixed(2)}
-      </p>
-
       {/* approve */}
-      <div className="mt-3 border-t border-black/[0.07] pt-3">
+      <div className="border-t border-black/[0.07] px-4 py-3">
         {proposal.published || plan?.published ? (
           <p className="text-[12px] text-state-pass">
             ✓ Published to Confluence
@@ -492,17 +517,17 @@ function ProposalCard({
               <button
                 onClick={() => act(true)}
                 disabled={busy}
-                className="rounded-[10px] border border-black/[0.10] bg-black/[0.05] px-3 py-1.5 text-[12px] text-gray-300 hover:bg-black/[0.09] disabled:opacity-50"
+                className="rounded-[8px] border border-black/[0.12] bg-white px-3 py-1.5 text-[12px] font-medium text-gray-300 shadow-sm hover:bg-black/[0.04] disabled:opacity-50"
               >
-                {busy && !plan ? "Checking…" : "Check against the live page"}
+                {busy && !plan ? "Checking…" : "① Check against live page"}
               </button>
               <button
                 onClick={() => act(false)}
                 disabled={busy || !plan?.ok}
                 title={plan?.ok ? "Writes a new version of the Confluence page" : "Check the page first"}
-                className="rounded-[10px] border border-accent/40 bg-accent/70 px-3 py-1.5 text-[12px] text-accent hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-[8px] border border-state-pass/40 bg-state-pass px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-state-pass/90 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Approve &amp; publish
+                ② Approve &amp; publish
               </button>
               {plan && !plan.published && (
                 <span className={`text-[11.5px] ${plan.ok ? "text-state-pass" : "text-state-warn"}`}>

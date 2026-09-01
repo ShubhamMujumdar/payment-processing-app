@@ -43,7 +43,7 @@ function Step({
 
       <div className="pb-6">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h3 className="text-[13.5px] font-medium text-gray-100">{title}</h3>
+          <h3 className="text-[14px] font-semibold text-gray-100">{title}</h3>
           {badge && <span className="text-[11.5px] text-accent">{badge}</span>}
           {seconds != null && (
             <span className="tnum ml-auto font-mono text-[11px] text-gray-600">{seconds}s</span>
@@ -88,16 +88,18 @@ export default function Explain({ run }: { run: Run }) {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-baseline gap-x-3">
-        <h2 className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-gray-500">
+      <details open>
+      <summary className="mb-4 flex cursor-pointer select-none list-none flex-wrap items-baseline gap-x-3">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">
           What happened
         </h2>
         {run.total_seconds != null && (
           <span className="text-[11.5px] text-gray-600">
-            start to finish, {run.total_seconds} seconds
+            · {run.total_seconds}s end-to-end
           </span>
         )}
-      </div>
+        <span className="ml-auto text-[10.5px] text-gray-600">▾ collapse</span>
+      </summary>
 
       <Step
         index={1}
@@ -207,7 +209,7 @@ export default function Explain({ run }: { run: Run }) {
               key={p.kind === "create" ? `new-${p.page_title}` : `${p.page_id}-${p.line_start}`}
               className={`rounded-[10px] border px-3 py-2 ${
                 p.kind === "create"
-                  ? "border-state-pass/40 bg-[#e6f7ef]"
+                  ? "border-state-pass/40 bg-state-pass/[0.08]"
                   : p.needs_change
                     ? "border-accent/40 bg-accent-soft"
                     : "border-black/[0.07] bg-black/[0.025]"
@@ -245,6 +247,7 @@ export default function Explain({ run }: { run: Run }) {
         Every number above came from this run. Nothing here is pre-recorded — see{" "}
         <Ident dim>demo/data/runs.sqlite</Ident>.
       </div>
+      </details>
     </div>
   );
 }

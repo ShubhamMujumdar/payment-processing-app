@@ -52,7 +52,7 @@ export function Track({
     <div>
       {title && (
         <div className="mb-2 flex items-center gap-2">
-          <span className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-gray-500">
+          <span className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-gray-400">
             {title}
           </span>
           {trailing}
@@ -67,13 +67,13 @@ export function Track({
           >
             {index > 0 && (
               <span
-                className={`absolute top-[7px] h-px ${line}`}
+                className={`absolute top-[8px] h-[1.5px] ${line}`}
                 style={{ right: NODE_WIDTH / 2 + 8, width: NODE_WIDTH - 16, left: "auto" }}
               />
             )}
             <div className="flex flex-col items-center">
               <span
-                className={`relative z-10 h-[15px] w-[15px] rounded-full border-2 ${DOT[stage.state]} ${
+                className={`relative z-10 h-[18px] w-[18px] rounded-full border-2 ${DOT[stage.state]} ${
                   stage.state === "active" ? "animate-pulse" : ""
                 }`}
               >

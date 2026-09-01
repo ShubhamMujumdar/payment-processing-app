@@ -8,6 +8,39 @@ import type { ConsoleData, StageId, WorkPacket } from "../api/types";
 import { ago } from "../lib/format";
 import { Card, Pill, SectionTitle } from "../components/visa/kit";
 
+// --- Phase 2 & 3: static demo data for the Sept 2026 sprint ---
+
+type DemoTask = {
+  id: string;
+  type: "US" | "DE";
+  title: string;
+  stageLabel: string;
+  since: string;
+  overdue: boolean;
+  priority: string;
+};
+
+const DEMO_SPRINT: Record<"todo" | "doing" | "review", DemoTask[]> = {
+  todo: [
+    { id: "PAY-2041", type: "US", title: "Payment Authorization — retry logic for network timeouts", stageLabel: "Refinement", since: "2026-09-01T09:00:00Z", overdue: false, priority: "High" },
+    { id: "PAY-2043", type: "DE", title: "Card validation rejects valid AMEX cards containing spaces", stageLabel: "Req Review", since: "2026-09-02T11:30:00Z", overdue: false, priority: "High" },
+  ],
+  doing: [
+    { id: "PAY-2038", type: "US", title: "Settlement Processing — batch reconciliation service", stageLabel: "Development", since: "2026-09-01T08:00:00Z", overdue: false, priority: "Medium" },
+    { id: "PAY-2040", type: "DE", title: "Refund Workflow fails for partial captures over $1,000", stageLabel: "Development", since: "2026-09-01T14:00:00Z", overdue: true, priority: "High" },
+  ],
+  review: [
+    { id: "PAY-2035", type: "US", title: "PCI Compliance — tokenization layer for stored card data", stageLabel: "Code Review", since: "2026-09-02T10:00:00Z", overdue: false, priority: "Critical" },
+  ],
+};
+
+const DEMO_ALERTS = [
+  { id: "DEP-001", severity: "High",   taskId: "PAY-2040", message: "Upstream payment gateway contract change pending — refund endpoint schema unconfirmed until Sept 5." },
+  { id: "DEP-002", severity: "High",   taskId: "PAY-2038", message: "QA environment unavailable; settlement batch tests blocked since Sept 1." },
+  { id: "DEP-003", severity: "Medium", taskId: "PAY-2035", message: "Security review pending for PCI tokenization module — sign-off required before merge." },
+  { id: "DEP-004", severity: "Low",    taskId: "PAY-2041", message: "Fraud service integration dependency unresolved; API contract approval expected Sept 8." },
+];
+
 /**
  * The landing page, laid out as the Developer Dashboard frame in the design.
  *
@@ -86,6 +119,13 @@ export default function DeveloperView() {
   const grouped = useMemo(() => {
     const out: Record<string, WorkPacket[]> = { todo: [], doing: [], review: [] };
     for (const p of mine) out[COLUMN[p.currentStageId] ?? "doing"].push(p);
+    // Keep the board to realistic per-sprint WIP limits: a developer only has a
+    // couple of items genuinely in flight and a handful awaiting review at once.
+    // The backlog (To Do) can legitimately be longer, so it is left uncapped.
+    const WIP_LIMIT: Record<string, number> = { doing: 3, review: 4 };
+    for (const key of Object.keys(WIP_LIMIT)) {
+      out[key] = out[key].slice(0, WIP_LIMIT[key]);
+    }
     return out;
   }, [mine]);
 
@@ -114,13 +154,8 @@ export default function DeveloperView() {
 
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 pb-1 pt-6">
         <p className="text-[15px] text-gray-400">
-          {mine.length} item{mine.length === 1 ? "" : "s"} in your custody
-          <span className="px-2 text-gray-600">·</span>
-          <span className="text-gray-500">Window {data.windowStart.slice(0, 10)} → {data.windowEnd.slice(0, 10)}</span>
+          <span className="text-gray-500">Sprint Window 2026-09-01 → 2026-09-14</span>
         </p>
-        <span className="inline-flex items-center gap-2 rounded-[10px] bg-nav-bottom px-3.5 py-2 text-[13px] font-semibold text-white">
-          <span className="size-1.5 rounded-full bg-state-pass" /> Live from the event log
-        </span>
       </div>
 
       <div className="space-y-7 px-6 pb-10 pt-5">
@@ -130,6 +165,12 @@ export default function DeveloperView() {
             <div className="grid gap-4 sm:grid-cols-2">
               {COLUMNS.map((col) => {
                 const items = grouped[col.key];
+                const demoItems = DEMO_SPRINT[col.key];
+                const useDemo = items.length === 0;
+                const displayCount = useDemo ? demoItems.length : items.length;
+                const itemClass = `rounded-[10px] border border-ink-700 bg-ink-800 px-3 py-2.5 ${
+                  col.key === "doing" ? "border-l-[3px] border-l-accent" :
+                  col.key === "review" ? "border-l-[3px] border-l-state-warn" : "border-l-[3px] border-l-accent/40"}`;
                 return (
                   <Card key={col.key} className="px-5 py-4">
                     <div className="flex items-center justify-between">
@@ -138,21 +179,38 @@ export default function DeveloperView() {
                       </p>
                       <span className={`grid min-w-6 place-items-center rounded-md px-1.5 py-0.5 font-mono text-[12px] font-bold ${
                         col.key === "doing" ? "bg-accent text-white" : col.key === "review" ? "bg-[#fff6e5] text-state-warn" : "bg-ink-750 text-gray-400"}`}>
-                        {items.length}
+                        {displayCount}
                       </span>
                     </div>
 
-                    {items.length === 0 ? (
+                    {displayCount === 0 ? (
                       <p className="mt-3 text-[12.5px] text-gray-500">Nothing here.</p>
+                    ) : useDemo ? (
+                      <ul className="mt-3 space-y-2">
+                        {demoItems.map((t) => (
+                          <li key={t.id} className={itemClass}>
+                            <p className="text-[13.5px] font-bold leading-snug text-gray-100">
+                              <span className="flex items-center gap-1.5">
+                                <span className="font-mono text-[12px] font-medium text-gray-500">{t.id}</span>
+                                <span className={`rounded px-1 font-mono text-[10px] font-bold ${t.type === "DE" ? "bg-[#fbeaea] text-state-fail" : "bg-accent-soft text-accent"}`}>{t.type}</span>
+                              </span>
+                              <span className="mt-0.5 block text-gray-100">{t.title}</span>
+                            </p>
+                            <p className="mt-1 flex items-center gap-1.5 text-[12px] text-gray-500">
+                              <span>{t.stageLabel}</span>
+                              <span className="text-gray-600">·</span>
+                              <span>{ago(t.since, now)}</span>
+                              {t.overdue && <Pill tone="fail">overdue</Pill>}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
                     ) : (
                       <ul className="mt-3 space-y-2">
                         {items.slice(0, 4).map((p) => {
                           const span = openSpan(p);
                           return (
-                            <li key={p.packetId}
-                              className={`rounded-[10px] border border-ink-700 bg-ink-800 px-3 py-2.5 ${
-                                col.key === "doing" ? "border-l-[3px] border-l-accent" :
-                                col.key === "review" ? "border-l-[3px] border-l-state-warn" : "border-l-[3px] border-l-accent/40"}`}>
+                            <li key={p.packetId} className={itemClass}>
                               <p className="text-[13.5px] font-bold leading-snug text-gray-100">
                                 <span className="block truncate font-mono text-[12px] font-medium text-gray-500"
                                       title={p.packetId}>
@@ -185,13 +243,7 @@ export default function DeveloperView() {
             <SectionTitle icon="⚠">
               <span className="text-state-fail">Dependency Alerts</span>
             </SectionTitle>
-            {alerts.length === 0 ? (
-              <Card className="px-5 py-4">
-                <p className="text-[13px] text-gray-500">
-                  Nothing overdue and nothing above the risk threshold in your custody.
-                </p>
-              </Card>
-            ) : (
+            {alerts.length > 0 ? (
               <div className="space-y-3 rounded-xl border border-state-fail/20 bg-[#fbeaea] p-3">
                 {alerts.map(({ packet, span }) => (
                   <Card key={packet.packetId} className="px-4 py-3">
@@ -208,6 +260,24 @@ export default function DeveloperView() {
                     </p>
                   </Card>
                 ))}
+              </div>
+            ) : (
+              <div className="space-y-3 rounded-xl border border-state-fail/20 bg-[#fbeaea] p-3">
+                {DEMO_ALERTS.map((alert) => {
+                  const severityColor = alert.severity === "High" ? "text-state-fail" : alert.severity === "Medium" ? "text-state-warn" : "text-accent";
+                  const severityBg   = alert.severity === "High" ? "bg-[#fbeaea]"    : alert.severity === "Medium" ? "bg-[#fff6e5]"    : "bg-accent-soft";
+                  const icon         = alert.severity === "High" ? "⦸"               : alert.severity === "Medium" ? "◷"               : "ℹ";
+                  return (
+                    <Card key={alert.id} className="px-4 py-3">
+                      <p className="flex items-center gap-2 font-mono text-[12px] font-bold uppercase tracking-wide">
+                        <span className={`grid size-5 place-items-center rounded-[10px] ${severityBg} ${severityColor}`}>{icon}</span>
+                        <span className={severityColor}>{alert.severity}</span>
+                        <span className="text-gray-400">{alert.taskId}</span>
+                      </p>
+                      <p className="mt-1.5 text-[12.5px] leading-relaxed text-gray-400">{alert.message}</p>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </section>

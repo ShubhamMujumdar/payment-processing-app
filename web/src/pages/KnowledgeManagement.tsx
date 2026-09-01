@@ -335,18 +335,19 @@ const PM_KPIS: Kpi[] = [
   { label: "Project KM Health", value: "79%", delta: "+3%", dir: "up", progress: 79, description: "Aggregate health across the four projects" },
 ];
 
+// Portfolio entities — matches Executive Portfolio page (Portfolio.tsx LOBS)
 const PROJECTS = [
-  { code: "PAY", name: "Payments",                status: "Good" as const, health: 91, coverage: 91, sla: 95, cycle: "2.1d" },
-  { code: "CSP", name: "Customer Service Portal", status: "Warn" as const, health: 74, coverage: 74, sla: 71, cycle: "4.8d" },
-  { code: "FRD", name: "Fraud & Risk Engine",     status: "Good" as const, health: 88, coverage: 88, sla: 89, cycle: "2.7d" },
-  { code: "MOB", name: "Merchant Onboarding",     status: "Risk" as const, health: 51, coverage: 51, sla: 42, cycle: "7.2d" },
+  { code: "CB-2023-Q3", shortCode: "CB", name: "Consumer Banking",    status: "Good" as const, health: 94, programs: 3,  projects: 12, milestoneProgress: 87, risks: 2,  budgetUsed: 3.2, budgetTotal: 5.0 },
+  { code: "CP-2023-Q3", shortCode: "CP", name: "Commercial Payments", status: "Risk" as const, health: 76, programs: 2,  projects:  9, milestoneProgress: 58, risks: 5,  budgetUsed: 4.8, budgetTotal: 6.0 },
+  { code: "WM-2023-Q3", shortCode: "WM", name: "Wealth Management",   status: "Good" as const, health: 91, programs: 2,  projects:  8, milestoneProgress: 91, risks: 1,  budgetUsed: 2.1, budgetTotal: 3.5 },
+  { code: "FP-2023-Q3", shortCode: "FP", name: "Fintech Partners",    status: "Warn" as const, health: 82, programs: 2,  projects:  7, milestoneProgress: 74, risks: 3,  budgetUsed: 3.5, budgetTotal: 4.0 },
 ];
 
 function ProgramManagerDashboard() {
   const navigate = useNavigate();
   return (
     <DashboardShell>
-      <PageHeader scope="Program Manager · Aggregate across Payments, Customer Service Portal, Fraud & Risk Engine, and Merchant Onboarding" />
+      <PageHeader scope="Program Manager · Aggregate of Consumer Banking — Payments, Customer Service Portal, Fraud & Risk Engine, and Merchant Onboarding" />
       <KpiGrid items={PM_KPIS} />
       <MonthlyBarChart series={[
         { name: "Completion", values: [67, 70, 73, 76, 79, 81], color: "var(--color-state-pass)" },
@@ -359,73 +360,44 @@ function ProgramManagerDashboard() {
         { label: "Action Capture", value: "93", detail: "Actions captured in the current reporting period" },
       ]} />
 
-      {/* ── Quick Navigation ─────────────────────────────────────────────── */}
-      <section>
-        <SectionHeading title="Quick Navigation" subtitle="Access key program management views" />
-        <div className="grid grid-cols-4 gap-4">
-          {([
-            { label: "Project Health",  icon: "M3 6h14M3 10h14M3 14h9",                                               path: "/pm-health",       desc: "Sprint velocity, risk flags and delivery KPIs across all projects" },
-            { label: "KnowledgeBase",   icon: "M4 5h3v3H4zM9 6h7M4 11h3v3H4zM9 12h7",                                  path: "/pm-knowledge",    desc: "Documentation, ADRs, runbooks and knowledge assets" },
-            { label: "Traceability",    icon: "M6 4v4m0 0a2 2 0 1 0 0 4m0-4h8a2 2 0 0 1 2 2v2m-2 4v-4",              path: "/pm-traceability", desc: "Link requirements, decisions and delivery artifacts" },
-            { label: "Analytics",       icon: "M4 16V9m4 7V5m4 11v-5m4 5V7",                                           path: null,               desc: "Programme-level analytics and reporting dashboards" },
-          ] as const).map(item => (
-            <button
-              key={item.label}
-              type="button"
-              onClick={() => item.path && navigate(item.path)}
-              className={`text-left ${item.path ? "" : "cursor-not-allowed opacity-60"}`}
-            >
-              <Card className={`h-full p-5 transition ${item.path ? "hover:border-accent hover:ring-1 hover:ring-accent" : ""}`}>
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-ink-750 border border-ink-700">
-                    <svg viewBox="0 0 20 20" fill="none" className="size-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                      <path d={item.icon} />
-                    </svg>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[14px] font-bold text-gray-100">{item.label}</p>
-                    <p className="mt-1 text-[11.5px] leading-4 text-gray-500">{item.desc}</p>
-                  </div>
-                </div>
-                {item.path
-                  ? <p className="mt-3 text-[11px] font-medium text-accent">Open {item.label} →</p>
-                  : <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-white/35">Coming soon</p>
-                }
-              </Card>
-            </button>
-          ))}
-        </div>
-      </section>
 
       <section>
-        <SectionHeading title="Project Health" subtitle="Click a card to view project-specific health metrics" />
+        <SectionHeading title="Portfolio Health" subtitle="Click Consumer Banking to view portfolio health details" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {PROJECTS.map(p => (
-            <button
-              key={p.code}
-              type="button"
-              onClick={() => navigate("/pm-health", { state: { selectedProject: p.code } })}
-              className="text-left"
-            >
-              <Card className="h-full p-5 transition hover:border-accent hover:ring-1 hover:ring-accent">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Project · {p.code}</p>
-                    <h3 className="mt-1 text-[18px] font-bold leading-tight text-gray-100">{p.name}</h3>
+          {PROJECTS.map(p => {
+            const isCB = p.shortCode === "CB";
+            const progressTone = p.status === "Good" ? "pass" : p.status === "Risk" ? "fail" : "warn";
+            return (
+              <button
+                key={p.code}
+                type="button"
+                onClick={() => isCB && navigate("/pm-health", { state: { selectedPortfolio: p.code } })}
+                disabled={!isCB}
+                className={`text-left ${!isCB ? "cursor-not-allowed" : ""}`}
+              >
+                <Card className={`flex h-full flex-col p-5 transition ${isCB ? "hover:border-accent hover:ring-1 hover:ring-accent" : ""}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500">Portfolio · {p.shortCode}</p>
+                      <h3 className="mt-1 text-[18px] font-bold leading-tight text-gray-100">{p.name}</h3>
+                    </div>
+                    <span className={`shrink-0 rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${STATUS_STYLE[p.status]}`}>{p.status}</span>
                   </div>
-                  <span className={`rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${STATUS_STYLE[p.status]}`}>{p.status}</span>
-                </div>
-                <p className="mt-4 text-[30px] font-bold text-gray-100">{p.health}%</p>
-                <Progress value={p.health} className="mt-2" />
-                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                  <div><p className="font-semibold text-gray-200">{p.coverage}%</p><p className="text-[10px] text-gray-500">Coverage</p></div>
-                  <div><p className="font-semibold text-gray-200">{p.sla}%</p><p className="text-[10px] text-gray-500">SLA</p></div>
-                  <div><p className="font-semibold text-gray-200">{p.cycle}</p><p className="text-[10px] text-gray-500">Cycle</p></div>
-                </div>
-                <p className="mt-3 text-[11px] font-medium text-accent">View project health →</p>
-              </Card>
-            </button>
-          ))}
+                  <p className="mt-4 text-[30px] font-bold text-gray-100">{p.health}%</p>
+                  <Progress value={p.health} tone={progressTone} className="mt-2" />
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                    <div><p className="font-semibold text-gray-200">{p.programs}</p><p className="text-[10px] text-gray-500">Programs</p></div>
+                    <div><p className="font-semibold text-gray-200">{p.projects}</p><p className="text-[10px] text-gray-500">Projects</p></div>
+                    <div><p className="font-semibold text-gray-200">{p.risks}</p><p className="text-[10px] text-gray-500">Risks</p></div>
+                  </div>
+                  {isCB
+                    ? <p className="mt-3 text-[11px] font-medium text-accent">View Details →</p>
+                    : <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-white/35">Coming soon</p>
+                  }
+                </Card>
+              </button>
+            );
+          })}
         </div>
       </section>
       <Watchlist items={[

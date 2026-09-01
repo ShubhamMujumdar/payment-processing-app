@@ -321,15 +321,15 @@ export default function ProgramManagerHealth() {
 
   return (
     <>
-      <PageMeta title="Projects Health" />
+      <PageMeta title="Portfolio Health" />
       <div className="min-h-screen pb-12">
 
         <PageHead
           kicker="Program Manager"
-          title="Projects Health"
+          title="Portfolio Health"
           blurb={selectedProject
             ? `Focused view — ${PROJECTS.find(p => p.code === selectedProject)?.name ?? selectedProject} · PAY · CSP · FRD · MOB`
-            : "Portfolio status across 4 active programs · PAY · CSP · FRD · MOB"
+            : "Portfolio health across 4 active projects · PAY · CSP · FRD · MOB"
           }
           right={
             <div className="flex gap-2">

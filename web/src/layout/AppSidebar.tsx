@@ -53,7 +53,7 @@ export default function AppSidebar() {
   const [wfmExpanded, setWfmExpanded] = useState(true);
 
   const PM_NAV: NavItem[] = [
-    { label: "Projects Health",  path: "/pm-health",        ready: true, icon: "M3 6h14M3 10h14M3 14h9" },
+    { label: "Portfolio Health",  path: "/pm-health",        ready: true, icon: "M3 6h14M3 10h14M3 14h9" },
     { label: "Deliverables",     path: "/pm-deliverables",  ready: true, icon: "M4 5h12v2H4zM5 9h10v6H5z" },
     { label: "KnowledgeBase",    path: "/pm-knowledge",     ready: true, icon: "M10 3v4m0 6v4M4.5 6.5l3 3m5 5 3 3m0-11-3 3m-5 5-3 3" },
     { label: "Traceability",     path: "/pm-traceability",  ready: true, icon: "M6 4v4m0 0a2 2 0 1 0 0 4m0-4h8a2 2 0 0 1 2 2v2m-2 4v-4" },

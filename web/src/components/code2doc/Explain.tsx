@@ -79,8 +79,11 @@ export default function Explain({ run }: { run: Run }) {
   const files = (run.files ?? []).filter((f) => !f.skipped);
   const skipped = (run.files ?? []).filter((f) => f.skipped);
 
+  // A new-page proposal was never retrieved or scored, so it does not belong
+  // in the ranked list and a null score would skew the scale for the rest.
+  const ranked = proposals.filter((p) => p.rerank_score != null);
   // Bars are relative to the strongest result in this search.
-  const scores = proposals.map((p) => p.rerank_score);
+  const scores = ranked.map((p) => p.rerank_score);
   const best = scores.length ? Math.max(...scores) : 0;
   const worst = scores.length ? Math.min(...scores) : 0;
   const width = (score: number) =>
@@ -169,10 +172,10 @@ export default function Explain({ run }: { run: Run }) {
         title="Ranked what came back"
         what="Every section in Confluence is scored against each question, then re-scored by a model that reads question and section together. Bars are relative to the best match here."
         seconds={timing("retrieved")}
-        badge={`${proposals.length} candidates`}
+        badge={`${ranked.length} candidates`}
       >
         <ul className="space-y-1.5">
-          {proposals.map((p, i) => (
+          {ranked.map((p, i) => (
             <li key={`${p.page_id}-${p.line_start}`} className="flex items-center gap-3">
               <span className="w-4 shrink-0 text-right font-mono text-[11px] text-gray-600">
                 {i + 1}

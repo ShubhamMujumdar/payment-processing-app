@@ -88,6 +88,8 @@ export default function DeveloperView() {
   const [data, setData] = useState<ConsoleData | null>(null);
   const [me, setMe] = useState<string>("");
   const [docs, setDocs] = useState<{ authored: number; edits: number } | null>(null);
+  const [alertFilter, setAlertFilter] = useState<"All" | "High" | "Medium" | "Low">("All");
+  const [expandedAlert, setExpandedAlert] = useState<string | null>(null);
   const now = useMemo(() => new Date(), [data]);
 
   useEffect(() => {
@@ -159,10 +161,10 @@ export default function DeveloperView() {
       </div>
 
       <div className="space-y-7 px-6 pb-10 pt-5">
-        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+        <div className="space-y-5">
           <section>
             <SectionTitle icon="◉">My Sprint at a Glance</SectionTitle>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               {COLUMNS.map((col) => {
                 const items = grouped[col.key];
                 const demoItems = DEMO_SPRINT[col.key];
@@ -240,44 +242,99 @@ export default function DeveloperView() {
           </section>
 
           <section>
-            <SectionTitle icon="⚠">
+            <SectionTitle
+              icon="⚠"
+              aside={
+                <div className="flex items-center gap-1">
+                  {(["All", "High", "Medium", "Low"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setAlertFilter(f)}
+                      className={`rounded-md px-2.5 py-1 font-mono text-[10.5px] font-bold uppercase tracking-wide transition-colors ${
+                        alertFilter === f
+                          ? f === "High"   ? "bg-state-fail text-white"
+                          : f === "Medium" ? "bg-state-warn text-white"
+                          : f === "Low"    ? "bg-accent text-white"
+                          :                  "bg-ink-700 text-gray-100"
+                          : "bg-ink-800 text-gray-500 hover:text-gray-300 border border-ink-700"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              }
+            >
               <span className="text-state-fail">Dependency Alerts</span>
             </SectionTitle>
+
             {alerts.length > 0 ? (
-              <div className="space-y-3 rounded-xl border border-state-fail/20 bg-[#fbeaea] p-3">
-                {alerts.map(({ packet, span }) => (
-                  <Card key={packet.packetId} className="px-4 py-3">
-                    <p className="flex items-center gap-2 font-mono text-[12px] font-bold uppercase tracking-wide text-state-fail">
-                      <span className="grid size-5 place-items-center rounded-[10px] bg-[#fbeaea]">
-                        {span?.isOverdue ? "⦸" : "◷"}
-                      </span>
-                      {span?.isOverdue ? "Blocked" : "At risk"}: {packetLabel(packet).id}
-                    </p>
-                    <p className="mt-1.5 text-[12.5px] leading-relaxed text-gray-400">
-                      {packetLabel(packet).title ?? "Unattributed packet"} — held at {stageLabel(packet.currentStageId)}
-                      {span ? ` since ${ago(span.enteredAt, now)}` : ""}
-                      {packet.riskScore >= 0.6 ? `, risk ${packet.riskScore.toFixed(2)}` : ""}.
-                    </p>
-                  </Card>
-                ))}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {alerts
+                  .filter(({ packet }) =>
+                    alertFilter === "All" ||
+                    (alertFilter === "High"   && packet.riskScore >= 0.8) ||
+                    (alertFilter === "Medium" && packet.riskScore >= 0.6 && packet.riskScore < 0.8) ||
+                    (alertFilter === "Low"    && packet.riskScore < 0.6)
+                  )
+                  .map(({ packet, span }) => {
+                    const isExpanded = expandedAlert === packet.packetId;
+                    const sev = packet.riskScore >= 0.8 ? "High" : packet.riskScore >= 0.6 ? "Medium" : "Low";
+                    const sevColor  = sev === "High" ? "text-state-fail" : sev === "Medium" ? "text-state-warn" : "text-accent";
+                    const sevBorder = sev === "High" ? "border-state-fail/25 bg-state-fail/[0.06]" : sev === "Medium" ? "border-state-warn/25 bg-state-warn/[0.06]" : "border-accent/25 bg-accent-soft";
+                    const sevPill   = sev === "High" ? "bg-state-fail/15" : sev === "Medium" ? "bg-state-warn/15" : "bg-accent/15";
+                    return (
+                      <div key={packet.packetId} className={`rounded-[10px] border ${sevBorder} px-3.5 py-2.5`}>
+                        <div className="flex items-center gap-2">
+                          <span className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide ${sevColor} ${sevPill}`}>
+                            {sev}
+                          </span>
+                          <span className="font-mono text-[12px] font-bold text-gray-200">{packetLabel(packet).id}</span>
+                          <button
+                            onClick={() => setExpandedAlert(isExpanded ? null : packet.packetId)}
+                            className="ml-auto shrink-0 text-[11px] text-gray-500 transition-colors hover:text-gray-300"
+                          >
+                            {isExpanded ? "Hide ↑" : "View Details ↓"}
+                          </button>
+                        </div>
+                        <p className={`mt-1.5 text-[12px] leading-snug text-gray-400 ${isExpanded ? "" : "line-clamp-2"}`}>
+                          {packetLabel(packet).title ?? "Unattributed packet"} — held at {stageLabel(packet.currentStageId)}
+                          {span ? ` since ${ago(span.enteredAt, now)}` : ""}
+                          {packet.riskScore >= 0.6 ? `, risk ${packet.riskScore.toFixed(2)}` : ""}.
+                        </p>
+                      </div>
+                    );
+                  })}
               </div>
             ) : (
-              <div className="space-y-3 rounded-xl border border-state-fail/20 bg-[#fbeaea] p-3">
-                {DEMO_ALERTS.map((alert) => {
-                  const severityColor = alert.severity === "High" ? "text-state-fail" : alert.severity === "Medium" ? "text-state-warn" : "text-accent";
-                  const severityBg   = alert.severity === "High" ? "bg-[#fbeaea]"    : alert.severity === "Medium" ? "bg-[#fff6e5]"    : "bg-accent-soft";
-                  const icon         = alert.severity === "High" ? "⦸"               : alert.severity === "Medium" ? "◷"               : "ℹ";
-                  return (
-                    <Card key={alert.id} className="px-4 py-3">
-                      <p className="flex items-center gap-2 font-mono text-[12px] font-bold uppercase tracking-wide">
-                        <span className={`grid size-5 place-items-center rounded-[10px] ${severityBg} ${severityColor}`}>{icon}</span>
-                        <span className={severityColor}>{alert.severity}</span>
-                        <span className="text-gray-400">{alert.taskId}</span>
-                      </p>
-                      <p className="mt-1.5 text-[12.5px] leading-relaxed text-gray-400">{alert.message}</p>
-                    </Card>
-                  );
-                })}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {DEMO_ALERTS
+                  .filter((a) => alertFilter === "All" || a.severity === alertFilter)
+                  .map((alert) => {
+                    const isExpanded = expandedAlert === alert.id;
+                    const sevColor  = alert.severity === "High" ? "text-state-fail" : alert.severity === "Medium" ? "text-state-warn" : "text-accent";
+                    const sevBorder = alert.severity === "High" ? "border-state-fail/25 bg-state-fail/[0.06]" : alert.severity === "Medium" ? "border-state-warn/25 bg-state-warn/[0.06]" : "border-accent/25 bg-accent-soft";
+                    const sevPill   = alert.severity === "High" ? "bg-state-fail/15" : alert.severity === "Medium" ? "bg-state-warn/15" : "bg-accent/15";
+                    return (
+                      <div key={alert.id} className={`rounded-[10px] border ${sevBorder} px-3.5 py-2.5`}>
+                        <div className="flex items-center gap-2">
+                          <span className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide ${sevColor} ${sevPill}`}>
+                            {alert.severity}
+                          </span>
+                          <span className="font-mono text-[12px] font-bold text-gray-200">{alert.taskId}</span>
+                          <button
+                            onClick={() => setExpandedAlert(isExpanded ? null : alert.id)}
+                            className="ml-auto shrink-0 text-[11px] text-gray-500 transition-colors hover:text-gray-300"
+                          >
+                            {isExpanded ? "Hide ↑" : "View Details ↓"}
+                          </button>
+                        </div>
+                        <p className={`mt-1.5 text-[12px] leading-snug text-gray-400 ${isExpanded ? "" : "line-clamp-2"}`}>
+                          {alert.message}
+                        </p>
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </section>

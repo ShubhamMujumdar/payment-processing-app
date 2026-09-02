@@ -752,7 +752,7 @@ export default function ProgramManagerDeliverables() {
             blurb={`${projectName} · Documentation, artifacts and delivery tracking`}
             right={
               <div className="flex gap-2">
-                <MockButton>Export</MockButton>
+                <MockButton variant="solid">Export</MockButton>
                 <MockButton variant="solid">New Deliverable</MockButton>
               </div>
             }
@@ -777,7 +777,7 @@ export default function ProgramManagerDeliverables() {
           blurb="Program deliverable management across PAY · CSP · FRD · MOB"
           right={
             <div className="flex gap-2">
-              <MockButton>Export</MockButton>
+              <MockButton variant="solid">Export</MockButton>
               <MockButton variant="solid">New Deliverable</MockButton>
             </div>
           }

@@ -8,11 +8,25 @@ type WatchItem = { text: string; status: "Risk" | "Warn" | "Good" };
 type Signal = { label: string; value: string; detail: string };
 
 const MONTHS = ["Mar", "Apr", "May", "Jun", "Jul", "Aug"];
+type LobStatus = "Good" | "Warn" | "Risk";
+
 const STATUS_STYLE = {
-  Risk: "border-red-200 bg-red-50 text-red-700",
-  Warn: "border-amber-200 bg-amber-50 text-amber-700",
-  Good: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  Risk: "border-state-fail/40 bg-state-fail/20 text-state-fail",
+  Warn: "border-state-warn/40 bg-state-warn/20 text-state-warn",
+  Good: "border-state-pass/40 bg-state-pass/20 text-state-pass",
 };
+
+const STATUS_COLOR: Record<LobStatus, string> = {
+  Good: "var(--color-state-pass)",
+  Warn: "var(--color-state-warn)",
+  Risk: "var(--color-state-fail)",
+};
+
+const STATUS_TONE = {
+  Good: "pass",
+  Warn: "warn",
+  Risk: "fail",
+} as const;
 
 function dirSymbol(dir: Dir = "flat") {
   return dir === "up" ? "↑" : dir === "down" ? "↓" : "→";
@@ -137,10 +151,10 @@ const EXEC_KPIS: Kpi[] = [
 ];
 
 const LOBS = [
-  { name: "Consumer Banking", coverage: 92, freshness: 88, health: 90, note: "19 active projects" },
-  { name: "Commercial Payments", coverage: 85, freshness: 80, health: 83, note: "24 active projects" },
-  { name: "Wealth Management", coverage: 88, freshness: 86, health: 87, note: "14 active projects" },
-  { name: "Fintech Partners", coverage: 81, freshness: 75, health: 78, note: "17 active projects" },
+  { name: "Consumer Banking",    status: "Good" as LobStatus, coverage: 92, freshness: 88, health: 90, healthTrend: [85, 86, 87, 88, 89, 90], note: "19 active projects" },
+  { name: "Commercial Payments", status: "Warn" as LobStatus, coverage: 85, freshness: 80, health: 83, healthTrend: [83, 82, 83, 82, 83, 83], note: "24 active projects" },
+  { name: "Wealth Management",   status: "Good" as LobStatus, coverage: 88, freshness: 86, health: 87, healthTrend: [82, 83, 84, 85, 86, 87], note: "14 active projects" },
+  { name: "Fintech Partners",    status: "Risk" as LobStatus, coverage: 81, freshness: 75, health: 78, healthTrend: [83, 82, 81, 80, 79, 78], note: "17 active projects" },
 ];
 
 function ExecutiveDashboard() {
@@ -174,7 +188,7 @@ function ExecutiveDashboard() {
             <button key={lob.name} type="button" onClick={() => setSelected(selected === lob.name ? null : lob.name)} className="text-left">
               <Card className={`h-full p-5 transition ${selected === lob.name ? "ring-2 ring-accent" : "hover:border-gray-500"}`}>
                 <div className="flex items-start justify-between gap-3"><div><h3 className="font-bold text-gray-100">{lob.name}</h3><p className="mt-1 text-[11px] text-gray-500">{lob.note}</p></div><span className="text-[24px] font-bold text-gray-100">{lob.health}%</span></div>
-                <div className="mt-5 grid grid-cols-2 gap-4"><div><p className="text-[11px] text-gray-500">Coverage</p><Progress value={lob.coverage} className="mt-2" /></div><div><p className="text-[11px] text-gray-500">Freshness</p><Progress value={lob.freshness} className="mt-2" /></div></div>
+                <div className="mt-5 grid grid-cols-2 gap-4"><div><p className="text-[11px] text-gray-500">Coverage</p><Progress value={lob.coverage} tone={STATUS_TONE[lob.status]} className="mt-2" /></div><div><p className="text-[11px] text-gray-500">Freshness</p><Progress value={lob.freshness} tone={STATUS_TONE[lob.status]} className="mt-2" /></div></div>
               </Card>
             </button>
           ))}
@@ -289,7 +303,7 @@ const DEV_KPIS: Kpi[] = [
 function DeveloperDashboard() {
   return (
     <DashboardShell>
-      <PageHeader scope="Developer · Project Mercury only" />
+      <PageHeader scope="Developer · Project Payments only" />
       <KpiGrid items={DEV_KPIS} />
       <MonthlyBarChart series={[
         { name: "Automation", values: [50, 54, 58, 63, 67, 71], color: "var(--color-state-pass)" },

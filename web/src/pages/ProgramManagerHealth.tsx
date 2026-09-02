@@ -331,12 +331,7 @@ export default function ProgramManagerHealth() {
             ? `Focused view — ${PROJECTS.find(p => p.code === selectedProject)?.name ?? selectedProject} · PAY · CSP · FRD · MOB`
             : "Portfolio health across 4 active projects · PAY · CSP · FRD · MOB"
           }
-          right={
-            <div className="flex gap-2">
-              <MockButton>Export Report</MockButton>
-              <MockButton variant="solid">Schedule Review</MockButton>
-            </div>
-          }
+          right={null}
         />
 
         <div className="space-y-7 px-6 pt-6">
@@ -344,20 +339,58 @@ export default function ProgramManagerHealth() {
           {/* ── 1. Portfolio Summary ──────────────────────────────────────── */}
           <section>
             <SectionTitle>Consumer Banking : Portfolio Summary</SectionTitle>
-            <div className="grid grid-cols-5 gap-4">
-              <StatCard label="Total Projects"     value={PROJECTS.length} tone="brand" icon={<IconGrid />} />
-              <StatCard label="On Track"           value={onTrack}  tone="pass"  icon={<IconCheck />} />
-              <StatCard label="At Risk"            value={atRisk}   tone="warn"  icon={<IconWarn />}  />
-              <StatCard label="Off Track"          value={offTrack} tone="fail"  icon={<IconAlert />} />
-              <StatCard
-                label="Portfolio Health"
-                value={healthPct} unit="%"
-                tone={healthTone}
-                progress={healthPct}
-                icon={<IconHealth />}
-                note={`${onTrack} on track · ${atRisk} at risk · ${offTrack} off track`}
-              />
-            </div>
+            <Card className="overflow-hidden p-0">
+              <div className="grid grid-cols-5 gap-px bg-ink-700">
+
+                {/* Total Projects */}
+                <div className="flex flex-col items-center justify-center gap-0.5 bg-ink-800 px-5 py-3.5 text-center transition-colors hover:bg-ink-750/50">
+                  <span className="font-mono text-[32px] font-bold leading-none text-accent">{PROJECTS.length}</span>
+                  <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-widest text-gray-400">Active</span>
+                  <span className="mt-1 flex items-center gap-1 text-[10px] text-gray-500">
+                    <IconGrid />Total Projects
+                  </span>
+                </div>
+
+                {/* On Track */}
+                <div className="flex flex-col items-center justify-center gap-0.5 bg-ink-800 px-5 py-3.5 text-center transition-colors hover:bg-ink-750/50">
+                  <span className="font-mono text-[32px] font-bold leading-none text-state-pass">{onTrack}</span>
+                  <span className="mt-0.5 text-[11px] font-semibold text-state-pass">{Math.round(onTrack / PROJECTS.length * 100)}%</span>
+                  <span className="mt-1 flex items-center gap-1 text-[10px] text-gray-500">
+                    <IconCheck />On Track
+                  </span>
+                </div>
+
+                {/* At Risk */}
+                <div className="flex flex-col items-center justify-center gap-0.5 bg-ink-800 px-5 py-3.5 text-center transition-colors hover:bg-ink-750/50">
+                  <span className="font-mono text-[32px] font-bold leading-none text-state-warn">{atRisk}</span>
+                  <span className="mt-0.5 text-[11px] font-semibold text-state-warn">{Math.round(atRisk / PROJECTS.length * 100)}%</span>
+                  <span className="mt-1 flex items-center gap-1 text-[10px] text-gray-500">
+                    <IconWarn />At Risk
+                  </span>
+                </div>
+
+                {/* Off Track */}
+                <div className="flex flex-col items-center justify-center gap-0.5 bg-ink-800 px-5 py-3.5 text-center transition-colors hover:bg-ink-750/50">
+                  <span className="font-mono text-[32px] font-bold leading-none text-state-fail">{offTrack}</span>
+                  <span className="mt-0.5 text-[11px] font-semibold text-state-fail">{Math.round(offTrack / PROJECTS.length * 100)}%</span>
+                  <span className="mt-1 flex items-center gap-1 text-[10px] text-gray-500">
+                    <IconAlert />Off Track
+                  </span>
+                </div>
+
+                {/* Portfolio Health */}
+                <div className="flex flex-col items-center justify-center gap-0.5 bg-ink-800 px-5 py-3.5 text-center transition-colors hover:bg-ink-750/50">
+                  <span className="font-mono text-[32px] font-bold leading-none" style={{ color: "#d97706" }}>{healthPct}%</span>
+                  <div className="mt-0.5 w-20">
+                    <Progress value={healthPct} tone={healthTone} />
+                  </div>
+                  <span className="mt-0.5 flex items-center gap-1 text-[10px] text-gray-500">
+                    <IconHealth />Portfolio Health
+                  </span>
+                </div>
+
+              </div>
+            </Card>
           </section>
 
           {/* ── 1b. Project Focus KPIs (shown when navigated from KnowledgeManagement) */}
@@ -445,12 +478,6 @@ export default function ProgramManagerHealth() {
                               {a.label}
                             </button>
                           ))}
-                          <button
-                            title="Not built yet"
-                            className="cursor-not-allowed rounded-[7px] border border-ink-700 px-2.5 py-1 text-[11px] font-semibold text-gray-600"
-                          >
-                            Analytics
-                          </button>
                         </div>
                       </td>
                     </tr>

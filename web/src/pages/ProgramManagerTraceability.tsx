@@ -125,16 +125,21 @@ function heatColor(v: number): string {
 }
 
 function CoverageHeatmap() {
-  const CELL_W = 82, CELL_H = 34, LABEL_W = 44, HEADER_H = 30;
+  const CELL_W = 96, CELL_H = 88, LABEL_W = 52, HEADER_H = 40;
   const projects = ["PAY","CSP","FRD","MOB"];
   const W = LABEL_W + HM_CATS.length * CELL_W + 8;
-  const H = HEADER_H + projects.length * CELL_H + 8;
+  const H = HEADER_H + projects.length * CELL_H + 10;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-label="Test coverage heatmap">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      style={{ width: "100%", height: "100%", display: "block" }}
+      preserveAspectRatio="xMidYMid meet"
+      aria-label="Test coverage heatmap"
+    >
       {HM_CATS.map((cat, ci) => (
-        <text key={cat} x={LABEL_W + ci * CELL_W + CELL_W / 2} y={HEADER_H - 8}
-          textAnchor="middle" fontSize="9" fill="#94a3b8"
+        <text key={cat} x={LABEL_W + ci * CELL_W + CELL_W / 2} y={HEADER_H - 10}
+          textAnchor="middle" fontSize="13" fontWeight="600" fill="#1e293b"
           fontFamily="'JetBrains Mono', monospace">{cat}</text>
       ))}
       {projects.map((proj, pi) => {
@@ -142,18 +147,18 @@ function CoverageHeatmap() {
         const y = HEADER_H + pi * CELL_H;
         return (
           <Fragment key={proj}>
-            <text x={LABEL_W - 5} y={y + CELL_H / 2 + 4} textAnchor="end"
-              fontSize="9" fontWeight="bold" fill="#64748b"
+            <text x={LABEL_W - 7} y={y + CELL_H / 2 + 4.5} textAnchor="end"
+              fontSize="16" fontWeight="bold" fill="#64748b"
               fontFamily="'JetBrains Mono', monospace">{proj}</text>
             {vals.map((v, ci) => {
               const x = LABEL_W + ci * CELL_W;
               const col = heatColor(v);
               return (
                 <Fragment key={ci}>
-                  <rect x={x+2} y={y+2} width={CELL_W-4} height={CELL_H-4} rx="4" fill={col} opacity="0.15" />
-                  <rect x={x+2} y={y+2} width={CELL_W-4} height={CELL_H-4} rx="4" fill="none" stroke={col} strokeWidth="0.5" opacity="0.4" />
-                  <text x={x+CELL_W/2} y={y+CELL_H/2+4} textAnchor="middle"
-                    fontSize="10.5" fontWeight="bold" fill={col}
+                  <rect x={x+4} y={y+4} width={CELL_W-8} height={CELL_H-8} rx="6" fill={col} opacity="0.15" />
+                  <rect x={x+4} y={y+4} width={CELL_W-8} height={CELL_H-8} rx="6" fill="none" stroke={col} strokeWidth="0.75" opacity="0.45" />
+                  <text x={x+CELL_W/2} y={y+CELL_H/2+5} textAnchor="middle"
+                    fontSize="13.5" fontWeight="bold" fill={col}
                     fontFamily="'JetBrains Mono', monospace">{v}%</text>
                 </Fragment>
               );
@@ -548,7 +553,7 @@ export default function ProgramManagerTraceability() {
           blurb="Portfolio requirements traceability across PAY · CSP · FRD · MOB"
           right={
             <div className="flex gap-2">
-              <MockButton>Export Matrix</MockButton>
+              <MockButton variant="solid">Export Matrix</MockButton>
               <MockButton variant="solid">Run Audit</MockButton>
             </div>
           }
@@ -596,10 +601,10 @@ export default function ProgramManagerTraceability() {
           </section>
 
           {/* ── 3. Coverage Heatmap + Sankey ─────────────────────────────── */}
-          <div className="grid grid-cols-5 gap-4">
-            <div className="col-span-2">
+          <div className="grid grid-cols-5 items-stretch gap-4">
+            <div className="col-span-2 flex flex-col">
               <SectionTitle aside="test coverage % by category">Coverage Heatmap</SectionTitle>
-              <Card className="p-5">
+              <Card className="flex flex-1 flex-col p-5">
                 <div className="mb-4 flex flex-wrap gap-3">
                   {[["≥80%","#00a870"],["≥60%","#1434cb"],["≥40%","#946200"],["<40%","#d14343"]].map(([l,c]) => (
                     <div key={l} className="flex items-center gap-1.5">
@@ -608,13 +613,15 @@ export default function ProgramManagerTraceability() {
                     </div>
                   ))}
                 </div>
-                <CoverageHeatmap />
+                <div className="min-h-0 flex-1">
+                  <CoverageHeatmap />
+                </div>
               </Card>
             </div>
 
-            <div className="col-span-3">
+            <div className="col-span-3 flex flex-col">
               <SectionTitle aside="goals → projects → coverage tiers">Traceability Flow</SectionTitle>
-              <Card className="p-5">
+              <Card className="flex-1 p-5">
                 <TraceabilitySankey />
               </Card>
             </div>

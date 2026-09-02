@@ -668,7 +668,7 @@ export default function ProgramManagerKnowledgeBase() {
             blurb={`${projectName} · Documentation, architecture, runbooks and knowledge assets`}
             right={
               <div className="flex gap-2">
-                <MockButton>Export Index</MockButton>
+                <MockButton variant="solid">Export Index</MockButton>
                 <MockButton variant="solid">Add Document</MockButton>
               </div>
             }
@@ -695,7 +695,7 @@ export default function ProgramManagerKnowledgeBase() {
           blurb="Program-level knowledge assets across PAY · CSP · FRD · MOB"
           right={
             <div className="flex gap-2">
-              <MockButton>Export Index</MockButton>
+              <MockButton variant="solid">Export Index</MockButton>
               <MockButton variant="solid">Add Document</MockButton>
             </div>
           }
@@ -724,12 +724,13 @@ export default function ProgramManagerKnowledgeBase() {
           </section>
 
           {/* ── 2. Widget Row ─────────────────────────────────────────────── */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-1">
+          <div className="grid grid-cols-3 items-stretch gap-3">
+            {/* Col 1 — By Project */}
+            <div className="flex flex-col">
               <SectionTitle>By Project</SectionTitle>
-              <Card className="divide-y divide-ink-700">
+              <Card className="flex-1 divide-y divide-ink-700">
                 {PROJECT_STATS.map(p => (
-                  <div key={p.code} className="px-5 py-3.5">
+                  <div key={p.code} className="px-5 py-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: PROJECT_COLOR[p.code] }} />
@@ -772,39 +773,39 @@ export default function ProgramManagerKnowledgeBase() {
               </Card>
             </div>
 
-            <div className="col-span-1 space-y-4">
-              <div>
-                <SectionTitle aside={`${missingDocs} gaps`}>Missing Documentation</SectionTitle>
-                <Card className="divide-y divide-ink-700">
-                  {ALL_DOCS.filter(d => d.status === "missing").map(doc => (
-                    <div key={doc.id} className="px-4 py-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-mono text-[10px] text-state-fail">{doc.id}</span>
-                        {doc.project !== "ALL" && (
-                          <div className="flex items-center gap-1">
-                            <div className="size-1.5 rounded-full" style={{ backgroundColor: PROJECT_COLOR[doc.project] }} />
-                            <span className="font-mono text-[10px] text-gray-500">{doc.project}</span>
-                          </div>
-                        )}
-                      </div>
-                      <p className="mt-0.5 text-[12px] italic leading-snug text-gray-400">{doc.title}</p>
-                      <p className="mt-1 text-[11px] text-gray-500">{doc.owner} · {doc.type}</p>
-                      <button type="button" title="Not built yet"
-                        className="mt-2 cursor-not-allowed rounded-[6px] border border-accent/30 bg-accent-soft px-2.5 py-1 text-[11px] font-semibold text-accent">
-                        Assign Author
-                      </button>
+            {/* Col 2 — Missing Documentation (stretches to fill column) */}
+            <div className="flex flex-col">
+              <SectionTitle aside={`${missingDocs} gaps`}>Missing Documentation</SectionTitle>
+              <Card className="flex-1 divide-y divide-ink-700">
+                {ALL_DOCS.filter(d => d.status === "missing").map(doc => (
+                  <div key={doc.id} className="px-4 py-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-mono text-[10px] text-state-fail">{doc.id}</span>
+                      {doc.project !== "ALL" && (
+                        <div className="flex items-center gap-1">
+                          <div className="size-1.5 rounded-full" style={{ backgroundColor: PROJECT_COLOR[doc.project] }} />
+                          <span className="font-mono text-[10px] text-gray-500">{doc.project}</span>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </Card>
-              </div>
+                    <p className="mt-0.5 text-[12px] italic leading-snug text-gray-400">{doc.title}</p>
+                    <p className="mt-0.5 text-[11px] text-gray-500">{doc.owner} · {doc.type}</p>
+                    <button type="button" title="Not built yet"
+                      className="mt-1.5 cursor-not-allowed rounded-[6px] border border-accent/30 bg-accent-soft px-2.5 py-0.5 text-[11px] font-semibold text-accent">
+                      Assign Author
+                    </button>
+                  </div>
+                ))}
+              </Card>
             </div>
 
-            <div className="col-span-1 space-y-4">
+            {/* Col 3 — Recently Updated + Reuse Opportunities (Reuse grows to fill) */}
+            <div className="flex flex-col gap-3">
               <div>
                 <SectionTitle>Recently Updated</SectionTitle>
                 <Card className="divide-y divide-ink-700">
                   {recentlyUpdated.map(doc => (
-                    <div key={doc.id} className="flex items-start gap-3 px-4 py-3">
+                    <div key={doc.id} className="flex items-start gap-3 px-4 py-2.5">
                       <div className="mt-0.5 size-2 shrink-0 rounded-full"
                         style={{ backgroundColor: doc.project === "ALL" ? "#94a3b8" : PROJECT_COLOR[doc.project] }} />
                       <div className="min-w-0 flex-1">
@@ -819,11 +820,11 @@ export default function ProgramManagerKnowledgeBase() {
                 </Card>
               </div>
 
-              <div>
+              <div className="flex flex-1 flex-col">
                 <SectionTitle aside={`${REUSE_ITEMS.length} opportunities`}>Reuse Opportunities</SectionTitle>
-                <Card className="divide-y divide-ink-700">
+                <Card className="flex-1 divide-y divide-ink-700">
                   {REUSE_ITEMS.map((r, i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-3">
+                    <div key={i} className="flex items-center gap-3 px-4 py-2.5">
                       <IconReuse />
                       <div className="min-w-0 flex-1">
                         <p className="text-[12px] font-medium text-gray-100">{r.title}</p>

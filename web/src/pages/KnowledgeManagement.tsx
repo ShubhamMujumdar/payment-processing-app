@@ -6,13 +6,12 @@ import { Card, Progress } from "../components/visa/kit";
 type Dir = "up" | "down" | "flat";
 type Kpi = { label: string; value: string; delta?: string; dir?: Dir; description: string; progress?: number };
 type WatchItem = { text: string; status: "Risk" | "Warn" | "Good" };
-type Signal = { label: string; value: string; detail: string };
 
 const MONTHS = ["Mar", "Apr", "May", "Jun", "Jul", "Aug"];
 const STATUS_STYLE = {
-  Risk: "border-red-200 bg-red-50 text-red-700",
-  Warn: "border-amber-200 bg-amber-50 text-amber-700",
-  Good: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  Risk: "border-state-fail/40 bg-state-fail/20 text-state-fail",
+  Warn: "border-state-warn/40 bg-state-warn/20 text-state-warn",
+  Good: "border-state-pass/40 bg-state-pass/20 text-state-pass",
 };
 
 function dirSymbol(dir: Dir = "flat") {
@@ -84,23 +83,6 @@ function MonthlyBarChart({ title, series }: { title?: string; series: { name: st
   );
 }
 
-function Signals({ items }: { items: Signal[] }) {
-  return (
-    <section>
-      <SectionHeading title="Business / Platform Signals" subtitle="Role-relevant operational indicators" />
-      <div className="grid gap-4 md:grid-cols-3">
-        {items.map(item => (
-          <Card key={item.label} className="p-5">
-            <p className="text-[12px] font-semibold uppercase tracking-wide text-gray-500">{item.label}</p>
-            <p className="mt-2 text-[28px] font-bold text-gray-100">{item.value}</p>
-            <p className="mt-2 text-[12px] text-gray-500">{item.detail}</p>
-          </Card>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function Watchlist({ items }: { items: WatchItem[] }) {
   return (
     <Card className="p-5">
@@ -145,13 +127,27 @@ type Lob = {
   coverage: number;
   freshness: number;
   projects: number;
+  healthTrend: number[];
   metrics: { label: string; value: string; progress: number }[];
   segments: { name: string; health: number; status: LobStatus }[];
 };
 
+const STATUS_COLOR: Record<LobStatus, string> = {
+  Good: "var(--color-state-pass)",
+  Warn: "var(--color-state-warn)",
+  Risk: "var(--color-state-fail)",
+};
+
+const STATUS_TONE = {
+  Good: "pass",
+  Warn: "warn",
+  Risk: "fail",
+} as const;
+
 const LOBS: Lob[] = [
   {
     name: "Consumer Banking", status: "Good", health: 90, coverage: 92, freshness: 88, projects: 19,
+    healthTrend: [85, 86, 87, 88, 89, 90],
     metrics: [
       { label: "AI Update Adoption", value: "81%", progress: 81 },
       { label: "Search Success", value: "90%", progress: 90 },
@@ -166,6 +162,7 @@ const LOBS: Lob[] = [
   },
   {
     name: "Commercial Payments", status: "Warn", health: 83, coverage: 85, freshness: 80, projects: 24,
+    healthTrend: [83, 82, 83, 82, 83, 83],
     metrics: [
       { label: "AI Update Adoption", value: "74%", progress: 74 },
       { label: "Search Success", value: "83%", progress: 83 },
@@ -180,6 +177,7 @@ const LOBS: Lob[] = [
   },
   {
     name: "Wealth Management", status: "Good", health: 87, coverage: 88, freshness: 86, projects: 14,
+    healthTrend: [82, 83, 84, 85, 86, 87],
     metrics: [
       { label: "AI Update Adoption", value: "79%", progress: 79 },
       { label: "Search Success", value: "88%", progress: 88 },
@@ -194,6 +192,7 @@ const LOBS: Lob[] = [
   },
   {
     name: "Fintech Partners", status: "Risk", health: 78, coverage: 81, freshness: 75, projects: 17,
+    healthTrend: [83, 82, 81, 80, 79, 78],
     metrics: [
       { label: "AI Update Adoption", value: "70%", progress: 70 },
       { label: "Search Success", value: "80%", progress: 80 },
@@ -273,11 +272,6 @@ function ExecutiveDashboard() {
           { name: "Adoption", values: [55, 60, 63, 68, 74, 78], color: "#f59e0b" },
         ]} />
       </section>
-      <Signals items={[
-        { label: "SME Time Saved", value: "410h", detail: "Time redirected from repeat knowledge queries" },
-        { label: "Search Abandonment", value: "18%", detail: "Sessions ending without a selected result" },
-        { label: "Priority Knowledge Gaps", value: "34", detail: "Organisation-level gaps requiring action" },
-      ]} />
       <section>
         <SectionHeading title="Lines of Business" subtitle="Select a card to drill into details" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -300,7 +294,7 @@ function ExecutiveDashboard() {
                     <span className={`rounded-md border px-2 py-1 text-[10px] font-bold uppercase ${STATUS_STYLE[lob.status]}`}>{lob.status}</span>
                   </div>
                   <p className="mt-4 text-[30px] font-bold text-gray-100">{lob.health}%</p>
-                  <Progress value={lob.health} className="mt-2" />
+                  <Progress value={lob.health} tone={STATUS_TONE[lob.status]} className="mt-2" />
                   <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                     <div><p className="font-semibold text-gray-200">{lob.coverage}%</p><p className="text-[10px] text-gray-500">Coverage</p></div>
                     <div><p className="font-semibold text-gray-200">{lob.freshness}%</p><p className="text-[10px] text-gray-500">Freshness</p></div>
@@ -354,13 +348,6 @@ function ProgramManagerDashboard() {
         { name: "SLA", values: [82, 83, 84, 85, 87, 88], color: "#60a5fa" },
         { name: "Readiness", values: [70, 73, 75, 78, 81, 84], color: "#f59e0b" },
       ]} />
-      <Signals items={[
-        { label: "Open Content Requests", value: "46", detail: "Requests across the four-project programme" },
-        { label: "Approval Cycle Time", value: "3.4d", detail: "Average draft-to-approval duration" },
-        { label: "Action Capture", value: "93", detail: "Actions captured in the current reporting period" },
-      ]} />
-
-
       <section>
         <SectionHeading title="Portfolio Health" subtitle="Click Consumer Banking to view portfolio health details" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -431,11 +418,6 @@ function OperationsDashboard() {
         { name: "Self-Service", values: [69, 71, 74, 77, 80, 82], color: "#60a5fa" },
         { name: "Template Adoption", values: [51, 56, 61, 67, 72, 76], color: "#f59e0b" },
       ]} />
-      <Signals items={[
-        { label: "Self-Service Rate", value: "82%", detail: "Queries resolved without expert support" },
-        { label: "Productivity Saved", value: "520h", detail: "Estimated operational time saved" },
-        { label: "Missing Content Signals", value: "39", detail: "Repeated searches with no useful result" },
-      ]} />
       <Watchlist items={[
         { status: "Risk", text: "High-frequency abandoned searches need content-owner assignment." },
         { status: "Warn", text: "Template adoption remains uneven across delivery groups." },
@@ -460,20 +442,15 @@ const DEV_KPIS: Kpi[] = [
 function DeveloperDashboard() {
   return (
     <DashboardShell>
-      <PageHeader scope="Developer · Project Mercury only" />
+      <PageHeader scope="Developer · Project Payments only" />
       <KpiGrid items={DEV_KPIS} />
       <MonthlyBarChart series={[
         { name: "Automation", values: [50, 54, 58, 63, 67, 71], color: "var(--color-state-pass)" },
         { name: "API Completeness", values: [72, 75, 78, 80, 82, 84], color: "#60a5fa" },
         { name: "CI/CD Compliance", values: [56, 59, 61, 63, 66, 68], color: "#f59e0b" },
       ]} />
-      <Signals items={[
-        { label: "Documentation Lag", value: "2.8d", detail: "Average code-to-documentation delay" },
-        { label: "Document Assistant Usage", value: "1.9k", detail: "Project Mercury interactions" },
-        { label: "Open Doc Exceptions", value: "12", detail: "Project items requiring developer action" },
-      ]} />
       <Watchlist items={[
-        { status: "Risk", text: "Twelve documentation exceptions remain open for Project Mercury." },
+        { status: "Risk", text: "Twelve documentation exceptions remain open for Project Payments." },
         { status: "Warn", text: "CI/CD documentation compliance is below the project target." },
         { status: "Warn", text: "Documentation lag remains above the two-day objective." },
         { status: "Good", text: "API completeness and PR-to-doc automation improved this month." },

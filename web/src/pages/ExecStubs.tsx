@@ -215,7 +215,6 @@ export function Analytics() {
         kicker="Delivery Analytics"
         title="Consumer Banking: Velocity & Throughput"
         blurb="Delivered story points across recent sprints, with rolling velocity and momentum."
-        right={<MockButton>↓ Export</MockButton>}
       />
 
       <div className="space-y-6 px-6 pb-10 pt-5">
@@ -279,7 +278,6 @@ export function Initiatives() {
         kicker="Strategic Initiatives"
         title={<><Link to="/strategy" className="text-accent underline underline-offset-2">Consumer Banking</Link>: Active Initiatives</>}
         blurb="Cross-functional initiatives with owners, progress and delivery status."
-        right={<MockButton>Export</MockButton>}
       />
 
       <div className="space-y-6 px-6 pb-10 pt-5">
@@ -332,7 +330,6 @@ export function RiskRegister() {
         kicker="Risk Register"
         title="Consumer Banking: Open Risks"
         blurb="Tracked delivery, platform and compliance risks with impact and owner."
-        right={<MockButton>↓ Export</MockButton>}
       />
 
       <div className="space-y-4 px-6 pb-10 pt-5">

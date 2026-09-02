@@ -50,7 +50,7 @@ export default function AppSidebar() {
   const isProductOps = role === "user_product_ops";
   const isProgramManager = role === "user_program_manager";
   const isDeveloper = role === "user_developer";
-  const [wfmExpanded, setWfmExpanded] = useState(true);
+  const [wfmExpanded, setWfmExpanded] = useState(false);
 
   const PM_NAV: NavItem[] = [
     { label: "Portfolio Health",  path: "/pm-health",        ready: true, icon: "M3 6h14M3 10h14M3 14h9" },

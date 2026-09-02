@@ -490,12 +490,6 @@ const IconChevron = ({ dir = "right" }: { dir?: "left" | "right" }) => (
     }
   </svg>
 );
-const IconDownload = () => (
-  <svg viewBox="0 0 14 14" fill="none" className="size-3 shrink-0" stroke="currentColor" strokeWidth="1.5">
-    <path d="M7 1v8M4 6l3 3 3-3M2 11h10" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
 // ─── Breadcrumb (Phase 5) ─────────────────────────────────────────────────────
 
 function Breadcrumb({ projectName, onHome, onHealth }: {
@@ -536,21 +530,6 @@ function Breadcrumb({ projectName, onHome, onHealth }: {
   );
 }
 
-// ─── Download button ──────────────────────────────────────────────────────────
-
-function DownloadBtn({ id }: { id: string }) {
-  return (
-    <button
-      type="button"
-      title={`Download ${id} — not built yet`}
-      className="flex cursor-not-allowed items-center gap-1 rounded-[7px] border border-ink-700 bg-ink-750 px-2.5 py-1 text-[11px] font-medium text-gray-400 transition-colors hover:border-gray-500 hover:text-gray-200"
-    >
-      <IconDownload />
-      Download
-    </button>
-  );
-}
-
 // ─── Project deliverable row (Phase 4 columns) ────────────────────────────────
 
 function ProjectDelivRow({ d }: { d: Deliverable }) {
@@ -578,9 +557,6 @@ function ProjectDelivRow({ d }: { d: Deliverable }) {
       </td>
       <td className="px-4 py-3">
         <Pill tone={toneFor(d.status)} dot>{STATUS_LABEL[d.status]}</Pill>
-      </td>
-      <td className="px-4 py-3">
-        <DownloadBtn id={d.id} />
       </td>
     </tr>
   );
@@ -691,7 +667,6 @@ function ProjectDeliverablesSection({ projectCode }: { projectCode: string }) {
               <th className="col-label px-4 py-3 text-left">Version</th>
               <th className="col-label px-4 py-3 text-left">Last Updated</th>
               <th className="col-label px-4 py-3 text-left">Status</th>
-              <th className="col-label px-4 py-3 text-left">Download</th>
             </tr>
           </thead>
           <tbody>
@@ -750,12 +725,6 @@ export default function ProgramManagerDeliverables() {
             kicker="Program Manager"
             title="Deliverables"
             blurb={`${projectName} · Documentation, artifacts and delivery tracking`}
-            right={
-              <div className="flex gap-2">
-                <MockButton variant="solid">Export</MockButton>
-                <MockButton variant="solid">New Deliverable</MockButton>
-              </div>
-            }
           />
           <div className="space-y-7 px-6 pt-6">
             <ProjectDeliverablesSection projectCode={selectedProject} />
@@ -775,12 +744,6 @@ export default function ProgramManagerDeliverables() {
           kicker="Program Manager"
           title="Deliverables"
           blurb="Program deliverable management across PAY · CSP · FRD · MOB"
-          right={
-            <div className="flex gap-2">
-              <MockButton variant="solid">Export</MockButton>
-              <MockButton variant="solid">New Deliverable</MockButton>
-            </div>
-          }
         />
 
         <div className="space-y-7 px-6 pt-6">

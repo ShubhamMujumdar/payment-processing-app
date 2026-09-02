@@ -666,12 +666,6 @@ export default function ProgramManagerKnowledgeBase() {
             kicker="Program Manager"
             title="KnowledgeBase"
             blurb={`${projectName} · Documentation, architecture, runbooks and knowledge assets`}
-            right={
-              <div className="flex gap-2">
-                <MockButton variant="solid">Export Index</MockButton>
-                <MockButton variant="solid">Add Document</MockButton>
-              </div>
-            }
           />
           <div className="space-y-7 px-6 pt-6">
             <ProjectKBSection projectCode={selectedProject} />
@@ -693,12 +687,6 @@ export default function ProgramManagerKnowledgeBase() {
           kicker="Program Manager"
           title="KnowledgeBase"
           blurb="Program-level knowledge assets across PAY · CSP · FRD · MOB"
-          right={
-            <div className="flex gap-2">
-              <MockButton variant="solid">Export Index</MockButton>
-              <MockButton variant="solid">Add Document</MockButton>
-            </div>
-          }
         />
 
         <div className="space-y-7 px-6 pt-6">

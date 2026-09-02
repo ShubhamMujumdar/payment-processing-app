@@ -110,7 +110,6 @@ export default function Portfolio() {
         kicker="Q3 Strategic Execution"
         title="Portfolio Intelligence Centre"
         blurb="Health, risk, velocity and OKR alignment across all lines of business."
-        right={<MockButton>Export Report</MockButton>}
       />
 
       <div className="space-y-4 px-6 pb-6 pt-4">
@@ -257,9 +256,8 @@ export default function Portfolio() {
         <div className="grid gap-4 lg:grid-cols-2">
           <InsightCard
             kicker="Strategic Insight" meta="Just now"
-            title="Reallocation Recommended"
-            body="Commercial Payments shows a 15% velocity dip this sprint. Models suggest shifting 3 senior engineers from Fintech Partners to mitigate Q3 delivery risk."
-            action="Execute Transfer"
+            title="Q3 Revenue Commitment at Risk"
+            body="Commercial Payments is tracking 12% below Q3 delivery targets, putting $4.2M of contracted ARR at risk. A rebalancing of capacity from the Consumer Banking portfolio — currently 94% on schedule — would recover the critical path without new headcount."
           />
           <Card className="px-4 py-3 space-y-3">
             <div>

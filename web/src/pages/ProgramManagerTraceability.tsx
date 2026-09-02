@@ -410,7 +410,7 @@ function CrossProjectView() {
   return (
     <Card>
       <table className="w-full text-[13px]">
-        <MatrixHead showGoal />
+        <MatrixHead />
         <tbody>
           {GOALS.map(g => {
             const reqs = REQUIREMENTS.filter(r => r.goalId === g.id);
@@ -418,7 +418,7 @@ function CrossProjectView() {
             return (
               <Fragment key={g.id}>
                 <tr className="border-b border-ink-700 bg-ink-750/60">
-                  <td colSpan={9} className="px-4 py-2.5">
+                  <td colSpan={8} className="px-4 py-2.5">
                     <div className="flex items-center gap-3">
                       <span className="font-mono text-[11px] font-bold text-accent">{g.id}</span>
                       <span className="text-[13px] font-semibold text-gray-100">{g.name}</span>
@@ -551,12 +551,6 @@ export default function ProgramManagerTraceability() {
           kicker="Program Manager"
           title="Traceability"
           blurb="Portfolio requirements traceability across PAY · CSP · FRD · MOB"
-          right={
-            <div className="flex gap-2">
-              <MockButton variant="solid">Export Matrix</MockButton>
-              <MockButton variant="solid">Run Audit</MockButton>
-            </div>
-          }
         />
 
         <div className="space-y-7 px-6 pt-6">

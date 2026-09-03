@@ -142,7 +142,7 @@ function PageHeader({ scope }: { scope: string }) {
 const EXEC_KPIS: Kpi[] = [
   { label: "Knowledge Coverage", value: "89%", delta: "+6%", dir: "up", description: "Complete documentation across all lines of business" },
   { label: "Freshness Compliance", value: "84%", delta: "+4%", dir: "up", description: "Content reviewed within policy windows" },
-  { label: "AI Update Adoption", value: "78%", delta: "+8%", dir: "up", description: "Suggested updates accepted across the organisation" },
+  { label: "AI Recommendation Adoption", value: "78%", delta: "+8%", dir: "up", description: "AI-generated recommendations accepted by teams" },
   { label: "Search Success", value: "87%", delta: "+3%", dir: "up", description: "Search sessions ending with a useful result" },
   { label: "Release Readiness", value: "91%", delta: "+5%", dir: "up", description: "Releases with approved supporting documentation" },
   { label: "Teams Decisions Captured", value: "82%", delta: "+7%", dir: "up", description: "Key decisions converted into governed knowledge" },
@@ -270,8 +270,8 @@ function OperationsDashboard() {
       <PageHeader scope="Operations · Platform-wide adoption, compliance, usage, and productivity" />
       <KpiGrid items={OPS_KPIS} />
       <MonthlyBarChart series={[
-        { name: "Active Users", values: [62, 66, 70, 74, 79, 84], color: "var(--color-state-pass)" },
-        { name: "Self-Service", values: [69, 71, 74, 77, 80, 82], color: "#60a5fa" },
+        { name: "Active KM Users", values: [62, 66, 70, 74, 79, 84], color: "var(--color-state-pass)" },
+        { name: "Self-Service Rate", values: [69, 71, 74, 77, 80, 82], color: "#60a5fa" },
         { name: "Template Adoption", values: [51, 56, 61, 67, 72, 76], color: "#f59e0b" },
       ]} />
       <Signals items={[

@@ -111,7 +111,7 @@ function PageHeader({ scope }: { scope: string }) {
 const EXEC_KPIS: Kpi[] = [
   { label: "Knowledge Coverage", value: "89%", delta: "+6%", dir: "up", progress: 89, description: "Complete documentation across all lines of business" },
   { label: "Freshness Compliance", value: "84%", delta: "+4%", dir: "up", progress: 84, description: "Content reviewed within policy windows" },
-  { label: "AI Update Adoption", value: "78%", delta: "+8%", dir: "up", progress: 78, description: "Suggested updates accepted across the organisation" },
+  { label: "AI Recommendation Adoption", value: "78%", delta: "+8%", dir: "up", progress: 78, description: "AI-generated recommendations accepted by teams" },
   { label: "Search Success", value: "87%", delta: "+3%", dir: "up", progress: 87, description: "Search sessions ending with a useful result" },
   { label: "Release Readiness", value: "91%", delta: "+5%", dir: "up", progress: 91, description: "Releases with approved supporting documentation" },
   { label: "Teams Decisions Captured", value: "82%", delta: "+7%", dir: "up", progress: 82, description: "Key decisions converted into governed knowledge" },
@@ -149,7 +149,7 @@ const LOBS: Lob[] = [
     name: "Consumer Banking", status: "Good", health: 90, coverage: 92, freshness: 88, projects: 19,
     healthTrend: [85, 86, 87, 88, 89, 90],
     metrics: [
-      { label: "AI Update Adoption", value: "81%", progress: 81 },
+      { label: "AI Recommendation Adoption", value: "81%", progress: 81 },
       { label: "Search Success", value: "90%", progress: 90 },
       { label: "Release Readiness", value: "93%", progress: 93 },
       { label: "Open Knowledge Gaps", value: "6", progress: 82 },
@@ -164,7 +164,7 @@ const LOBS: Lob[] = [
     name: "Commercial Payments", status: "Warn", health: 83, coverage: 85, freshness: 80, projects: 24,
     healthTrend: [83, 82, 83, 82, 83, 83],
     metrics: [
-      { label: "AI Update Adoption", value: "74%", progress: 74 },
+      { label: "AI Recommendation Adoption", value: "74%", progress: 74 },
       { label: "Search Success", value: "83%", progress: 83 },
       { label: "Release Readiness", value: "85%", progress: 85 },
       { label: "Open Knowledge Gaps", value: "11", progress: 66 },
@@ -179,7 +179,7 @@ const LOBS: Lob[] = [
     name: "Wealth Management", status: "Good", health: 87, coverage: 88, freshness: 86, projects: 14,
     healthTrend: [82, 83, 84, 85, 86, 87],
     metrics: [
-      { label: "AI Update Adoption", value: "79%", progress: 79 },
+      { label: "AI Recommendation Adoption", value: "79%", progress: 79 },
       { label: "Search Success", value: "88%", progress: 88 },
       { label: "Release Readiness", value: "89%", progress: 89 },
       { label: "Open Knowledge Gaps", value: "7", progress: 80 },
@@ -194,7 +194,7 @@ const LOBS: Lob[] = [
     name: "Fintech Partners", status: "Risk", health: 78, coverage: 81, freshness: 75, projects: 17,
     healthTrend: [83, 82, 81, 80, 79, 78],
     metrics: [
-      { label: "AI Update Adoption", value: "70%", progress: 70 },
+      { label: "AI Recommendation Adoption", value: "70%", progress: 70 },
       { label: "Search Success", value: "80%", progress: 80 },
       { label: "Release Readiness", value: "82%", progress: 82 },
       { label: "Open Knowledge Gaps", value: "14", progress: 58 },
@@ -267,9 +267,9 @@ function ExecutiveDashboard() {
           <p className="mt-4 text-[12px] text-gray-500">Composite of coverage, freshness, adoption, search success, and release readiness.</p>
         </Card>
         <MonthlyBarChart series={[
-          { name: "Coverage", values: [77, 79, 81, 84, 87, 89], color: "var(--color-state-pass)" },
-          { name: "Freshness", values: [74, 76, 78, 80, 82, 84], color: "#60a5fa" },
-          { name: "Adoption", values: [55, 60, 63, 68, 74, 78], color: "#f59e0b" },
+          { name: "Knowledge Coverage", values: [77, 79, 81, 84, 87, 89], color: "var(--color-state-pass)" },
+          { name: "Freshness Compliance", values: [74, 76, 78, 80, 82, 84], color: "#60a5fa" },
+          { name: "AI Recommendation Adoption", values: [55, 60, 63, 68, 74, 78], color: "#f59e0b" },
         ]} />
       </section>
       <section>
@@ -408,8 +408,8 @@ function OperationsDashboard() {
       <PageHeader scope="Operations · Platform-wide adoption, compliance, usage, and productivity" />
       <KpiGrid items={OPS_KPIS} />
       <MonthlyBarChart series={[
-        { name: "Active Users", values: [62, 66, 70, 74, 79, 84], color: "var(--color-state-pass)" },
-        { name: "Self-Service", values: [69, 71, 74, 77, 80, 82], color: "#60a5fa" },
+        { name: "Active KM Users", values: [62, 66, 70, 74, 79, 84], color: "var(--color-state-pass)" },
+        { name: "Self-Service Rate", values: [69, 71, 74, 77, 80, 82], color: "#60a5fa" },
         { name: "Template Adoption", values: [51, 56, 61, 67, 72, 76], color: "#f59e0b" },
       ]} />
       <Watchlist items={[
@@ -439,9 +439,9 @@ function DeveloperDashboard() {
       <PageHeader scope="Developer · Project Payments only" />
       <KpiGrid items={DEV_KPIS} />
       <MonthlyBarChart series={[
-        { name: "Automation", values: [50, 54, 58, 63, 67, 71], color: "var(--color-state-pass)" },
-        { name: "API Completeness", values: [72, 75, 78, 80, 82, 84], color: "#60a5fa" },
-        { name: "CI/CD Compliance", values: [56, 59, 61, 63, 66, 68], color: "#f59e0b" },
+        { name: "PR-to-Doc Automation", values: [50, 54, 58, 63, 67, 71], color: "var(--color-state-pass)" },
+        { name: "API DocCompleteness", values: [72, 75, 78, 80, 82, 84], color: "#60a5fa" },
+        { name: "CI/CD Doc Compliance", values: [56, 59, 61, 63, 66, 68], color: "#f59e0b" },
       ]} />
       <Watchlist items={[
         { status: "Risk", text: "Twelve documentation exceptions remain open for Project Payments." },

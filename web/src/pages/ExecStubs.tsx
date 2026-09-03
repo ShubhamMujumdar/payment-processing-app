@@ -13,15 +13,15 @@ import { Card, MockButton, PageHead, Pill, Progress, SectionTitle, StatCard } fr
  * be the one thing on this screen a viewer could not check.
  */
 
-// Delivered story points across the last 7 sprints (seeded demo data).
+// Delivered story points across the last 7 sprints — combined across PAY, CSP, FRD, MOB.
 const SPRINT_DELIVERY = [
-  { sprint: "S36", points: 42 },
-  { sprint: "S37", points: 55 },
-  { sprint: "S38", points: 48 },
-  { sprint: "S39", points: 66 },
-  { sprint: "S40", points: 61 },
-  { sprint: "S41", points: 74 },
-  { sprint: "S42", points: 80 },
+  { sprint: "S36", points: 198 },
+  { sprint: "S37", points: 224 },
+  { sprint: "S38", points: 211 },
+  { sprint: "S39", points: 258 },
+  { sprint: "S40", points: 243 },
+  { sprint: "S41", points: 276 },
+  { sprint: "S42", points: 312 },
 ];
 
 type ChartView = "bar" | "line";
@@ -205,31 +205,33 @@ export function Analytics() {
   const delta = latest - points[points.length - 2];
 
   // Round the scale up to a clean tick so gridlines read nicely.
-  const scaleMax = Math.ceil(max / 20) * 20;
-  const ticks = Array.from({ length: scaleMax / 20 + 1 }, (_, i) => i * 20).reverse();
+  const tickStep = max > 200 ? 60 : 20;
+  const scaleMax = Math.ceil(max / tickStep) * tickStep;
+  const ticks = Array.from({ length: Math.floor(scaleMax / tickStep) + 1 }, (_, i) => i * tickStep).reverse();
 
   return (
     <>
       <PageMeta title="Analytics · Delivery Metrics" description="Delivered story points and velocity trends." />
       <PageHead
-        kicker="Delivery Analytics"
-        title="Consumer Banking: Velocity & Throughput"
-        blurb="Delivered story points across recent sprints, with rolling velocity and momentum."
+        kicker="Portfolio Analytics"
+        title="All Projects: Velocity & Throughput"
+        blurb="Delivered story points across Projects, recent sprints, with rolling velocity and momentum."
+        right={<Link to="/portfolio" className="inline-flex items-center gap-1.5 rounded-[10px] border border-ink-700 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-300 transition-colors hover:border-gray-500 hover:text-gray-100">← Back to Portfolio</Link>}
       />
 
       <div className="space-y-6 px-6 pb-10 pt-5">
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="Latest Sprint (S42)" value={String(latest)} unit="SP" tone="brand" progress={Math.round((latest / scaleMax) * 100)}
-            note={<span className="font-semibold text-state-pass">↗ +{delta} vs S41</span>} />
+            note={<span className="font-semibold text-state-pass">↗ +{delta} vs S41 · PAY · CSP · FRD · MOB</span>} />
           <StatCard label="Average Velocity" value={String(avg)} unit="SP / sprint" tone="pass"
-            note="Rolling mean across last 7 sprints" />
+            note="Rolling mean across last 7 sprints, all projects" />
           <StatCard label="Peak Delivery" value={String(max)} unit="SP" tone="brand"
-            note="Highest delivered sprint in window" />
+            note="Highest combined sprint in window" />
         </div>
 
         <Card className="px-6 py-5">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-            <SectionTitle aside="Last 7 sprints">Delivered Story Points</SectionTitle>
+            <SectionTitle aside="Last 7 sprints · PAY · CSP · FRD · MOB">Delivered Story Points</SectionTitle>
             <ViewToggle view={view} onChange={setView} />
           </div>
 
@@ -278,6 +280,7 @@ export function Initiatives() {
         kicker="Strategic Initiatives"
         title={<><Link to="/strategy" className="text-accent underline underline-offset-2">Consumer Banking</Link>: Active Initiatives</>}
         blurb="Cross-functional initiatives with owners, progress and delivery status."
+        right={<Link to="/portfolio" className="inline-flex items-center gap-1.5 rounded-[10px] border border-ink-700 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-300 transition-colors hover:border-gray-500 hover:text-gray-100">← Back to Portfolio</Link>}
       />
 
       <div className="space-y-6 px-6 pb-10 pt-5">
@@ -317,10 +320,10 @@ export function Initiatives() {
 
 export function RiskRegister() {
   const risks = [
-    { id: "RSK-118", title: "Upstream Identity API contract change", impact: "High", tone: "fail" as const, owner: "Identity Team", note: "Blocks auth migration; no dated commitment from upstream." },
-    { id: "RSK-114", title: "Elasticsearch cluster stability in dev", impact: "High", tone: "fail" as const, owner: "Platform SRE", note: "Intermittent node loss under indexing load." },
-    { id: "RSK-109", title: "Single approver on production releases", impact: "Medium", tone: "warn" as const, owner: "Delivery", note: "Segregation of duties not yet enforced by environment rules." },
-    { id: "RSK-102", title: "Spacing tokens unsynced from design", impact: "Low", tone: "idle" as const, owner: "Design Systems", note: "Typography mapped; spacing pending." },
+    { id: "RSK-118", title: "PCI DSS v4.0 Certification Deadline at Risk", impact: "High", tone: "fail" as const, assignee: "M. Alvarez", owner: "Compliance & Risk", note: "Auth migration must complete before the June 2026 deadline. Failure to certify suspends card processing across all LOBs — estimated $6.4M daily revenue exposure." },
+    { id: "RSK-114", title: "Payment Processing SLA Breach Under Peak Load", impact: "High", tone: "fail" as const, assignee: "P. Chen", owner: "Platform Engineering", note: "Intermittent failures during peak transaction windows risk contractual SLA penalties with three enterprise clients and potential NPS impact across retail banking." },
+    { id: "RSK-109", title: "Q3 Contractual Commitments at Risk", impact: "Medium", tone: "warn" as const, assignee: "S. Okafor", owner: "Programme Delivery", note: "Three of four Q3 committed features are tracking behind schedule. $2.8M in contracted delivery milestones may not be invoiceable by September 30." },
+    { id: "RSK-102", title: "Real-Time Payments Roadmap 6 Months Behind Competitors", impact: "Low", tone: "idle" as const, assignee: "L. Nguyen", owner: "Product Strategy", note: "Leading fintech competitors have reached 60% market adoption of instant settlement. Our equivalent capability is delayed to Q1 2027, creating a growing differentiation gap." },
   ];
 
   return (
@@ -330,6 +333,7 @@ export function RiskRegister() {
         kicker="Risk Register"
         title="Consumer Banking: Open Risks"
         blurb="Tracked delivery, platform and compliance risks with impact and owner."
+        right={<Link to="/portfolio" className="inline-flex items-center gap-1.5 rounded-[10px] border border-ink-700 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-300 transition-colors hover:border-gray-500 hover:text-gray-100">← Back to Portfolio</Link>}
       />
 
       <div className="space-y-4 px-6 pb-10 pt-5">
@@ -345,7 +349,8 @@ export function RiskRegister() {
             </div>
             <div className="text-right">
               <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-gray-500">Owner</p>
-              <p className="mt-0.5 text-[13px] font-semibold text-gray-200">{r.owner}</p>
+              <p className="mt-0.5 text-[13px] font-semibold text-gray-200">{r.assignee}</p>
+              <p className="mt-0.5 text-[12px] text-gray-500">{r.owner}</p>
             </div>
           </Card>
         ))}

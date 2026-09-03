@@ -14,6 +14,7 @@ import {
   type Run,
   type Workflow,
 } from "../api/code2doc";
+import { DOC_UPDATE_FIXTURES, mockEmailContent, type DocUpdateNotification } from "../api/docUpdateFixtures";
 
 /**
  * The live view: one commit, two pipelines.
@@ -69,33 +70,93 @@ function docStages(run: Run | null): Stage[] {
   });
 }
 
-function ciStages(run: Run | null, workflows: Workflow[], loaded: boolean): Stage[] {
-  const commit: Stage = { id: "commit", label: "Commit pushed", state: run ? "done" : "pending", detail: run?.sha.slice(0, 8) };
-  if (!loaded) return [commit, { id: "ci", label: "Checking CI…", state: "pending" }];
-  if (workflows.length === 0) {
-    return [
-      commit,
-      {
-        id: "none",
-        label: "No workflow",
-        state: "skipped",
-        detail: "none watches this branch",
-      },
-    ];
+/**
+ * Canonical execution order for well-known workflow name tokens.
+ * Lower number = runs earlier in the pipeline.
+ */
+const WORKFLOW_PRIORITY: [string, number][] = [
+  ["ci", 10], ["build", 10], ["test", 10],
+  ["security", 20], ["scan", 20], ["lint", 20], ["quality", 20],
+  ["cd", 30], ["deploy", 30], ["release", 30], ["delivery", 30],
+];
+
+function workflowPriority(name: string): number {
+  const lower = (name ?? "").toLowerCase();
+  for (const [key, pri] of WORKFLOW_PRIORITY) {
+    if (lower.includes(key)) return pri;
   }
-  return [
-    commit,
-    ...workflows.map((w) => ({
+  return 20;
+}
+
+/** Map a single GitHub workflow run to the Track's StageState vocabulary. */
+function workflowState(w: Workflow): StageState {
+  if (w.status !== "completed") {
+    return w.status === "in_progress" ? "active" : "pending";
+  }
+  switch (w.conclusion) {
+    case "success":   return "done";
+    case "cancelled": return "cancelled";
+    case "skipped":   return "skipped";
+    default:          return "failed"; // failure | timed_out | action_required | neutral
+  }
+}
+
+/** Human-readable detail line shown below the stage label. */
+function workflowDetail(w: Workflow, state: StageState): string | undefined {
+  if (state === "active")    return "running";
+  if (state === "pending")   return w.status === "queued" ? "queued" : undefined;
+  if (state === "skipped" && w.status !== "completed") return undefined; // downstream-blocked
+  return w.conclusion ?? undefined;
+}
+
+function ciStages(run: Run | null, workflows: Workflow[], loaded: boolean): Stage[] {
+  const commit: Stage = {
+    id: "commit",
+    label: "Commit pushed",
+    state: run ? "done" : "pending",
+    detail: run?.sha.slice(0, 8),
+  };
+
+  if (!loaded) {
+    return [commit, { id: "ci-loading", label: "Checking CI…", state: "pending" }];
+  }
+  if (workflows.length === 0) {
+    return [commit, { id: "ci-none", label: "No workflow", state: "skipped", detail: "none watches this branch" }];
+  }
+
+  // Sort into canonical execution order (CI → Security → CD), then by start time
+  // for ties so the track reads left-to-right as the pipeline actually ran.
+  const sorted = [...workflows].sort((a, b) => {
+    const pa = workflowPriority(a.name ?? "");
+    const pb = workflowPriority(b.name ?? "");
+    if (pa !== pb) return pa - pb;
+    if (a.started_at && b.started_at) {
+      return new Date(a.started_at).getTime() - new Date(b.started_at).getTime();
+    }
+    return a.started_at ? -1 : b.started_at ? 1 : 0;
+  });
+
+  // Propagate failure: once a stage failed or was cancelled, any downstream
+  // stage that never started is implicitly blocked — show it as skipped.
+  let upstreamFailed = false;
+  const workflowStages: Stage[] = sorted.map((w) => {
+    let state: StageState;
+    if (upstreamFailed && w.status !== "completed") {
+      // Never started because an earlier stage failed
+      state = "skipped";
+    } else {
+      state = workflowState(w);
+      if (state === "failed" || state === "cancelled") upstreamFailed = true;
+    }
+    return {
       id: String(w.id),
-      label: w.name || "workflow",
-      state: (w.status !== "completed"
-        ? "active"
-        : w.conclusion === "success"
-          ? "done"
-          : "failed") as StageState,
-      detail: w.status === "completed" ? (w.conclusion ?? undefined) : w.status.replace("_", " "),
-    })),
-  ];
+      label: w.name ?? "workflow",
+      state,
+      detail: workflowDetail(w, state),
+    };
+  });
+
+  return [commit, ...workflowStages];
 }
 
 /** The plain-English verdict, in one sentence. */
@@ -135,6 +196,7 @@ export default function LivePipeline() {
   const [connected, setConnected] = useState(false);
   const [watching, setWatching] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expandedCommitEmail, setExpandedCommitEmail] = useState(false);
   const selectedRef = useRef<string | null>(null);
   selectedRef.current = selected;
 
@@ -166,6 +228,7 @@ export default function LivePipeline() {
     if (!selected) return;
     setCiLoaded(false);
     setWorkflows([]);
+    setExpandedCommitEmail(false);
     refreshRun(selected);
     getRunCi(selected)
       .then((d) => setWorkflows(d.workflows))
@@ -203,6 +266,32 @@ export default function LivePipeline() {
 
   const docRunning = run !== null && !["proposed", "no-impact", "failed", "published"].includes(run.status);
   const proposals = useMemo(() => (run?.proposals ?? []).filter((p) => p.needs_change), [run]);
+
+  // Derive the email record for this commit. A fixture match means the email was
+  // already sent historically — the fixture itself is the evidence, so we show it
+  // regardless of the live run's current status. For purely live commits we only
+  // show the section once the run reaches "published" (manually approved).
+  const commitEmail = useMemo((): DocUpdateNotification | null => {
+    if (!run) return null;
+    const fixture = DOC_UPDATE_FIXTURES.find((u) => run.sha.startsWith(u.shortSha));
+    if (fixture) return fixture;
+    if (run.status !== "published") return null;
+    const publishedProposal = (run.proposals ?? []).find((p) => p.published);
+    return {
+      runId: run.run_id,
+      shortSha: run.sha.slice(0, 7),
+      pageId: publishedProposal?.page_id ?? "",
+      pageTitle: publishedProposal?.page_title ?? "Documentation",
+      pageUrl: publishedProposal?.anchor_url ?? "https://confluence.example.com",
+      commitMessage: run.message.split("\n")[0],
+      commitAuthor: run.author || "unknown",
+      publishedAt: new Date().toISOString(),
+      rationale: publishedProposal?.rationale ?? "Documentation updated to reflect this commit.",
+      status: "published",
+      emailSentAt: new Date().toISOString(),
+      emailRecipients: ["ops-team@cognizant.com", "platform-sre@cognizant.com"],
+    };
+  }, [run]);
 
   const statusTone = (s: string): "pass" | "warn" | "fail" | "idle" | "brand" => {
     if (s === "proposed" || s === "published") return "pass";
@@ -367,6 +456,68 @@ export default function LivePipeline() {
                         onPublished={() => refreshRun(run.run_id)}
                       />
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Emails Sent — only when this commit is approved and published to Confluence */}
+              {commitEmail && (
+                <div className="mt-5 rounded-[10px] border border-black/[0.09] bg-ink-900 px-5 py-4">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <h2 className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">
+                      Emails Sent
+                    </h2>
+                    <span className="flex items-center gap-1.5 rounded-full border border-state-pass/30 bg-state-pass/10 px-2.5 py-0.5 font-mono text-[10px] font-bold text-state-pass">
+                      <span className="size-1.5 rounded-full bg-state-pass" />
+                      {commitEmail.emailRecipients.length} recipient{commitEmail.emailRecipients.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  <div className="rounded-[10px] border border-black/[0.07] bg-ink-950/60 px-4 py-3">
+                    <div className="flex items-start gap-3">
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="truncate text-[12.5px] font-medium text-gray-200">
+                          {commitEmail.pageTitle}
+                        </p>
+                        <p className="truncate text-[11.5px] text-gray-500">
+                          {commitEmail.commitMessage}
+                        </p>
+                        <p className="text-[11px] text-gray-600">
+                          → {commitEmail.emailRecipients.join(", ")}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setExpandedCommitEmail((v) => !v)}
+                        className="shrink-0 text-[11px] text-gray-500 transition-colors hover:text-gray-300"
+                      >
+                        {expandedCommitEmail ? "Hide ↑" : "View Email ↓"}
+                      </button>
+                    </div>
+
+                    {expandedCommitEmail && (() => {
+                      const email = mockEmailContent(commitEmail);
+                      return (
+                        <div className="mt-3 rounded-[8px] border border-state-warn/20 bg-state-warn/[0.04] p-3">
+                          <div className="space-y-0.5 font-mono text-[11px]">
+                            <p>
+                              <span className="text-gray-600">From:    </span>
+                              <span className="text-gray-400">{email.from}</span>
+                            </p>
+                            <p>
+                              <span className="text-gray-600">To:      </span>
+                              <span className="text-gray-400">{email.to}</span>
+                            </p>
+                            <p>
+                              <span className="text-gray-600">Subject: </span>
+                              <span className="text-gray-300">{email.subject}</span>
+                            </p>
+                          </div>
+                          <div className="mt-3 whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-gray-500">
+                            {email.body}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}

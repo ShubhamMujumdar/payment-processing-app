@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
  * moves when a label gets longer would drag the arrow off its anchor.
  */
 
-export type StageState = "pending" | "active" | "done" | "failed" | "skipped";
+export type StageState = "pending" | "active" | "done" | "failed" | "cancelled" | "skipped";
 
 export interface Stage {
   id: string;
@@ -21,19 +21,21 @@ export interface Stage {
 export const NODE_WIDTH = 114;
 
 const DOT: Record<StageState, string> = {
-  pending: "border-ink-500 bg-ink-900",
-  active: "border-brand-400 bg-brand-500",
-  done: "border-accent/40 bg-accent/70",
-  failed: "border-state-fail bg-state-fail/30",
-  skipped: "border-ink-600 bg-ink-850",
+  pending:   "border-ink-500 bg-ink-900",
+  active:    "border-brand-400 bg-brand-500",
+  done:      "border-accent/40 bg-accent/70",
+  failed:    "border-state-fail bg-state-fail/30",
+  cancelled: "border-state-warn/80 bg-state-warn/20",
+  skipped:   "border-ink-600 bg-ink-850",
 };
 
 const LABEL: Record<StageState, string> = {
-  pending: "text-gray-600",
-  active: "text-accent",
-  done: "text-gray-300",
-  failed: "text-state-fail",
-  skipped: "text-gray-600",
+  pending:   "text-gray-600",
+  active:    "text-accent",
+  done:      "text-gray-300",
+  failed:    "text-state-fail",
+  cancelled: "text-state-warn",
+  skipped:   "text-gray-600",
 };
 
 export function Track({

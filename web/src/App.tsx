@@ -28,7 +28,7 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 function RoleIndex() {
   const role = localStorage.getItem("demo_role");
   if (role === "user_executive") return <Navigate to="/portfolio" replace />;
-  if (role === "user_program_manager") return <Navigate to="/knowledge-management" replace />;
+  if (role === "user_program_manager") return <Navigate to="/pm-health" replace />;
   if (role === "user_developer") return <Navigate to="/knowledge-management" replace />;
   if (role === "user_product_ops") return <Navigate to="/knowledge-management" replace />;
   return <Navigate to="/knowledge-management" replace />;

@@ -151,7 +151,7 @@ export default function Strategy() {
           `ID: ${projectId}`,
         ]}
         title={`${p.name}: Detailed Health & Execution`}
-        right={<Pill tone={p.statusTone} dot>{p.healthState}</Pill>}
+        right={<Link to="/initiatives" className="inline-flex items-center gap-1.5 rounded-[10px] border border-ink-700 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-300 transition-colors hover:border-gray-500 hover:text-gray-100">← Back to LOB Initiatives</Link>}
       />
 
       <div className="space-y-6 px-6 pb-10 pt-5">
@@ -171,6 +171,7 @@ export default function Strategy() {
               <option key={id} value={id}>{id} — {PROJECTS[id].name}</option>
             ))}
           </select>
+          <Pill tone={p.statusTone} dot>{p.healthState}</Pill>
         </div>
 
         {/* ── Top stat row ── */}
@@ -278,7 +279,6 @@ export default function Strategy() {
           <Card className="px-6 py-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SectionTitle>Design-to-Dev Handoff Status</SectionTitle>
-              <MockButton>View Figma Spec</MockButton>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               {p.handoff.map((h) => (

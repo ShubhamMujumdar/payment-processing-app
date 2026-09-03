@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import PageMeta from "../components/common/PageMeta";
-import DocUpdatesTile from "../components/code2doc/DocUpdatesTile";
 import { getConsole } from "../api/client";
 import { getRuns } from "../api/code2doc";
 import type { ConsoleData, StageId, WorkPacket } from "../api/types";
@@ -375,6 +374,7 @@ export default function DeveloperView() {
                 })}
               </div>
             )}
+
           </section>
 
           <section>
@@ -396,8 +396,6 @@ export default function DeveloperView() {
             </p>
           </section>
         </div>
-
-        <DocUpdatesTile now={now} />
 
         <p className="text-[12.5px] text-gray-500">
           Derived from the same event log as the{" "}

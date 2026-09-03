@@ -311,7 +311,7 @@ function ExecutiveDashboard() {
       <Watchlist items={[
         { status: "Risk", text: "Fintech Partners freshness is below the organisation target." },
         { status: "Warn", text: "Commercial Payments has elevated unresolved knowledge gaps." },
-        { status: "Warn", text: "Knowledge graph coverage trails the other executive KPIs." },
+        { status: "Good", text: "Wealth Management KM health has improved 5 points over 6 sprints, with Advisory segment leading at 90% coverage." },
         { status: "Good", text: "Consumer Banking is above target for coverage and freshness." },
       ]} />
     </DashboardShell>
@@ -342,12 +342,6 @@ function ProgramManagerDashboard() {
   return (
     <DashboardShell>
       <PageHeader scope="Program Manager · Aggregate of Consumer Banking — Payments, Customer Service Portal, Fraud & Risk Engine, and Merchant Onboarding" />
-      <KpiGrid items={PM_KPIS} />
-      <MonthlyBarChart series={[
-        { name: "Completion", values: [67, 70, 73, 76, 79, 81], color: "var(--color-state-pass)" },
-        { name: "SLA", values: [82, 83, 84, 85, 87, 88], color: "#60a5fa" },
-        { name: "Readiness", values: [70, 73, 75, 78, 81, 84], color: "#f59e0b" },
-      ]} />
       <section>
         <SectionHeading title="Portfolio Health" subtitle="Click Consumer Banking to view portfolio health details" />
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

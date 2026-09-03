@@ -58,6 +58,103 @@ const MILESTONES: { project: string; title: string; date: string; daysOut: numbe
   { project: "CSP", title: "v3.2 Production Release",   date: "Oct 8, 2026",  daysOut: 37, status: "on-track"  },
 ];
 
+// ─── Knowledge Management KPIs (moved from KnowledgeManagement landing page) ──
+
+type KmKpi = {
+  label: string; value: string;
+  delta?: string; dir?: "up" | "down" | "flat";
+  description: string; progress?: number;
+};
+
+const KM_MONTHS = ["Mar", "Apr", "May", "Jun", "Jul", "Aug"];
+
+const PM_KM_KPIS: KmKpi[] = [
+  { label: "Documentation Completion", value: "81%",  delta: "+7%",      dir: "up",   progress: 81, description: "Required project artifacts completed" },
+  { label: "Open Content Requests",    value: "46",   delta: "9 overdue", dir: "flat", progress: 62, description: "Requests across Payments, CSP, Fraud & Risk Engine, and Merchant Onboarding" },
+  { label: "Approval Cycle Time",      value: "3.4d", delta: "Target 2d", dir: "down", progress: 59, description: "Average draft-to-approval duration" },
+  { label: "SLA Compliance",           value: "88%",  delta: "+2%",      dir: "up",   progress: 88, description: "Reviews and approvals completed on time" },
+  { label: "Action Items Captured",    value: "93%",  delta: "+5%",      dir: "up",   progress: 93, description: "Meeting actions stored with owners" },
+  { label: "Decision Traceability",    value: "86%",  delta: "+6%",      dir: "up",   progress: 86, description: "Decisions linked to delivery artifacts" },
+  { label: "Release Doc Readiness",    value: "84%",  delta: "+4%",      dir: "up",   progress: 84, description: "Milestones with approved release documentation" },
+  { label: "Project KM Health",        value: "79%",  delta: "+3%",      dir: "up",   progress: 79, description: "Aggregate health across the four projects" },
+];
+
+const KM_CHART_SERIES = [
+  { name: "Documentation Completion", values: [64, 68, 76, 81, 89, 95], color: "#A855F7" },
+  { name: "SLA Compliance",           values: [88, 84, 90, 86, 92, 89], color: "#22D3EE" },
+  { name: "Release Doc Readiness",    values: [48, 57, 63, 74, 82, 91], color: "#E879F9" },
+];
+
+function kmDirSymbol(dir: "up" | "down" | "flat" = "flat") {
+  return dir === "up" ? "↑" : dir === "down" ? "↓" : "→";
+}
+
+function KmKpiCard({ kpi }: { kpi: KmKpi }) {
+  return (
+    <Card className="flex min-h-[120px] flex-col p-3.5">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[10.5px] font-semibold uppercase leading-tight tracking-wide text-gray-500">
+          {kpi.label}
+        </p>
+        {kpi.delta && (
+          <span className="shrink-0 rounded-full bg-ink-750 px-1.5 py-0.5 text-[10px] font-semibold text-gray-400">
+            {kmDirSymbol(kpi.dir)} {kpi.delta}
+          </span>
+        )}
+      </div>
+      <p className="mt-2 text-[22px] font-bold leading-none tracking-tight text-gray-100">{kpi.value}</p>
+      {kpi.progress !== undefined && (
+        <div className="mt-2 flex items-center gap-1.5">
+          <Progress
+            value={kpi.progress}
+            tone={kpi.progress >= 90 ? "pass" : kpi.progress >= 75 ? "brand" : kpi.progress >= 60 ? "warn" : "fail"}
+            className="flex-1"
+          />
+          <span className="w-7 text-right text-[10px] font-semibold text-gray-500">{kpi.progress}%</span>
+        </div>
+      )}
+      <p className="mt-auto pt-2 text-[10.5px] leading-4 text-gray-500">{kpi.description}</p>
+    </Card>
+  );
+}
+
+function KmMonthlyBarChart() {
+  const max = Math.max(...KM_CHART_SERIES.flatMap(s => s.values), 1);
+  return (
+    <Card className="mt-5 p-3.5">
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <h2 className="text-[18px] font-bold text-gray-100">Monthly KPI Trend</h2>
+        <p className="text-[12px] text-gray-500">Mar to Aug</p>
+      </div>
+      <div className="flex h-32 items-end gap-2 border-b border-ink-700 px-1 pb-4 pt-2">
+        {KM_MONTHS.map((month, i) => (
+          <div key={month} className="flex h-full min-w-0 flex-1 flex-col justify-end">
+            <div className="flex h-full items-end justify-center gap-0.5">
+              {KM_CHART_SERIES.map(s => (
+                <div
+                  key={s.name}
+                  title={`${s.name}: ${s.values[i]}`}
+                  className="w-full max-w-3 rounded-t-sm transition-opacity hover:opacity-80"
+                  style={{ height: `${Math.max((s.values[i] / max) * 100, 5)}%`, background: s.color }}
+                />
+              ))}
+            </div>
+            <span className="mt-1.5 text-center text-[9px] text-gray-500">{month}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-3">
+        {KM_CHART_SERIES.map(s => (
+          <span key={s.name} className="flex items-center gap-1.5 text-[10px] text-gray-500">
+            <i className="h-1.5 w-1.5 rounded-sm" style={{ background: s.color }} />
+            {s.name}
+          </span>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 // ─── Project-specific KPIs ────────────────────────────────────────────────────
 
 type ProjectKpi = { label: string; value: string; delta: string; up: boolean; progress: number; description: string };
@@ -485,6 +582,17 @@ export default function ProgramManagerHealth() {
                 </tbody>
               </table>
             </Card>
+          </section>
+
+          {/* ── 2b. Knowledge Management KPIs ─────────────────────────────── */}
+          <section>
+            <SectionTitle aside="Mar → Aug 2026 · documentation health indicators">
+              Knowledge Management KPIs
+            </SectionTitle>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {PM_KM_KPIS.map(k => <KmKpiCard key={k.label} kpi={k} />)}
+            </div>
+            <KmMonthlyBarChart />
           </section>
 
           {/* ── 3. Cross-Project Metrics + Health Trend ───────────────────── */}

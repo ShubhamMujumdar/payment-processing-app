@@ -242,7 +242,7 @@ export default function Login() {
             {/* Headline */}
             <h1 style={{ color:"#fff", fontSize:34, fontWeight:800, lineHeight:1.15,
               margin:"0 0 14px", letterSpacing:"-0.025em", maxWidth:360 }}>
-              Intelligent<br/>Commerce<br/>Operations
+              Intelligent Documentation<br/>for Modern<br/>Codebases
             </h1>
             <p style={{ color:"rgba(255,255,255,0.58)", fontSize:13.5, lineHeight:1.7,
               margin:"0 0 44px", maxWidth:340 }}>

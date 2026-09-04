@@ -7,7 +7,7 @@
  * (which is gitignored) rather than a client's name in public git history.
  *
  *   VITE_BRAND_NAME=ACME
- *   VITE_BRAND_PRODUCT=Workforce Management
+ *   VITE_BRAND_PRODUCT=Strategic Platform Management
  *   VITE_BRAND_PORTAL=Executive KM Portal
  */
 export const BRAND = {

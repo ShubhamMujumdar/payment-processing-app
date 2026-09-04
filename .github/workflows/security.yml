@@ -47,7 +47,7 @@ jobs:
           cache: maven
 
       - name: Initialise CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: java-kotlin
           # security-and-quality is broader than the default suite; for a
@@ -58,7 +58,7 @@ jobs:
         run: mvn -B -ntp clean compile -DskipTests
 
       - name: Run CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
           category: /language:java-kotlin
 
@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload results to the Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-deps.sarif
           category: trivy-dependencies
@@ -183,7 +183,7 @@ jobs:
 
       - name: Upload results to the Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-image.sarif
           category: trivy-image

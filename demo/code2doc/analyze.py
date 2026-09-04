@@ -91,31 +91,6 @@ reviewer can find what you missed, but may approve what you got subtly wrong.
 - Never invent behaviour the diff does not show."""
 
 
-
-class NewPage(BaseModel):
-    """A page that does not exist yet, for a change nothing documents."""
-
-    needed: bool = Field(description="False if one of the candidate sections does after all cover this subject, or if the change does not warrant its own page.")
-    title: str = Field(description="Page title in the style of the existing corpus, e.g. 'payment-refund-policy'. Empty when needed is false.")
-    storage_html: str = Field(description="The whole page in Confluence storage format: <h1>/<h2> headings, <p>, <table> with <tbody>/<tr>/<th>/<td>. No markdown, no <html> or <body> wrapper. Empty when needed is false.")
-    rationale: str = Field(description="One or two sentences a reviewer can check: what the change introduces, and why no existing page covers it.")
-    code_citation: str = Field(description="File and symbol from the diff that justifies the page.")
-    confidence: str = Field(description="high, medium or low.")
-
-
-
-SYSTEM_NEW_PAGE = """You decide whether a code change introduces a subject the documentation does not cover at all, and if so you write the page for it.
-
-You are called only when retrieval already searched the corpus and every candidate section was judged not to need changing. That is weak evidence of a gap, not proof: retrieval can miss, and a near-miss section may be the right home for this after all.
-
-Rules:
-- Prefer needed false. Extending a page someone already maintains beats creating a second page on the same subject, and a corpus that grows a page per commit is worse than one that is slightly out of date.
-- Set needed false if any candidate below is plausibly the right home, even if it would need more than a minimal edit.
-- Set needed true only for a genuinely new subject: a new capability, endpoint, policy or entity that no candidate describes.
-- Write the page in the corpus's own shape: a short intent paragraph, then numbered sections with tables where the existing pages use tables.
-- Document only what the diff shows. Where the change implies something you cannot see -- an owner, an SLA, a rollout date -- leave the row out rather than invent it. A page that is thin but true is reviewable; one padded with plausible detail is not."""
-
-
 def _client() -> Any:
     import anthropic
 
@@ -163,38 +138,5 @@ def propose_redline(diff: str, section_title: str, section_text: str, summary: s
             }
         ],
         output_format=Redline,
-    )
-    return response.parsed_output
-
-
-def propose_new_page(diff: str, summary: str, candidates: list[tuple[str, str]]) -> NewPage:
-    """Diff plus the sections retrieval found and rejected, in; a page, or a no, out.
-
-    `candidates` are the near misses -- what the corpus already has that came
-    closest. They are passed in so the model can decline: the common case is not
-    a gap but a section that should have been edited and was not.
-    """
-    shown = "\n\n".join(
-        f"Candidate {i + 1}: {title}\n\n```\n{text[:1200]}\n```"
-        for i, (title, text) in enumerate(candidates)
-    ) or "No candidate sections were retrieved at all."
-
-    response = _client().messages.parse(
-        model=MODEL,
-        max_tokens=8000,
-        thinking={"type": "adaptive"},
-        system=SYSTEM_NEW_PAGE,
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    f"Code change{f' ({summary})' if summary else ''}:\n\n"
-                    f"```diff\n{diff}\n```\n\n"
-                    f"The corpus was searched and these came closest. Each was judged "
-                    f"not to need changing:\n\n{shown}"
-                ),
-            }
-        ],
-        output_format=NewPage,
     )
     return response.parsed_output

@@ -645,19 +645,10 @@ function ProposalCard({
           ))}
         </div>
 
-        {/* A new-page proposal has no line range and no rerank score: it was
-            not retrieved from anywhere. Rendering those unconditionally threw
-            on the first create proposal and blanked the whole screen. */}
         <p className="mt-2 text-[10.5px] text-gray-600">
           <Ident dim>{proposal.code_citation}</Ident>
-          {proposal.line_start != null && proposal.line_end != null && (
-            <>{" · "}lines {proposal.line_start}–{proposal.line_end}</>
-          )}
-          {proposal.rerank_score != null ? (
-            <>{" · "}rerank {proposal.rerank_score > 0 ? "+" : ""}{proposal.rerank_score.toFixed(2)}</>
-          ) : (
-            <>{" · "}no existing section — new page</>
-          )}
+          {" · "}lines {proposal.line_start}–{proposal.line_end}
+          {" · "}rerank {proposal.rerank_score > 0 ? "+" : ""}{proposal.rerank_score.toFixed(2)}
         </p>
       </div>
 

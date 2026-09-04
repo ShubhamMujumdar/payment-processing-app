@@ -50,9 +50,6 @@ export interface Analysis {
 }
 
 export interface Proposal {
-  /** "create" means no page covers this yet and one was drafted. Absent on
-   *  proposals written before the create path existed; those are all edits. */
-  kind?: "edit" | "create";
   page_id: string;
   page_title: string;
   heading_path: string;

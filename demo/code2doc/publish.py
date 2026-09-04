@@ -282,46 +282,6 @@ def publish_proposal(
     return result
 
 
-def publish_new_page(
-    client: Any,
-    title: str,
-    storage_html: str,
-    parent_id: str | None = None,
-    dry_run: bool = True,
-) -> dict[str, Any]:
-    """Plan the creation, and create it only if `dry_run` is False.
-
-    The same shape and the same default as publish_proposal, deliberately: the
-    UI and the API branch on `kind`, not on two different result contracts, and
-    creating a page in a space other people use deserves the gate an edit gets.
-
-    There is no version to collide on, so the equivalent safety check is the
-    title: Confluence will happily hold two pages with the same name, and the
-    second one is how a corpus starts rotting.
-    """
-    plan = client.dry_run_create(title, storage_html)
-
-    result: dict[str, Any] = {
-        "page_id": plan.get("existing_page_id"),
-        "title": title,
-        "current_version": None,
-        "dry_run": dry_run,
-        "ok": plan["would_create"],
-        "problem": plan["problem"],
-        "fragments": [{"old": "(nothing)", "new": f"{plan['characters']} characters", "matches": 1}],
-        "published": False,
-    }
-    if not result["ok"] or dry_run:
-        return result
-
-    response = client.create_page(title, storage_html, parent_id=parent_id, confirm=True)
-    result["published"] = True
-    result["page_id"] = response.get("id")
-    result["new_version"] = (response.get("version") or {}).get("number", 1)
-    result["url"] = response.get("_links", {}).get("webui")
-    return result
-
-
 def find_changed_value(existing: str, proposed: str) -> str:
     """Human-readable one-liner for a log or an event payload."""
     fragments = minimal_fragments(existing, proposed)

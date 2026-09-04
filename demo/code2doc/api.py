@@ -278,30 +278,19 @@ def publish(run_id: str, index: int, request: PublishRequest) -> dict[str, Any]:
     cfg = config()
     cfg.require_confluence()
 
-    from .publish import publish_new_page, publish_proposal, version_message
+    from .publish import publish_proposal, version_message
     from .sources.confluence import ConfluenceClient, ConfluenceError
 
     client = ConfluenceClient(cfg.base_url, cfg.email, cfg.api_token, cfg.space_key)
     try:
-        # `kind` is absent on proposals written before the create path existed;
-        # those are all edits.
-        if proposal.get("kind") == "create":
-            result = publish_new_page(
-                client,
-                title=proposal["page_title"],
-                storage_html=proposal["proposed_text"],
-                parent_id=os.getenv("CONFLUENCE_PARENT_PAGE_ID") or None,
-                dry_run=request.dry_run,
-            )
-        else:
-            result = publish_proposal(
-                client,
-                page_id=proposal["page_id"],
-                existing_text=proposal["existing_text"],
-                proposed_text=proposal["proposed_text"],
-                message=version_message(run["sha"], run["message"]),
-                dry_run=request.dry_run,
-            )
+        result = publish_proposal(
+            client,
+            page_id=proposal["page_id"],
+            existing_text=proposal["existing_text"],
+            proposed_text=proposal["proposed_text"],
+            message=version_message(run["sha"], run["message"]),
+            dry_run=request.dry_run,
+        )
     except ConfluenceError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
     finally:
@@ -311,10 +300,9 @@ def publish(run_id: str, index: int, request: PublishRequest) -> dict[str, Any]:
         proposals[index] = {**proposal, "published": True}
         _runs().update(run_id, proposals_json=proposals)
         _runs().emit(run_id, "published", {
-            "kind": proposal.get("kind", "edit"),
             "page_title": proposal["page_title"],
             "heading_path": proposal["heading_path"],
-            "url": result.get("url") or proposal.get("anchor_url"),
+            "url": proposal["anchor_url"],
             "version": result.get("new_version"),
         })
     return result

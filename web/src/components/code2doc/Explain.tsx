@@ -74,16 +74,12 @@ export default function Explain({ run }: { run: Run }) {
   const timing = (kind: string) => run.timeline?.find((t) => t.kind === kind)?.seconds ?? null;
   const proposals = run.proposals ?? [];
   const edits = proposals.filter((p) => p.needs_change);
-  const creations = proposals.filter((p) => p.kind === "create" && p.needs_change);
   const lines = changedLines(run.diff);
   const files = (run.files ?? []).filter((f) => !f.skipped);
   const skipped = (run.files ?? []).filter((f) => f.skipped);
 
-  // A new-page proposal was never retrieved or scored, so it does not belong
-  // in the ranked list and a null score would skew the scale for the rest.
-  const ranked = proposals.filter((p) => p.rerank_score != null);
   // Bars are relative to the strongest result in this search.
-  const scores = ranked.map((p) => p.rerank_score);
+  const scores = proposals.map((p) => p.rerank_score);
   const best = scores.length ? Math.max(...scores) : 0;
   const worst = scores.length ? Math.min(...scores) : 0;
   const width = (score: number) =>
@@ -172,10 +168,10 @@ export default function Explain({ run }: { run: Run }) {
         title="Ranked what came back"
         what="Every section in Confluence is scored against each question, then re-scored by a model that reads question and section together. Bars are relative to the best match here."
         seconds={timing("retrieved")}
-        badge={`${ranked.length} candidates`}
+        badge={`${proposals.length} candidates`}
       >
         <ul className="space-y-1.5">
-          {ranked.map((p, i) => (
+          {proposals.map((p, i) => (
             <li key={`${p.page_id}-${p.line_start}`} className="flex items-center gap-3">
               <span className="w-4 shrink-0 text-right font-mono text-[11px] text-gray-600">
                 {i + 1}
@@ -200,39 +196,23 @@ export default function Explain({ run }: { run: Run }) {
         title="Decided, section by section"
         what="Each candidate is shown to the model with the diff. Leaving a section alone is a valid answer, and it has to give a reason either way."
         seconds={timing("proposed")}
-        badge={
-          creations.length
-            ? `${creations.length} new page · ${edits.length - creations.length} to change`
-            : `${edits.length} to change · ${proposals.length - edits.length} left alone`
-        }
+        badge={`${edits.length} to change · ${proposals.length - edits.length} left alone`}
       >
         <ul className="space-y-1.5">
           {proposals.map((p) => (
             <li
-              key={p.kind === "create" ? `new-${p.page_title}` : `${p.page_id}-${p.line_start}`}
+              key={`${p.page_id}-${p.line_start}`}
               className={`rounded-[10px] border px-3 py-2 ${
-                p.kind === "create"
-                  ? "border-state-pass/40 bg-state-pass/[0.08]"
-                  : p.needs_change
-                    ? "border-accent/40 bg-accent-soft"
-                    : "border-black/[0.07] bg-black/[0.025]"
+                p.needs_change ? "border-accent/40 bg-accent-soft" : "border-black/[0.07] bg-black/[0.025]"
               }`}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className={
-                  p.kind === "create" ? "text-state-pass" : p.needs_change ? "text-accent" : "text-gray-600"
-                }>
-                  {p.kind === "create" ? "＋" : p.needs_change ? "✎" : "✓"}
+                <span className={p.needs_change ? "text-accent" : "text-gray-600"}>
+                  {p.needs_change ? "✎" : "✓"}
                 </span>
-                <span className="text-[12px] text-gray-300">
-                  {p.kind === "create" ? p.page_title : p.heading_path}
-                </span>
-                <span className={`ml-auto text-[11px] ${
-                  p.kind === "create" ? "font-semibold text-state-pass" : "text-gray-600"
-                }`}>
-                  {p.kind === "create"
-                    ? "new page — nothing covers this"
-                    : p.needs_change ? "needs changing" : "already correct"}
+                <span className="text-[12px] text-gray-300">{p.heading_path}</span>
+                <span className="ml-auto text-[11px] text-gray-600">
+                  {p.needs_change ? "needs changing" : "already correct"}
                 </span>
               </div>
               <p className="mt-1 text-[11.5px] text-gray-500">{p.rationale}</p>

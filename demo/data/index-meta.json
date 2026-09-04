@@ -1,7 +1,7 @@
 {
   "embedding_model": "bge-large-en-v1.5",
   "dimension": 1024,
-  "built_at": "2026-08-18T15:35:37",
+  "built_at": "2026-09-04T07:58:29",
   "truncated_chunks": 0,
   "chunks": 43
 }

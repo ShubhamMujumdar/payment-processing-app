@@ -38,7 +38,7 @@ This Technical Design Document is code-impacted. Changes to APIs, DTOs, entities
 |---|---|---|---|
 | id | Long | Primary key | Payment identifier |
 | customerId | Long | Not null | Customer reference |
-| amount | BigDecimal | Minimum 0.01 | Payment amount |
+| amount | BigDecimal | Minimum 0.01, maximum 10000.00 | Payment amount |
 | currency | String | 3 uppercase letters | Payment currency |
 | paymentReference | String | Not blank, unique | External business payment reference |
 | status | Enum | CREATED to terminal state | Lifecycle state |
@@ -62,6 +62,9 @@ This Technical Design Document is code-impacted. Changes to APIs, DTOs, entities
 - Track status moves INITIATED to PROCESSING to SUCCESS.
 - FAILED and CANCELLED are terminal states preserved by status tracking.
 - Duplicate payment reference is rejected with HTTP 409.
+- Payment amount is capped at 10000.00 per transaction by request validation.
+- Payers also have a daily aggregate cap; payers without a configured limit fall back to the platform defaults of 10000.00 per transaction and 25000.00 per day.
+- A payment that would breach either ceiling raises PaymentLimitExceededException, which reports the breached limit and the attempted total.
 
 # 6. Workflows
 

@@ -151,7 +151,7 @@ export default function Strategy() {
           `ID: ${projectId}`,
         ]}
         title={`${p.name}: Detailed Health & Execution`}
-        right={<Link to="/initiatives" className="inline-flex items-center gap-1.5 rounded-[10px] border border-ink-700 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-300 transition-colors hover:border-gray-500 hover:text-gray-100">← Back to LOB Initiatives</Link>}
+        right={<Link to="/portfolio" className="inline-flex items-center gap-1.5 rounded-[10px] border border-ink-700 bg-white px-3.5 py-2 text-[13px] font-semibold text-gray-300 transition-colors hover:border-gray-500 hover:text-gray-100">← Back to Portfolio</Link>}
       />
 
       <div className="space-y-6 px-6 pb-10 pt-5">

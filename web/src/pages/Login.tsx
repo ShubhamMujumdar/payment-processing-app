@@ -9,7 +9,7 @@ import { BRAND } from "../brand";
 const ROLES = [
   { id: "user_executive",       label: "Executive",       initials: "EX", defaultPath: "/portfolio" },
   { id: "user_developer",       label: "Developer",       initials: "DV", defaultPath: "/knowledge-management" },
-  { id: "user_program_manager", label: "Program Manager", initials: "PM", defaultPath: "/knowledge-management" },
+  { id: "user_program_manager", label: "Program Manager", initials: "PM", defaultPath: "/pm-health" },
   { id: "user_product_ops",     label: "Product Ops",     initials: "PO", defaultPath: "/knowledge-management" },
 ];
 

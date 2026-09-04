@@ -12,7 +12,7 @@ import Portfolio from "./pages/Portfolio";
 import Strategy from "./pages/Strategy";
 import { Analytics, Initiatives, RiskRegister } from "./pages/ExecStubs";
 import NotFound from "./pages/OtherPage/NotFound";
-import Login from "./pages/Login";
+import Login, { ROLES } from "./pages/Login";
 import ProgramManagerHealth from "./pages/ProgramManagerHealth";
 import ProgramManagerDeliverables from "./pages/ProgramManagerDeliverables";
 import ProgramManagerKnowledgeBase from "./pages/ProgramManagerKnowledgeBase";
@@ -26,12 +26,13 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 }
 
 function RoleIndex() {
+  // Reads the same landing table the sign-in screen uses, so the two cannot
+  // disagree. They had: this sent a program manager to /pm-health while
+  // Login sent them to /knowledge-management, and Login won because it
+  // navigates straight to the path rather than through here.
   const role = localStorage.getItem("demo_role");
-  if (role === "user_executive") return <Navigate to="/portfolio" replace />;
-  if (role === "user_program_manager") return <Navigate to="/pm-health" replace />;
-  if (role === "user_developer") return <Navigate to="/knowledge-management" replace />;
-  if (role === "user_product_ops") return <Navigate to="/knowledge-management" replace />;
-  return <Navigate to="/knowledge-management" replace />;
+  const landing = ROLES.find((r) => r.id === role)?.defaultPath;
+  return <Navigate to={landing ?? "/knowledge-management"} replace />;
 }
 
 function BlockProductOps({ children }: { children: React.ReactNode }) {

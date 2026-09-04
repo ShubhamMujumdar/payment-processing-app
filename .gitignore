@@ -45,3 +45,7 @@ code2doc_executive_rfp.pptx
 # the server holds open -- so this 270KB zip is how a new machine gets one
 # without a GITHUB_TOKEN. `run.py restore-graph` unpacks it.
 !spine/graph-snapshot.zip
+make-ui-changes.ts
+package-lock.json
+package.json
+docs/demo-runbook.md

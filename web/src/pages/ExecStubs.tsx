@@ -222,7 +222,7 @@ export function Analytics() {
       <div className="space-y-6 px-6 pb-10 pt-5">
         <div className="grid gap-4 md:grid-cols-3">
           <StatCard label="Latest Sprint (S42)" value={String(latest)} unit="SP" tone="brand" progress={Math.round((latest / scaleMax) * 100)}
-            note={<span className="font-semibold text-state-pass">↗ +{delta} vs S41 · PAY · CSP · FRD · MOB</span>} />
+            note={<span className="font-semibold text-state-pass">↗ +{delta} vs S41 </span>} />
           <StatCard label="Average Velocity" value={String(avg)} unit="SP / sprint" tone="pass"
             note="Rolling mean across last 7 sprints, all projects" />
           <StatCard label="Peak Delivery" value={String(max)} unit="SP" tone="brand"
@@ -231,7 +231,7 @@ export function Analytics() {
 
         <Card className="px-6 py-5">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-            <SectionTitle aside="Last 7 sprints · PAY · CSP · FRD · MOB">Delivered Story Points</SectionTitle>
+            <SectionTitle aside="Last 7 sprints">Delivered Story Points</SectionTitle>
             <ViewToggle view={view} onChange={setView} />
           </div>
 

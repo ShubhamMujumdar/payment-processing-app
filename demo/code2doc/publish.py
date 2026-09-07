@@ -130,6 +130,13 @@ def minimal_fragments(existing: str, proposed: str) -> list[Fragment]:
                 old_text, new_text = _unescape(old_cell), _unescape(new_cell)
                 if old_text != new_text and old_text:
                     fragments.append(Fragment(old_text, new_text))
+        elif LIST_MARKER.match(old_line) and LIST_MARKER.match(new_line):
+            # A bullet edited in place. The marker is markdown the page does
+            # not store -- it spells the item <li><p>text</p></li> -- but the
+            # prose inside survives the round trip byte-identical, the same
+            # property that makes table cells work. Match on that and the
+            # item is rewritten without disturbing its markup.
+            fragments.append(Fragment(_strip_marker(old_line), _strip_marker(new_line)))
         else:
             fragments.append(Fragment(old_line.strip(), new_line.strip()))
     return fragments

@@ -34,7 +34,7 @@ function KpiCard({ kpi }: { kpi: Kpi }) {
         <div className="mt-2 flex items-center gap-1.5">
           <Progress
             value={kpi.progress}
-            tone={kpi.progress >= 90 ? "pass" : kpi.progress >= 75 ? "brand" : kpi.progress >= 60 ? "warn" : "fail"}
+            tone={kpi.progress >= 75 ? "pass" : kpi.progress >= 60 ? "warn" : "fail"}
             className="flex-1"
           />
           <span className="w-7 text-right text-[10px] font-semibold text-gray-500">{kpi.progress}%</span>
@@ -444,10 +444,10 @@ function DeveloperDashboard() {
         { name: "CI/CD Doc Compliance", values: [56, 59, 61, 63, 66, 68], color: "#f59e0b" },
       ]} />
       <Watchlist items={[
-        { status: "Risk", text: "Twelve documentation exceptions remain open for Project Payments." },
-        { status: "Warn", text: "CI/CD documentation compliance is below the project target." },
+        { status: "Risk", text: "Twelve documentation exceptions remain open for Project Payments (target: 0)." },
+        { status: "Warn", text: "CI/CD documentation compliance is below the project target of 75%." },
         { status: "Warn", text: "Documentation lag remains above the two-day objective." },
-        { status: "Good", text: "API completeness and PR-to-doc automation improved this month." },
+        { status: "Good", text: "API completeness (84%, +5%) improved this month." },
       ]} />
     </DashboardShell>
   );

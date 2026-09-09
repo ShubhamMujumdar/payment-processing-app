@@ -7,7 +7,7 @@ import { BRAND } from "../brand";
 // same as the username (which is the role id). Validation requires a
 // known role id AND username === password.
 const ROLES = [
-  { id: "user_executive",       label: "Executive",       initials: "EX", defaultPath: "/portfolio" },
+  { id: "user_executive",       label: "Portfolio Manager", initials: "PF", defaultPath: "/portfolio" },
   { id: "user_developer",       label: "Developer",       initials: "DV", defaultPath: "/knowledge-management" },
   { id: "user_program_manager", label: "Program Manager", initials: "PM", defaultPath: "/pm-health" },
   { id: "user_product_ops",     label: "Product Ops",     initials: "PO", defaultPath: "/knowledge-management" },

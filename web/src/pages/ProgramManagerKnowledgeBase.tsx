@@ -407,7 +407,7 @@ function ProjectBreadcrumb({ projectName, onHome, onHealth }: {
       </button>
       <IconChevron dir="right" />
       <button onClick={onHealth} className="text-[12px] text-gray-500 transition-colors hover:text-gray-300">
-        Portfolio Health
+        Program Health
       </button>
       <IconChevron dir="right" />
       <span className="text-[12px] text-gray-500">{projectName}</span>
@@ -418,7 +418,7 @@ function ProjectBreadcrumb({ projectName, onHome, onHealth }: {
         className="ml-auto flex items-center gap-1.5 rounded-[8px] border border-ink-700 px-3 py-1.5 text-[12px] text-gray-400 transition-colors hover:border-gray-500 hover:text-gray-200"
       >
         <IconChevron dir="left" />
-        Back to Portfolio Health
+        Back to Program Health
       </button>
     </nav>
   );
@@ -691,9 +691,9 @@ export default function ProgramManagerKnowledgeBase() {
 
         <div className="space-y-7 px-6 pt-6">
 
-          {/* ── 1. Portfolio Insights ────────────────────────────────────── */}
+          {/* ── 1. Program Insights ────────────────────────────────────── */}
           <section>
-            <SectionTitle>Portfolio Knowledge Insights</SectionTitle>
+            <SectionTitle>Program Knowledge Insights</SectionTitle>
             <div className="grid grid-cols-5 gap-4">
               <StatCard
                 label="Documentation Health"

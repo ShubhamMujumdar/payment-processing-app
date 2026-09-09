@@ -550,14 +550,14 @@ export default function ProgramManagerTraceability() {
         <PageHead
           kicker="Program Manager"
           title="Traceability"
-          blurb="Portfolio requirements traceability across PAY · CSP · FRD · MOB"
+          blurb="Program requirements traceability across PAY · CSP · FRD · MOB"
         />
 
         <div className="space-y-7 px-6 pt-6">
 
-          {/* ── 1. Portfolio KPIs ────────────────────────────────────────── */}
+          {/* ── 1. Program KPIs ────────────────────────────────────────── */}
           <section>
-            <SectionTitle>Portfolio KPIs</SectionTitle>
+            <SectionTitle>Program KPIs</SectionTitle>
             <div className="grid grid-cols-5 gap-4">
               <StatCard label="Requirements Coverage" value={reqCovPct}    unit="%" tone={coverageTone(reqCovPct)}   progress={reqCovPct}   icon={<IconReq />}    />
               <StatCard label="Avg Test Coverage"     value={avgTestCov}   unit="%" tone={coverageTone(avgTestCov)}  progress={avgTestCov}  icon={<IconTest />}   />

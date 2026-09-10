@@ -29,8 +29,8 @@ public class PaymentRequestDTO {
     private String payeeId;
 
     @NotNull(message = "amount is required")
-    @DecimalMin(value = "3.00", message = "amount must be at least 3.00")
-    @DecimalMax(value = "1000.00", message = "amount exceeds the per-transaction limit of 1000.00")
+    @DecimalMin(value = "5.00", message = "amount must be at least 5.00")
+    @DecimalMax(value = "5000.00", message = "amount exceeds the per-transaction limit of 5000.00")
     private BigDecimal amount;
 
     @NotBlank(message = "currency is required")

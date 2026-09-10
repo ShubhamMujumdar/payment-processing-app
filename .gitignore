@@ -37,6 +37,7 @@ Thumbs.db
 # ArcadeDB's own, which is singular and so slipped past the rule for weeks --
 # committed, permanently dirty, and carrying absolute local paths.
 logs/
+log/
 spine/log/
 code2doc_executive_rfp.pptx
 *.zip

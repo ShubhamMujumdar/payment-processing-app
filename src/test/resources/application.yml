@@ -1,7 +1,17 @@
 spring:
   main:
-    # springdoc-openapi 3.1.0 still imports the old org.springframework.boot.autoconfigure.jackson
-    # package. Spring Boot 3.5.x relocated it to org.springframework.boot.jackson.autoconfigure.
-    # Both get loaded by @SpringBootTest / @WebMvcTest, causing a duplicate jsonComponentModule bean.
-    # This allows the second definition (the new-package one) to silently override the first.
+    # springdoc-openapi 3.1.0 imports old org.springframework.boot.autoconfigure.* packages.
+    # Spring Boot 3.5.x relocated auto-configurations to new packages (e.g.
+    # org.springframework.boot.jackson.autoconfigure, org.springframework.boot.webmvc.autoconfigure).
+    # Both get loaded by @SpringBootTest / @WebMvcTest, causing duplicate bean definitions.
+    # This allows the new-package definition to silently override the old one.
     allow-bean-definition-overriding: true
+  autoconfigure:
+    exclude:
+      # The new-package ErrorMvcAutoConfiguration (spring-boot-webmvc-autoconfigure) references
+      # org.springframework.boot.web.error.ErrorPageRegistrar which is absent from the test
+      # classpath when springdoc 3.1.0 is present. Excluding this class prevents condition
+      # evaluation from failing with NoClassDefFoundError; the old-package
+      # org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
+      # remains active and handles error mapping correctly.
+      - org.springframework.boot.webmvc.autoconfigure.error.ErrorMvcAutoConfiguration

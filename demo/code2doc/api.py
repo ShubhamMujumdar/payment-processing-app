@@ -305,6 +305,12 @@ def publish(run_id: str, index: int, request: PublishRequest) -> dict[str, Any]:
             "url": proposal["anchor_url"],
             "version": result.get("new_version"),
         })
+        # Re-ingest and rebuild ChromaDB immediately after the Confluence
+        # page is updated so the index is never stale for the next retrieval.
+        watcher = _state.get("watcher")
+        if watcher is not None:
+            import threading
+            threading.Thread(target=watcher._refresh_index, daemon=True).start()
     return result
 
 

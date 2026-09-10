@@ -97,7 +97,7 @@ class PaymentControllerTest {
         PaymentRequestDTO invalid = validRequest();
         invalid.setPayerId("");                              // violates @NotBlank
         invalid.setCurrency("US");                           // violates @Size(min=3, max=3)
-        invalid.setAmount(new BigDecimal("0.00"));           // violates @DecimalMin("1.00")
+        invalid.setAmount(new BigDecimal("0.00"));           
 
         mockMvc.perform(post("/api/v1/payments")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -8,8 +8,13 @@ three-second interval costs about 1200 calls an hour and still leaves headroom.
 
 The pipeline per commit:
 
-    detect -> filter noise -> analyse (Claude) -> retrieve (Chroma + reranker)
+    detect -> filter noise -> analyse (Claude) -> re-ingest Confluence
+           -> rebuild ChromaDB -> retrieve (Chroma + reranker)
            -> propose redlines (Claude) -> store
+
+Re-ingesting before retrieval guarantees the index reflects the latest
+Confluence content, so a manually-edited page or a previous pipeline run
+that updated Confluence is always visible to the current run.
 
 Every stage writes an event before it starts work, so a dashboard sees
 "analysing" while the model is still thinking rather than a gap followed by a
@@ -107,6 +112,30 @@ class Watcher:
     def close(self) -> None:
         self.source.close()
 
+    # --- index refresh -----------------------------------------------------
+    def _refresh_index(self, on_log: Callable[[str], None] = print) -> int:
+        """Re-ingest Confluence and rebuild ChromaDB using the already-loaded embedder."""
+        import time
+
+        from .chunking import chunk_pages
+        from .ingest import ingest
+
+        on_log("  re-ingesting Confluence…")
+        t0 = time.perf_counter()
+        pages = ingest(self.config, "confluence")
+        on_log(f"  {len(pages)} pages ingested ({time.perf_counter() - t0:.1f}s)")
+
+        chunks = chunk_pages(pages, token_counter=self.retriever.embedder.token_count)
+        texts = [c.embed_text() for c in chunks]
+
+        t0 = time.perf_counter()
+        vectors = self.retriever.embedder.embed_passages(texts)
+        on_log(f"  {len(chunks)} chunks embedded ({time.perf_counter() - t0:.1f}s)")
+
+        n = self.retriever.store.replace(chunks, vectors)
+        on_log(f"  ChromaDB rebuilt: {n} chunks")
+        return n
+
     # --- the loop ----------------------------------------------------------
     def run_forever(self, on_log: Callable[[str], None] = print) -> None:
         branch = self.branch
@@ -173,6 +202,10 @@ class Watcher:
                 self.store.update(run_id, status="no-impact")
                 self.store.emit(run_id, "no-impact", {"reason": analysis.summary, "kind": analysis.change_kind})
                 return run_id
+
+            self.store.update(run_id, status="refreshing")
+            self.store.emit(run_id, "refreshing", {})
+            self._refresh_index(on_log)
 
             self.store.emit(run_id, "retrieving", {"queries": [q.topic for q in analysis.queries]})
             best: dict[str, Any] = {}

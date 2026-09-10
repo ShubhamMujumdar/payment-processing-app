@@ -102,15 +102,17 @@ and is what it reads and writes.
 # macOS / Linux
 ./setup.sh          # check everything, install what is missing
 ./start.sh          # run all three services, print the URLs
+./status.sh         # what is up, what is not
 ./stop.sh
 
 # Windows (PowerShell)
 .\setup.ps1
 .\start.ps1
+.\status.ps1
 .\stop.ps1
 
 # Windows (double-click)
-setup.cmd  ·  start.cmd  ·  stop.cmd
+setup.cmd  ·  start.cmd  ·  status.cmd  ·  stop.cmd
 ```
 
 Every script is safe to re-run. `setup` checks before it acts, so a second run

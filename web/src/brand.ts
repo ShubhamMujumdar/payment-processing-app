@@ -7,14 +7,14 @@
  * (which is gitignored) rather than a client's name in public git history.
  *
  *   VITE_BRAND_NAME=ACME
- *   VITE_BRAND_PRODUCT=Strategic Platform Management
+ *   VITE_BRAND_PRODUCT=Strategic Portfolio Management
  *   VITE_BRAND_PORTAL=Executive KM Portal
  */
 export const BRAND = {
   /** The wordmark at the top of the navigation rail. */
   name: import.meta.env.VITE_BRAND_NAME ?? "VISA",
   /** The line beneath it. */
-  product: import.meta.env.VITE_BRAND_PRODUCT ?? "Strategic Platform Management",
+  product: import.meta.env.VITE_BRAND_PRODUCT ?? "Strategic Portfolio Management",
   /** The title in the top bar. */
-  portal: import.meta.env.VITE_BRAND_PORTAL ?? "Strategic Platform Management",
+  portal: import.meta.env.VITE_BRAND_PORTAL ?? "Strategic Portfolio Management",
 };

@@ -28,8 +28,6 @@
           red build green. See docs/CI-CD.md "Coverage ratchet".
         -->
         <jacoco.line.coverage.minimum>0.45</jacoco.line.coverage.minimum>
-        <!-- Override Tomcat to fix CVE-2026-65182, CVE-2026-65905, CVE-2026-68525 (CRITICAL) -->
-        <tomcat.version>10.1.58</tomcat.version>
     </properties>
 
     <dependencies>

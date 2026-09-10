@@ -1,0 +1,12 @@
+# Tomcat CVEs affecting tomcat-embed-core <= 10.1.55 (bundled by Spring Boot 3.5.16).
+# The fix ships in Tomcat 10.1.58, which has not yet been published to Maven Central.
+# Remove this file and upgrade <tomcat.version> once 10.1.58 is available.
+#
+# Trivy reference: https://avd.aquasec.com/nvd/cve-2026-65182
+CVE-2026-65182
+
+# Trivy reference: https://avd.aquasec.com/nvd/cve-2026-65905
+CVE-2026-65905
+
+# Trivy reference: https://avd.aquasec.com/nvd/cve-2026-68525
+CVE-2026-68525

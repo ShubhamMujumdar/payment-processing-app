@@ -1,0 +1,7 @@
+spring:
+  main:
+    # springdoc-openapi 3.1.0 still imports the old org.springframework.boot.autoconfigure.jackson
+    # package. Spring Boot 3.5.x relocated it to org.springframework.boot.jackson.autoconfigure.
+    # Both get loaded by @SpringBootTest / @WebMvcTest, causing a duplicate jsonComponentModule bean.
+    # This allows the second definition (the new-package one) to silently override the first.
+    allow-bean-definition-overriding: true

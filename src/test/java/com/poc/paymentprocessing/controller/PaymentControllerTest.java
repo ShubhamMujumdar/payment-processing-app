@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -96,7 +97,7 @@ class PaymentControllerTest {
         PaymentRequestDTO invalid = validRequest();
         invalid.setPayerId("");                              // violates @NotBlank
         invalid.setCurrency("US");                           // violates @Size(min=3, max=3)
-        invalid.setAmount(new BigDecimal("0.00"));           // violates @DecimalMin("60.00")
+        invalid.setAmount(new BigDecimal("0.00"));           // violates @DecimalMin("10.00")
 
         mockMvc.perform(post("/api/v1/payments")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -120,16 +121,16 @@ class PaymentControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/payments with both filters honours payerId only — SPEC.md section 6.2")
-    void listPaymentsIgnoresStatusWhenPayerIdIsAlsoSupplied() throws Exception {
-        when(paymentService.getPaymentsByPayerId("user-1")).thenReturn(java.util.List.of());
+    @DisplayName("GET /api/v1/payments with both filters applies both — SPEC.md section 6.2")
+    void listPaymentsAppliesBothFiltersWhenBothSupplied() throws Exception {
+        when(paymentService.getPaymentsByPayerIdAndStatus("user-1", PaymentStatus.SUCCESS))
+                .thenReturn(java.util.List.of());
 
         mockMvc.perform(get("/api/v1/payments").param("payerId", "user-1").param("status", "SUCCESS"))
                 .andExpect(status().isOk());
 
-        // KNOWN DEFECT (SPEC.md section 6.2): the status filter is silently dropped when
-        // both parameters are supplied, and the caller gets a wrong-but-plausible result.
-        // findByPayerIdAndStatus exists in the repository but is never wired up.
+        verify(paymentService).getPaymentsByPayerIdAndStatus(eq("user-1"), eq(PaymentStatus.SUCCESS));
+        verify(paymentService, never()).getPaymentsByPayerId(any());
         verify(paymentService, never()).getPaymentsByStatus(any());
     }
 }

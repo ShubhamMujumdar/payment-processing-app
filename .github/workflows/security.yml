@@ -119,6 +119,7 @@ jobs:
           format: table
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true     # do not block on a CVE with no available fix
+          trivyignores: '.trivyignore'
           exit-code: '1'
 
   # ---------------------------------------------------------------------------

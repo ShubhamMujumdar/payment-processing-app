@@ -6,6 +6,7 @@ import com.poc.paymentprocessing.entity.Payment;
 import com.poc.paymentprocessing.entity.PaymentMethod;
 import com.poc.paymentprocessing.entity.PaymentStatus;
 import com.poc.paymentprocessing.entity.Refund;
+import com.poc.paymentprocessing.entity.RefundReason;
 import com.poc.paymentprocessing.entity.RefundStatus;
 import com.poc.paymentprocessing.exception.InvalidRefundException;
 import com.poc.paymentprocessing.exception.PaymentNotFoundException;
@@ -85,6 +86,7 @@ class RefundServiceImplTest {
         return RefundRequestDTO.builder()
                 .refundAmount(new BigDecimal(amount))
                 .reason("Customer requested refund")
+                .reasonCode(RefundReason.GOODWILL)
                 .build();
     }
 
@@ -202,11 +204,11 @@ class RefundServiceImplTest {
         ArgumentCaptor<Refund> saved = ArgumentCaptor.forClass(Refund.class);
         verify(refundRepository, org.mockito.Mockito.atLeastOnce()).save(saved.capture());
         assertThat(saved.getValue().getStatus()).isEqualTo(RefundStatus.FAILED);
-
-        // KNOWN DEFECTS (SPEC.md sections 6.10 and 6.8): a failed refund writes no audit
-        // row and records no failure reason. Pinned here so the gap is visible in the
-        // test report rather than silently absent.
-        verify(paymentAuditService, never()).recordTransition(any(), any(), any(), any());
+        assertThat(saved.getValue().getFailureReason()).isEqualTo("Gateway rejected refund");
         assertThat(saved.getValue().getProcessedAt()).isNull();
+
+        verify(paymentAuditService).recordTransition(
+                "pay-1", PaymentStatus.SUCCESS, PaymentStatus.SUCCESS,
+                "Refund failed: Gateway rejected refund");
     }
 }

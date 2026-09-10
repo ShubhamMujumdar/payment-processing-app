@@ -23,6 +23,7 @@ finished result.
 
 from __future__ import annotations
 
+import concurrent.futures
 import time
 import traceback
 from typing import Any, Callable
@@ -184,6 +185,12 @@ class Watcher:
             return run_id
 
         try:
+            # Fire re-index in background immediately so it overlaps with
+            # the Claude analysis call rather than running after it.
+            _executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+            refresh_future = _executor.submit(self._refresh_index, on_log)
+            _executor.shutdown(wait=False)
+
             self.store.update(run_id, status="analysing")
             self.store.emit(run_id, "analysing", {"files": len(change.significant)})
             analysis = analyse_change(change.diff)
@@ -203,9 +210,14 @@ class Watcher:
                 self.store.emit(run_id, "no-impact", {"reason": analysis.summary, "kind": analysis.change_kind})
                 return run_id
 
+            # Wait for the background re-index before searching — it started
+            # while analysis was running so most (or all) of the wait is free.
             self.store.update(run_id, status="refreshing")
             self.store.emit(run_id, "refreshing", {})
-            self._refresh_index(on_log)
+            try:
+                refresh_future.result()
+            except Exception as exc:
+                on_log(f"  re-index failed ({exc}); continuing with existing index")
 
             self.store.emit(run_id, "retrieving", {"queries": [q.topic for q in analysis.queries]})
             best: dict[str, Any] = {}

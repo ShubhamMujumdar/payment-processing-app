@@ -1,6 +1,7 @@
 package com.poc.paymentprocessing.dto;
 
 import jakarta.validation.constraints.DecimalMin;
+import com.poc.paymentprocessing.entity.RefundReason;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -25,4 +26,12 @@ public class RefundRequestDTO {
 
     @NotBlank(message = "reason is required")
     private String reason;
+
+    /**
+     * Why the refund is being raised. Required from now on: a free-text reason
+     * cannot be aggregated, so finance could not tell goodwill refunds apart
+     * from processing failures.
+     */
+    @NotNull(message = "reasonCode is required")
+    private RefundReason reasonCode;
 }

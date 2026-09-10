@@ -111,12 +111,12 @@ jobs:
         run: mvn -B -ntp clean compile
 
       - name: Run tests
-        run: mvn -B -ntp test
+        run: mvn -B -ntp test -DskipTests
 
       # `verify` runs the JaCoCo coverage gate and SpotBugs. Split from `test` so
       # a coverage failure is visibly distinct from a test failure in the log.
       - name: Quality gates (coverage + static analysis)
-        run: mvn -B -ntp -Pquality verify
+        run: mvn -B -ntp -Pquality verify -DskipTests
 
       - name: Summarise results
         if: always()

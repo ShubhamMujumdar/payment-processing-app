@@ -139,14 +139,14 @@ export default function AppSidebar() {
       <nav className="flex-1 overflow-y-auto px-2">
         {isExecutive ? (
           <>
-            {/* Workforce Management collapsible group */}
+            {/* Work Management collapsible group */}
             <div className="mb-1">
               {open && (
                 <button
                   onClick={() => setWfmExpanded((v) => !v)}
                   className="flex w-full items-center justify-between rounded-[10px] px-3 py-[7px] text-white/80 transition-colors hover:bg-white/[0.09] hover:text-white"
                 >
-                  <span className="text-[12.5px]">Workforce Management</span>
+                  <span className="text-[12.5px]">Work Management</span>
                   <svg viewBox="0 0 20 20" fill="none" className={`size-3.5 shrink-0 transition-transform duration-150 ${wfmExpanded ? "rotate-180" : ""}`} aria-hidden="true">
                     <path d="M5 7.5l5 5 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>

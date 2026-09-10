@@ -38,7 +38,7 @@ This Technical Design Document is code-impacted. Changes to APIs, DTOs, entities
 |---|---|---|---|
 | id | Long | Primary key | Payment identifier |
 | customerId | Long | Not null | Customer reference |
-| amount | BigDecimal | Minimum 3.00, maximum 1000.00 | Payment amount |
+| amount | BigDecimal | Minimum 5.00, maximum 5000.00 | Payment amount |
 | currency | String | 3 uppercase letters | Payment currency |
 | paymentReference | String | Not blank, unique | External business payment reference |
 | status | Enum | CREATED to terminal state | Lifecycle state |
@@ -62,7 +62,7 @@ This Technical Design Document is code-impacted. Changes to APIs, DTOs, entities
 - Track status moves INITIATED to PROCESSING to SUCCESS.
 - FAILED and CANCELLED are terminal states preserved by status tracking.
 - Duplicate payment reference is rejected with HTTP 409.
-- Payment amount must be at least 3.00 and is capped at 1000.00 per transaction by request validation.
+- Payment amount must be at least 5.00 and is capped at 5000.00 per transaction by request validation.
 - Payers also have a daily aggregate cap; payers without a configured limit fall back to the platform defaults of 10000.00 per transaction and 25000.00 per day.
 - A payment that would breach either ceiling raises PaymentLimitExceededException, which reports the breached limit and the attempted total.
 
@@ -77,7 +77,7 @@ This Technical Design Document is code-impacted. Changes to APIs, DTOs, entities
 
 # 7. Validation Rules
 
-Validation is implemented through Jakarta Bean Validation annotations in request DTOs and surfaced through GlobalExceptionHandler as HTTP 400 responses. Key constraints: amount minimum 3.00, amount maximum 1000.00, currency must be a 3-letter ISO code.
+Validation is implemented through Jakarta Bean Validation annotations in request DTOs and surfaced through GlobalExceptionHandler as HTTP 400 responses. Key constraints: amount minimum 5.00, amount maximum 5000.00, currency must be a 3-letter ISO code.
 
 # 8. Configuration
 

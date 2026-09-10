@@ -33,6 +33,11 @@ public class Refund {
     private String reason;
 
     @Enumerated(EnumType.STRING)
+    private RefundReason reasonCode;
+
+    private String failureReason;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RefundStatus status;
 

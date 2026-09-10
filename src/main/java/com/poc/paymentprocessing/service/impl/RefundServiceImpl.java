@@ -5,6 +5,7 @@ import com.poc.paymentprocessing.dto.RefundResponseDTO;
 import com.poc.paymentprocessing.entity.Payment;
 import com.poc.paymentprocessing.entity.PaymentStatus;
 import com.poc.paymentprocessing.entity.Refund;
+import com.poc.paymentprocessing.entity.RefundReason;
 import com.poc.paymentprocessing.entity.RefundStatus;
 import com.poc.paymentprocessing.exception.InvalidRefundException;
 import com.poc.paymentprocessing.exception.PaymentNotFoundException;
@@ -55,6 +56,7 @@ public class RefundServiceImpl implements RefundService {
                 .paymentId(paymentId)
                 .refundAmount(requestDTO.getRefundAmount())
                 .reason(requestDTO.getReason())
+                .reasonCode(requestDTO.getReasonCode())
                 .status(RefundStatus.INITIATED)
                 .build();
         refund = refundRepository.save(refund);
@@ -76,6 +78,9 @@ public class RefundServiceImpl implements RefundService {
                     "Refund processed: " + requestDTO.getRefundAmount());
         } else {
             refund.setStatus(RefundStatus.FAILED);
+            refund.setFailureReason(result.message());
+            paymentAuditService.recordTransition(payment.getId(), payment.getStatus(), payment.getStatus(),
+                    "Refund failed: " + result.message());
         }
 
         refund = refundRepository.save(refund);

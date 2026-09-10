@@ -89,6 +89,13 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public List<PaymentResponseDTO> getPaymentsByPayerIdAndStatus(String payerId, PaymentStatus status) {
+        return paymentRepository.findByPayerIdAndStatus(payerId, status).stream()
+                .map(paymentMapper::toResponseDTO)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public PaymentResponseDTO cancelPayment(String id) {
         Payment payment = findPaymentOrThrow(id);

@@ -47,6 +47,9 @@ public class PaymentController {
             @RequestParam(required = false) String payerId,
             @RequestParam(required = false) PaymentStatus status) {
 
+        if (payerId != null && status != null) {
+            return ResponseEntity.ok(paymentService.getPaymentsByPayerIdAndStatus(payerId, status));
+        }
         if (payerId != null) {
             return ResponseEntity.ok(paymentService.getPaymentsByPayerId(payerId));
         }

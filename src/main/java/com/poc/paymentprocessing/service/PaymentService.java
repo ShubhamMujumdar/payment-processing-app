@@ -20,6 +20,8 @@ public interface PaymentService {
 
     List<PaymentResponseDTO> getPaymentsByStatus(PaymentStatus status);
 
+    List<PaymentResponseDTO> getPaymentsByPayerIdAndStatus(String payerId, PaymentStatus status);
+
     PaymentResponseDTO cancelPayment(String id);
 
     void deletePayment(String id);

@@ -183,7 +183,7 @@ jobs:
       # Building the image on a PR proves the Dockerfile still works without
       # publishing anything. Nothing is pushed from a pull request.
       - name: Verify the container image builds
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
